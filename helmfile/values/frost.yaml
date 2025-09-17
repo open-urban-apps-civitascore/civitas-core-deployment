@@ -58,6 +58,10 @@ frost:
       enable: true
     openApi:
       enable: true
+    projects:
+      enable: true
+      enableDefaultRules: true
+      updateFeatureWithLocation: true
 
   ########################################
   # FROST-Server Extension configuration #
@@ -146,27 +150,6 @@ frost:
         type: RuntimeDefault
       capabilities:
         drop: ["ALL"]
-
-# {% if inv_k8s.ingress.ca_path is defined and inv_k8s.ingress.ca_path != "" %}
-#     volumeMounts:
-#     - name: cacert-volume
-#       mountPath: /tmp/cacert
-#     lifecycle:
-#       postStart:
-#         exec:
-#           command:
-#             - "sh"
-#             - "-c"
-#             - >
-#               echo Importing the provided CACert into JDK cacert store... >> /tmp/cacert.log
-#               && keytool -list -cacerts -storepass changeit | grep -c trustedCertEntry >> /tmp/cacert.log || true
-#               && keytool -import -trustcacerts -alias ca-bundle -cacerts -file /tmp/cacert/cacert.crt -keypass changeit -storepass changeit -noprompt >> /tmp/cacert.log || true
-#               && keytool -list -cacerts -storepass changeit | grep -c trustedCertEntry >> /tmp/cacert.log || true
-#     volumes:
-#     - name: cacert-volume
-#       configMap:
-#         name: cacert
-# {% endif %}
 
     extraEnv: |  
       - name: auth_registerUserLocally
@@ -333,27 +316,6 @@ frost:
       tls:
         enabled: false
         secretName:
-
-# {% if inv_k8s.ingress.ca_path is defined and inv_k8s.ingress.ca_path != "" %}
-#     volumeMounts:
-#     - name: cacert-volume
-#       mountPath: /tmp/cacert
-#     lifecycle:
-#       postStart:
-#         exec:
-#           command:
-#             - "sh"
-#             - "-c"
-#             - >
-#               echo Importing the provided CACert into JDK cacert store... >> /tmp/cacert.log
-#               && keytool -list -cacerts -storepass changeit | grep -c trustedCertEntry >> /tmp/cacert.log || true
-#               && keytool -import -trustcacerts -alias ca-bundle -cacerts -file /tmp/cacert/cacert.crt -keypass changeit -storepass changeit -noprompt >> /tmp/cacert.log || true
-#               && keytool -list -cacerts -storepass changeit | grep -c trustedCertEntry >> /tmp/cacert.log || true
-#     volumes:
-#     - name: cacert-volume
-#       configMap:
-#         name: cacert
-# {% endif %}
 
   ##############################################
   # FROST-Server Database module configuration #
