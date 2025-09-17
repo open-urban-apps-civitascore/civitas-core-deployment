@@ -1,0 +1,447 @@
+# If empty, use the chart name as common base name for any FROST-Server Kubernetes component
+name:
+
+frost:
+  ######################################
+  # FROST-Server general configuration #
+  ######################################
+  alwaysOrderbyId: true
+  logSensitiveData: false
+  queueLoggingInterval: 0
+
+  #####################################
+  # FROST-Server plugin configuration #
+  #####################################
+  plugins:
+    providedPlugins:
+    plugins:
+    actuation:
+      enable: false
+      idType:
+        actuator:
+        task:
+        taskingCapability:
+    coreModel:
+      enable: true
+      editableDsProperties: false
+      idType:
+        default: LONG
+        datastream:
+        feature:
+        historicalLocation:
+        location:
+        observedProperty:
+        observation:
+        sensor:
+        thing:
+    multiDatastream:
+      enable: false
+      idType:
+        multiDatastream:
+    modelLoader:
+      enable: true
+      modelPath:
+      modelFiles:
+      liquibasePath:
+      liquibaseFiles:
+      securityPath:
+      securityFiles:
+    dataArray:
+      enable: true
+    csv:
+      enable: true
+    geojson:
+      enable: true
+    batchProcessing:
+      enable: true
+    odata:
+      enable: true
+    openApi:
+      enable: true
+
+  ########################################
+  # FROST-Server Extension configuration #
+  ########################################
+  extension:
+    customLinks:
+      enable:
+      recurseDepth:
+    filterDelete:
+      enable:
+
+  auth:
+    provider: "de.fraunhofer.iosb.ilt.frostserver.auth.keycloak.KeycloakAuthProvider"
+    allowAnonymousRead: true
+    authenticateOnly: true
+    role:
+      read:
+      create:
+      update:
+      delete:
+      admin:
+    realmName: FROST-Server
+    plainTextPassword: true
+    db:
+      autoUpdate: "true"
+      maximumConnection: 100
+      maximumIdleConnection: 10
+      minimumIdleConnection: 5
+    keycloakConfig:
+    keycloakConfigFile:
+    keycloakConfigUrl:
+    keycloakConfigSecret:
+
+  logging:
+    default: "WARN"
+    parser: "WARN"
+    queries: "WARN"
+    requests: "WARN"
+    service: "WARN"
+    settings: "WARN"
+    moquette: "WARN"
+    liquibase: "WARN"
+    jooq: "WARN"
+
+  ##########################################
+  # FROST-Server HTTP module configuration #
+  ##########################################
+  http:
+    image:
+      registry: docker.io
+      repository: fraunhoferiosb/frost-server-http
+      tag: latest
+      pullPolicy: Always
+      imagePullSecret: private-registry-pull-secret
+    # FROST-Server HTTP deployment settings
+    replicas: 1
+    ports:
+      http:
+        servicePort: 80
+    ingress:
+      enabled: false
+      rewriteAnnotation: nginx.ingress.kubernetes.io/rewrite-target
+      rewriteTarget: /FROST-Server/$1
+      path: /FROST-Server/(.*)
+      annotations:
+        nginx.ingress.kubernetes.io/ssl-redirect: "true"
+      tls:
+        enabled: false
+        secretName: []
+
+    # FROST-Server HTTP deployment resource option. An empty resources field will default to the limits of the namespace.
+    resources:
+      limits:
+        cpu: 1000m
+        memory: 2Gi
+      requests:
+        cpu: 500m
+        memory: 1Gi
+    securityContext:
+      runAsUser: 1001
+      runAsGroup: 1001
+      runAsNonRoot: true
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: false
+      seccompProfile:
+        type: RuntimeDefault
+      capabilities:
+        drop: ["ALL"]
+
+# {% if inv_k8s.ingress.ca_path is defined and inv_k8s.ingress.ca_path != "" %}
+#     volumeMounts:
+#     - name: cacert-volume
+#       mountPath: /tmp/cacert
+#     lifecycle:
+#       postStart:
+#         exec:
+#           command:
+#             - "sh"
+#             - "-c"
+#             - >
+#               echo Importing the provided CACert into JDK cacert store... >> /tmp/cacert.log
+#               && keytool -list -cacerts -storepass changeit | grep -c trustedCertEntry >> /tmp/cacert.log || true
+#               && keytool -import -trustcacerts -alias ca-bundle -cacerts -file /tmp/cacert/cacert.crt -keypass changeit -storepass changeit -noprompt >> /tmp/cacert.log || true
+#               && keytool -list -cacerts -storepass changeit | grep -c trustedCertEntry >> /tmp/cacert.log || true
+#     volumes:
+#     - name: cacert-volume
+#       configMap:
+#         name: cacert
+# {% endif %}
+
+    extraEnv: |  
+      - name: auth_registerUserLocally
+        value: "true"        
+      - name: auth_userRoleDecoderClass
+        value: "de.fraunhofer.iosb.ilt.frostserver.plugin.projects.ProjectRoleDecoder"      
+      - name: persistence_idGenerationMode_Role
+        value: "ClientGeneratedOnly"
+      - name: persistence_idGenerationMode_User
+        value: "ClientGeneratedOnly"
+      - name: plugins_modelLoader_idType_Role
+        value: "STRING"
+      - name: plugins_modelLoader_idType_User
+        value: "STRING"
+      - name: plugins_projects_enable
+        value: "true"
+
+    # FROST-Server HTTP business settings
+    serviceHost:
+    serviceProtocol: https
+    servicePort: 443
+    urlSubPath:
+    defaultCount: false
+    defaultTop: 100
+    maxTop: 1000
+    maxDataSize: 25000000
+    useAbsoluteNavigationLinks: false
+
+    # FROST-Server Cross-Origin Resource Sharing settings to the FROST-Server HTTP
+    cors:
+      enable: true
+      allowed:
+        headers: Origin, Accept, X-Requested-With, Content-Type, Access-Control-Request-Method, Access-Control-Request-Headers, Authorization
+        methods: GET, HEAD, OPTIONS
+        origins: '*'
+      exposed:
+        headers: Location
+      preflight:
+        maxage: 1800
+      request:
+        decorate: true
+      support:
+        credentials: false
+
+
+    # FROST-Server Database related settings to the FROST-Server HTTP
+    db:
+      autoUpdate: true
+      maximumConnection: 10
+      maximumIdleConnection: 10
+      minimumIdleConnection: 10
+
+    # FROST-Server Messages Bus related settings to the FROST-Server HTTP
+    bus:
+      sendWorkerPoolSize: 10
+      sendQueueSize: 2000
+      recvWorkerPoolSize: 10
+      recvQueueSize: 2000
+      maxInFlight: 50
+
+  ##########################################
+  # FROST-Server MQTT module configuration #
+  ##########################################
+
+  mqtt:
+    image:
+      registry: docker.io
+      repository: fraunhoferiosb/frost-server-mqtt
+      tag: latest
+      # pullPolicy: {{ general.image_pullPolicy }}
+      pullPolicy: Always
+      imagePullSecret: private-registry-pull-secret
+    # FROST-Server MQTT deployment settings
+    enabled: true
+    annotations: {}
+    serviceType: ClusterIP
+    replicas: 1
+    ports:
+      mqtt:
+        nodePort:
+        servicePort: 1883
+      websocket:
+        nodePort:
+        servicePort: 9876
+    host: 0.0.0.0
+    internalHost: localhost
+
+    securityContext:
+      runAsUser: 1000
+      runAsGroup: 1000
+      runAsNonRoot: true
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: false
+      seccompProfile:
+        type: RuntimeDefault
+      capabilities:
+        drop: ["ALL"]
+
+    extraEnv: |
+      - name: auth_registerUserLocally
+        value: "true"  
+      - name: auth_mqtt_topicAllowList
+        value: "^/[a-zA-Z0-9_-]+\\((('[^']+')|([0-9]+))\\)/[a-zA-Z0-9_-]+$"
+      - name: auth_userRoleDecoderClass
+        value: "de.fraunhofer.iosb.ilt.frostserver.plugin.projects.ProjectRoleDecoder"
+      - name: persistence_idGenerationMode_Role
+        value: "ClientGeneratedOnly"
+      - name: persistence_idGenerationMode_User
+        value: "ClientGeneratedOnly"
+      - name: plugins_modelLoader_idType_Role
+        value: "STRING"
+      - name: plugins_modelLoader_idType_User
+        value: "STRING"
+      - name: plugins_projects_enable
+        value: "true"
+
+    secureWebsocketPort:
+    stickySessionTimeout: 10800
+    exposedEndpoints:
+    javaKeystorePath:
+    keyManagerPassword:
+    keyStorePassword:
+    persistentStoreType: memory
+    session_queue_size: 1024
+    session_timeout_seconds: 3600
+    sslPort:
+    netty:
+      mqtt:
+        message_size: 8092
+
+    # FROST-Server MQTT business settings
+    serviceHost: "" # default URI is the same then frost.http.serviceHost"
+    qos: 2
+    subscribeMessageQueueSize: 10000
+    subscribeThreadPoolSize: 20
+    createMessageQueueSize: 10000
+    createThreadPoolSize: 10
+    maxInFlight: 50
+    waitForEnter: false
+
+    # FROST-Server Database related settings to the FROST-Server MQTT
+    db:
+      autoUpdate: false
+      maximumConnection: 10
+      maximumIdleConnection: 10
+      minimumIdleConnection: 10
+
+    # FROST-Server Messages Bus related settings to the FROST-Server MQTT
+    bus:
+      sendWorkerPoolSize: 10
+      sendQueueSize: 2000
+      recvWorkerPoolSize: 10
+      recvQueueSize: 2000
+      maxInFlight: 2000
+
+    ingress:
+      enabled: false
+      path: /mqtt
+      annotations:
+        kubernetes.io/ingress.class: nginx
+        nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+        nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+        nginx.ingress.kubernetes.io/ssl-redirect: true
+      tls:
+        enabled: false
+        secretName:
+
+# {% if inv_k8s.ingress.ca_path is defined and inv_k8s.ingress.ca_path != "" %}
+#     volumeMounts:
+#     - name: cacert-volume
+#       mountPath: /tmp/cacert
+#     lifecycle:
+#       postStart:
+#         exec:
+#           command:
+#             - "sh"
+#             - "-c"
+#             - >
+#               echo Importing the provided CACert into JDK cacert store... >> /tmp/cacert.log
+#               && keytool -list -cacerts -storepass changeit | grep -c trustedCertEntry >> /tmp/cacert.log || true
+#               && keytool -import -trustcacerts -alias ca-bundle -cacerts -file /tmp/cacert/cacert.crt -keypass changeit -storepass changeit -noprompt >> /tmp/cacert.log || true
+#               && keytool -list -cacerts -storepass changeit | grep -c trustedCertEntry >> /tmp/cacert.log || true
+#     volumes:
+#     - name: cacert-volume
+#       configMap:
+#         name: cacert
+# {% endif %}
+
+  ##############################################
+  # FROST-Server Database module configuration #
+  ##############################################
+
+  db:
+    enableIntegratedDb: false
+    dbExternalConnectionString: jdbc:postgresql://postgresql.postgresql.svc.cluster.local:5432/frost
+    image:
+      registry: docker.io
+      repository: postgis/postgis
+      tag: 14-3.2-alpine
+      pullPolicy: IfNotPresent
+    # FROST-Server Database deployment settings
+    ports:
+      postgresql:
+        servicePort: 5432
+    persistence:
+      enabled: false
+      existingClaim:
+      storageClassName:
+      accessModes:
+        - ReadWriteOnce
+      capacity: 10Gi
+      mountPath: /var/lib/postgresql/data
+      hostPath:
+    requiredHostname:
+
+    # Common FROST-Server Database properties, shared by any other FROST-Server modules
+    driver: "org.postgresql.Driver"
+    implementationClass: "de.fraunhofer.iosb.ilt.frostserver.persistence.pgjooq.PostgresPersistenceManager"
+    idGenerationMode: "ServerGeneratedOnly"
+    transactionRole: false
+    countMode: "FULL"
+    database: sensorthings
+    # Set this to your own created secret if needed
+    existingSecret: frost-db-credentials
+    secretUsernameKey: username
+    secretPasswordKey: password
+    username:
+    password:
+    securityContext:
+      runAsUser:
+      runAsGroup:
+      fsGroup:
+
+  ##############################################
+  # FROST-Server Backup module configuration #
+  ##############################################
+  backup:
+    enabled: false
+    image:
+      registry: docker.io
+      repository: kartoza/pg-backup
+      tag: 14-3.2
+      pullPolicy: IfNotPresent
+
+    removeBefore: 14
+
+    persistence:
+      existingClaim:
+      storageClassName:
+      accessModes:
+        - ReadWriteOnce
+      capacity: 10Gi
+      mountPath: /backups
+
+    securityContext:
+      runAsUser:
+      runAsGroup:
+      fsGroup:
+
+  ##################################################
+  # FROST-Server Messages Bus module configuration #
+  ##################################################
+  bus:
+    image:
+        registry: docker.io
+        repository: eclipse-mosquitto
+        tag: latest
+        pullPolicy: IfNotPresent
+    # FROST-Server Messages Bus deployment settings
+    ports:
+      bus:
+        servicePort: 1883
+
+    # Common FROST-Server Messages Bus properties, shared by any other FROST-Server modules
+    implementationClass: "de.fraunhofer.iosb.ilt.sta.messagebus.MqttMessageBus"
+    topicName: "FROST-Bus"
+    qos: 2
+
