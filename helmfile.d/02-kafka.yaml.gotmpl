@@ -1,0 +1,18 @@
+---
+environments:
+  default:
+    values:
+      - ../environments/default/*.yaml
+---
+helmDefaults:
+  wait: true
+  waitForJobs: true
+---
+releases:
+  - name: kafka-operator
+    namespace: {{ .Environment.Values.global.namespacePrefix }}-{{ .Environment.Values.kafkaOperator.namespace }}
+    chart: oci://quay.io/strimzi-helm/strimzi-kafka-operator
+    version: {{ .Environment.Values.kafkaOperator.versions.operator }}
+    createNamespace: true
+    values:
+      - ../values/kafka-operator.yaml.gotmpl

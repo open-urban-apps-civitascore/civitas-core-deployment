@@ -1,0 +1,4 @@
+replicas: {{ .Environment.Values.kafkaOperator.replicas }}
+watchNamespace: {{ .Environment.Values.global.namespacePrefix }}-{{ .Environment.Values.kafka.namespace }}
+
+defaultImageTag: {{ .Environment.Values.kafkaOperator.versions.operator }}

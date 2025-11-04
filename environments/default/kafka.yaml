@@ -1,0 +1,7 @@
+kafkaOperator:
+  versions:
+    operator: "0.48.0"
+  replicas: 1
+  namespace: kafka-operator
+kafka:
+  namespace: kafka

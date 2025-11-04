@@ -4,3 +4,4 @@ global:
   namespace: civitas
   metrics:
     enabled: false
+  namespacePrefix: civitas
