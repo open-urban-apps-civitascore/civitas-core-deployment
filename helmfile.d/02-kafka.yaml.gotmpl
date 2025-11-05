@@ -16,3 +16,9 @@ releases:
     createNamespace: true
     values:
       - ../values/kafka-operator.yaml.gotmpl
+  - name: kafka
+    namespace: {{ .Environment.Values.global.namespacePrefix }}-{{ .Environment.Values.kafka.namespace }}
+    chart: ../charts/kafka
+    createNamespace: true
+    values:
+      - ../values/kafka.yaml.gotmpl

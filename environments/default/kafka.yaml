@@ -5,3 +5,5 @@ kafkaOperator:
   namespace: kafka-operator
 kafka:
   namespace: kafka
+  version: 4.1.0
+  replicas: 3

@@ -1,0 +1,124 @@
+# Values for Strimzi-based Kafka cluster
+
+# Kafka cluster identity
+clusterName: kafka-cluster
+kafkaVersion: 4.1.0
+
+controller:
+  replicas: 1
+  resources:
+    requests:
+      cpu: "500m"
+      memory: "1Gi"
+    limits:
+      cpu: "1"
+      memory: "2Gi"
+
+broker:
+  replicas: 1
+  resources:
+    requests:
+      cpu: "500m"
+      memory: "2Gi"
+    limits:
+      cpu: "2"
+      memory: "4Gi"
+
+kafka:
+  # Listener presets; adjust as needed
+  listeners:
+    - name: internal
+      port: 9092
+      type: internal
+      tls: true
+    - name: external
+      port: 9094
+      type: nodeport
+      tls: true
+      configuration:
+        bootstrap:
+          nodePort: null
+        brokers: []
+  # Broker config tuned for production
+  config:
+    inter.broker.protocol.version: '3.7'
+    log.message.format.version: '3.7'
+    offsets.topic.replication.factor: 3
+    transaction.state.log.replication.factor: 3
+    transaction.state.log.min.isr: 2
+    default.replication.factor: 3
+    min.insync.replicas: 2
+    num.partitions: 12
+    auto.create.topics.enable: "false"
+    ssl.enabled.protocols: 'TLSv1.2,TLSv1.3'
+  storage:
+    type: persistent-claim
+    size: 5Gi
+    class: ""
+    deleteClaim: false
+  resources:
+    requests:
+      cpu: "500m"
+      memory: "2Gi"
+    limits:
+      cpu: "2"
+      memory: "8Gi"
+  # Optional: provide Strimzi pod template customizations (scheduling, labels, etc.)
+  template: {}
+  # Optional metrics configuration (JMX exporter)
+  metricsConfig: {}
+
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+entityOperator:
+  enabled: true
+  topicOperator: {}
+  userOperator: {}
+
+# Optional topics to create
+# topics:
+#   - name: example
+#     partitions: 12
+#     replicas: 3
+#     config:
+#       retention.ms: 604800000
+#       cleanup.policy: delete
+
+topics: []
+
+# Optional users to create
+# users:
+#   - name: my-app
+#     authentication:
+#       type: tls
+#     authorization:
+#       type: simple
+#       acls:
+#         - resource:
+#             type: topic
+#             name: my-topic
+#             patternType: literal
+#           operation: Read
+#         - resource:
+#             type: group
+#             name: my-group
+#             patternType: literal
+#           operation: Read
+users: []
+
+# Optional KafkaConnect instance
+connect:
+  enabled: false
+  name: kafka-connect
+  replicas: 1
+  image: ""
+  bootstrapServers: ""
+  config: {}
+  resources: {}
+
+# Optional Cruise Control
+cruiseControl:
+  enabled: false
+  config: {}
