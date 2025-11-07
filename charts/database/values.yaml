@@ -116,3 +116,12 @@ database:
   # cannot be changed. The name of the template from which to create
   # the new database.
   template:
+  # Whether to create a Kubernetes secret for the database credentials.
+  createSecret:
+    attentions: []
+    # Whether to create the secret.
+    enabled: true
+    # Name of the secret to create.
+    name: "secret-name"
+    # Username to store in the secret.
+    username: "username"

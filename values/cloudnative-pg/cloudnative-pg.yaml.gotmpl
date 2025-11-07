@@ -133,6 +133,8 @@ cluster:
       ensure: present
       login: true
       superuser: false
+      passwordSecret:
+        name: "{{ .secretName }}"
     {{- end }}
   {{- else }}
   roles: []
