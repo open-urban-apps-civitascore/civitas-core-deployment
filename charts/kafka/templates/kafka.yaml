@@ -14,7 +14,7 @@ spec:
     deleteClaim: false
   {{- if .Values.controller.resources }}
   resources:
-{{ toYaml .Values.controller.resources | nindent 4 }}
+    {{- toYaml .Values.controller.resources | nindent 4 }}
   {{- end }}
 ---
 apiVersion: kafka.strimzi.io/v1beta2
@@ -39,7 +39,7 @@ spec:
     deleteClaim: false
   {{- if .Values.broker.resources }}
   resources:
-{{ toYaml .Values.broker.resources | nindent 4 }}
+    {{- toYaml .Values.broker.resources | nindent 4 }}
   {{- end }}
 ---
 apiVersion: kafka.strimzi.io/v1beta2
@@ -48,23 +48,14 @@ metadata:
   name: {{ include "kafka.clusterName" . }}
 spec:
   kafka:
-    version: 4.1.0
+    version: {{ .Values.kafkaVersion }}
     metadataVersion: 4.1-IV1
     listeners:
-      - name: plain
-        port: 9092
-        type: internal
-        tls: false
-      - name: tls
-        port: 9093
-        type: internal
-        tls: true
+      {{- toYaml .Values.kafka.listeners | nindent 6 }}
+    {{- if .Values.kafka.config }}
     config:
-      offsets.topic.replication.factor: 1
-      transaction.state.log.replication.factor: 1
-      transaction.state.log.min.isr: 1
-      default.replication.factor: 1
-      min.insync.replicas: 1
+      {{- toYaml .Values.kafka.config | nindent 6 }}
+    {{- end }}
   entityOperator:
     topicOperator: {}
     userOperator: {}
