@@ -1,8 +1,12 @@
----
 environments:
   default:
     values:
       - ../environments/default/*.yaml
+      - profile: dev
+  prod:
+    values:
+      - ../environments/default/*.yaml
+      - profile: prod
 ---
 helmDefaults:
   wait: true
@@ -10,15 +14,17 @@ helmDefaults:
 ---
 releases:
   - name: kafka-operator
-    namespace: {{ .Environment.Values.global.namespacePrefix }}-{{ .Environment.Values.kafkaOperator.namespace }}
+    namespace: {{ .Values.global.namespacePrefix }}-{{ .Values.kafkaOperator.namespace }}
     chart: oci://quay.io/strimzi-helm/strimzi-kafka-operator
-    version: {{ .Environment.Values.kafkaOperator.versions.operator }}
+    version: {{ .Values.kafkaOperator.versions.operator }}
     createNamespace: true
     values:
       - ../values/kafka-operator.yaml.gotmpl
   - name: kafka
-    namespace: {{ .Environment.Values.global.namespacePrefix }}-{{ .Environment.Values.kafka.namespace }}
+    namespace: {{ .Values.global.namespacePrefix }}-{{ .Values.kafka.namespace }}
     chart: ../charts/kafka
     createNamespace: true
     values:
-      - ../values/kafka.yaml.gotmpl
+      - ../values/kafka/kafka-base.yaml
+      - ../values/kafka/kafka-{{ .Values.profile | default "dev" }}.yaml
+      - ../values/environment_merger.yaml.gotmpl

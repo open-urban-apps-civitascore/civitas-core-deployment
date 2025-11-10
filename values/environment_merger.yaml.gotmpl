@@ -1,0 +1,1 @@
+{{ merge (.Values | get .Release.Name dict) (.Values | get "global" dict) | toYaml }}
