@@ -1,8 +1,8 @@
 ---
 embeddedDatabase:
   enabled: true
-  crdVersion: "0.26.0"
-  clusterVersion: "0.3.1"
+  crdVersion: '0.26.0'
+  clusterVersion: '0.3.1'
   namespace: civitas
   clusterWide: false
   recovery:
@@ -28,11 +28,11 @@ embeddedDatabase:
     imagePullSecrets: []
     storage:
       size: 8Gi
-      storageClass: ""
+      storageClass: ''
     walStorage:
       enabled: false
       size: 1Gi
-      storageClass: ""
+      storageClass: ''
     resources:
       requests:
         cpu: 250m
@@ -69,7 +69,7 @@ embeddedDatabase:
       jobs: 2
     scheduledBackups:
       - name: daily-backup
-        schedule: "0 2 * * *"
+        schedule: '0 2 * * *'
         backupOwnerReference: self
         method: barmanObjectStore
-    retentionPolicy: "30d"
+    retentionPolicy: '30d'

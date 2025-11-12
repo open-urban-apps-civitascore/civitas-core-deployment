@@ -11,5 +11,5 @@ spec:
     - name: wget
       image: busybox
       command: ['wget']
-      args: ['{{ include "postgres-init-job.fullname" . }}:{{ .Values.service.port }}']
+      args: ['{{ include "postgres-init-job.fullname" . }}:{{ .Values.database.port }}']
   restartPolicy: Never

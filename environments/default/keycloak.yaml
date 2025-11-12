@@ -6,4 +6,4 @@ keycloak:
     embedded:
       enabled: true
     name: keycloak
-    user: "keycloak"
+    user: 'keycloak'

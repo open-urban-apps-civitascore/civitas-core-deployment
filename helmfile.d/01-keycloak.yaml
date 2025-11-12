@@ -15,7 +15,12 @@ helmDefaults:
 ---
 releases:
   - name: keycloak-db
-    namespace: "{{- if .Environment.Values.embeddedDatabase.clusterWide -}}{{ .Environment.Values.keycloak.namespace }}{{- else -}}{{ .Environment.Values.embeddedDatabase.namespace }}{{- end -}}"
+    namespace: >-
+      {{- if .Environment.Values.embeddedDatabase.clusterWide -}}
+      {{ .Environment.Values.keycloak.namespace }}
+      {{- else -}}
+      {{ .Environment.Values.embeddedDatabase.namespace }}
+      {{- end -}}
     chart: ../charts/database
     createNamespace: true
     condition: keycloak.database.embedded.enabled

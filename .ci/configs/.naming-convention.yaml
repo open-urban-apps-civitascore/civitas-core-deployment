@@ -1,0 +1,36 @@
+---
+files:
+  use-hyphen: true
+  use-underscore: false
+  use-capital: false
+  use-pascal-case: false
+  use-camel-case: false
+  use-screaming-snake-case: false
+  allow-unicode: false
+  min-length: 3
+  max-length: 50
+directories:
+  use-hyphen: true
+  use-underscore: false
+  use-capital: false
+  use-pascal-case: false
+  use-camel-case: false
+  use-screaming-snake-case: false
+  allow-unicode: false
+empty-files:
+  allow-empty: false
+duplicate-files:
+  allow-duplicates: false
+exclude-patterns:
+  - '__pycache__'
+  - "\\.git/"
+  # Allow .yaml.gotmpl because it's better than -yaml.gotmpl
+  - ".*\\.yaml\\.gotmpl$"
+  - ".*\\.yml\\.gotmpl$"
+  # Defined by https://helm.sh/docs/chart_best_practices/conventions so they must be ignored by our conventions
+  - 'charts/.*/Chart.yaml'
+  - 'charts/.*/templates/NOTES.txt'
+  - 'charts/.*/templates/_helpers.tpl'
+  - 'charts/.*/.helmignore' # ignore duplicate warning
+  # GitLab merge_request_templates directory uses underscores by convention
+  - '.*\.gitlab/merge_request_templates.*'
