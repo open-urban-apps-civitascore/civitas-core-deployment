@@ -1,2 +1,8 @@
 watchNamespaces:
   - {{ .Values.global.namespacePrefix }}-kafka
+labels:
+  app.kubernetes.io/name: strimzi-kafka-operator
+  app.kubernetes.io/instance: {{ .Values.global.namespacePrefix }}
+  app.kubernetes.io/managed-by: Helm
+  app.kubernetes.io/component: operator
+  app.kubernetes.io/part-of: civitas-core
