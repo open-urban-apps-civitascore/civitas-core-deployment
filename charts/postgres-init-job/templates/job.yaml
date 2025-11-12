@@ -1,0 +1,64 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+    name: {{ include "postgres-init-job.fullname" . }}
+    labels:
+        {{- include "postgres-init-job.labels" . | nindent 4 }}
+spec:
+    template:
+        metadata:
+            labels:
+                {{- include "postgres-init-job.selectorLabels" . | nindent 8 }}
+        spec:
+            restartPolicy: Never
+            containers:
+                - name: init
+                    image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+                    imagePullPolicy: {{ .Values.image.pullPolicy }}
+                    env:
+                        {{- range .Values.env }}
+                        - name: {{ .name }}
+                            value: {{ .value | quote }}
+                        {{- end }}
+                        - name: DATABASE_PASSWORD
+                            valueFrom:
+                                secretKeyRef:
+                                    name: {{ .Values.database.appPassword.secretName }}
+                                    key: {{ .Values.database.appPassword.passwordKey }}
+                        - name: POSTGRES_PASSWORD
+                            valueFrom:
+                                secretKeyRef:
+                                    name: {{ .Values.database.postgresPassword.secretName }}
+                                    key: {{ .Values.database.postgresPassword.passwordKey }}
+                    command: /bin/sh
+                    args:
+                        - -c
+                        - |
+                            echo "Running DB initialization script..."
+                            PGPASSWORD=$POSTGRES_PASSWORD psql -h {{ .Values.database.host }} -p {{ .Values.database.port }} -U {{ .Values.database.postgresUser }} <<EOF
+                            CREATE DATABASE {{ .Values.database.name }};
+                            CREATE USER {{ .Values.database.appUser }} WITH ENCRYPTED PASSWORD '$DATABASE_PASSWORD';
+                            GRANT ALL PRIVILEGES ON DATABASE {{ .Values.database.name }} TO {{ .Values.database.appUser }};
+                            EOF
+                            {{ if .Values.database.extensions }}
+                            PGPASSWORD=$DATABASE_PASSWORD psql -h {{ .Values.database.host }} -p {{ .Values.database.port }} -U {{ .Values.database.appUser }} -d {{ .Values.database.name }} <<EOF
+                            {{ if .Values.database.extensions }}
+                            {{ range .Values.database.extensions }}
+                            CREATE EXTENSION IF NOT EXISTS {{ . }} WITH SCHEMA public;
+                            {{ end }}
+                            {{ end }}
+                            EOF
+                            {{ end }}
+                            echo "DB initialization script completed."
+            {{- with .Values.nodeSelector }}
+            nodeSelector:
+                {{- toYaml . | nindent 8 }}
+            {{- end }}
+            {{- with .Values.tolerations }}
+            tolerations:
+                {{- toYaml . | nindent 8 }}
+            {{- end }}
+            {{- with .Values.affinity }}
+            affinity:
+                {{- toYaml . | nindent 8 }}
+            {{- end }}

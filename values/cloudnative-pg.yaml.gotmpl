@@ -1,0 +1,228 @@
+nameOverride: ""
+fullnameOverride: ""
+namespaceOverride: ""
+
+type: postgresql
+
+version:
+  postgresql: "16"
+  timescaledb: "2.15"
+  postgis: "3.4"
+
+mode: standalone
+
+recovery:
+  method: object_store
+
+  pitrTarget:
+    time: ""
+
+  backupName: "{{ .Environment.Values.embeddedDatabase.recovery.backupName }}"  # Name of the backup to recover from. Required if method is `backup`.
+
+  clusterName: "{{ .Environment.Values.embeddedDatabase.recovery.clusterName }}"
+  database: "{{ .Environment.Values.embeddedDatabase.recovery.database }}"
+  owner: ""
+  endpointURL: "{{ .Environment.Values.embeddedDatabase.recovery.endpointURL }}"
+  endpointCA:
+    create: false
+    name: ""
+    key: ""
+    value: ""
+  destinationPath: "{{ .Environment.Values.embeddedDatabase.recovery.destinationPath }}"
+  provider: s3
+  s3:
+    region: "{{ .Environment.Values.embeddedDatabase.recovery.s3.region }}"
+    bucket: "{{ .Environment.Values.embeddedDatabase.recovery.s3.bucket }}"
+    path: "{{ .Environment.Values.embeddedDatabase.recovery.s3.path }}"
+    accessKey: "{{ .Environment.Values.embeddedDatabase.recovery.s3.accessKey }}"
+    secretKey: "{{ .Environment.Values.embeddedDatabase.recovery.s3.secretKey }}"
+    inheritFromIAMRole: false
+  secret:
+    create: true
+    name: ""
+
+  import:
+    type: "microservice"
+    databases: []
+    roles: []
+    postImportApplicationSQL: []
+    schemaOnly: false
+    pgDumpExtraOptions: []
+    pgRestoreExtraOptions: []
+    source:
+      host: ""
+      port: 5432
+      username: ""
+      database: ""
+      sslMode: "verify-full"
+      passwordSecret:
+        create: false
+        name: ""
+        key: "password"
+        value: ""
+      sslKeySecret:
+        name: ""
+        key: ""
+      sslCertSecret:
+        name: ""
+        key: ""
+      sslRootCertSecret:
+        name: ""
+        key: ""
+
+
+cluster:
+  instances: {{ .Environment.Values.embeddedDatabase.cluster.instances }}
+
+  imageName: ""  # Default value depends on type (postgresql/postgis/timescaledb)
+
+  imageCatalogRef: {}
+
+  imagePullPolicy: {{ .Environment.Values.embeddedDatabase.cluster.imagePullPolicy | default "IfNotPresent" }}
+
+  imagePullSecrets: {{ .Environment.Values.embeddedDatabase.cluster.imagePullSecrets | default "[]" }}
+
+  storage:
+    size: {{ .Environment.Values.embeddedDatabase.cluster.storage.size | default "8Gi" }}
+    storageClass: "{{ .Environment.Values.embeddedDatabase.cluster.storage.storageClass | default "" }}"
+
+  walStorage:
+    enabled: {{ .Environment.Values.embeddedDatabase.cluster.walStorage.enabled | default false }}
+    size: {{ .Environment.Values.embeddedDatabase.cluster.walStorage.size | default "1Gi" }}
+    storageClass: "{{ .Environment.Values.embeddedDatabase.cluster.walStorage.storageClass | default "" }}"
+
+  postgresUID: -1
+
+  postgresGID: -1
+
+  services: {}
+
+  {{- if .Environment.Values.embeddedDatabase.cluster.resources }}
+  resources:
+  {{ toYaml .Environment.Values.embeddedDatabase.cluster.resources | indent 2 }}
+  {{- else }}
+  resources: {}
+  {{- end }}
+
+  priorityClassName: ""
+
+  primaryUpdateMethod: {{ .Environment.Values.embeddedDatabase.cluster.primaryUpdateMethod | default "switchover" }}
+
+  primaryUpdateStrategy: {{ .Environment.Values.embeddedDatabase.cluster.primaryUpdateStrategy | default "unsupervised" }}
+
+  logLevel: "{{ .Environment.Values.embeddedDatabase.cluster.logLevel | default "info" }}"
+
+  affinity:
+    topologyKey: topology.kubernetes.io/zone
+
+  env: {{ .Environment.Values.embeddedDatabase.cluster.env | default (list) }}
+
+  envFrom: {{ .Environment.Values.embeddedDatabase.cluster.envFrom | default (list) }}
+
+  certificates: {{ .Environment.Values.embeddedDatabase.cluster.certificates | default "{}" }}
+
+  enableSuperuserAccess: true
+  superuserSecret: ""
+
+  enablePDB: true
+
+  {{- if .Environment.Values.databases }}
+  roles:
+    {{- range .Environment.Values.databases }}
+    - name: "{{ .user }}"
+      ensure: present
+      login: true
+      superuser: false
+    {{- end }}
+  {{- else }}
+  roles: []
+  {{- end }}
+
+  monitoring:
+    enabled: false
+    podMonitor:
+      enabled: true
+      relabelings: []
+      metricRelabelings: []
+    prometheusRule:
+      enabled: true
+      excludeRules: []
+    disableDefaultQueries: false
+    customQueries: []
+    customQueriesSecret: []
+
+  postgresql:
+    parameters: {}
+    synchronous: {}
+    pg_hba:
+      - local     all           all                     trust
+      - hostnossl quantumleap   all       all           md5
+      - hostssl   all           +zalandos 127.0.0.1/32  pam
+      - host      all           all       127.0.0.1/32  md5
+      - hostssl   all           +zalandos ::1/128       pam
+      - host      all           all       ::1/128       md5
+      - hostssl   replication   standby   all           md5
+      - hostnossl all           all       10.0.0.0/8    md5
+      - hostnossl all           all       10.0.0.0/8    pam
+      - hostssl   all           +zalandos all           pam
+      - hostssl   all           all       all           md5
+    pg_ident: []
+    shared_preload_libraries: []
+    ldap: {}
+
+
+  initdb: {}
+
+  serviceAccountTemplate: {}
+
+  additionalLabels: {}
+  annotations: {}
+
+
+backups:
+  enabled: {{ .Environment.Values.embeddedDatabase.backups.enabled | default false }}
+  endpointURL: "{{ .Environment.Values.embeddedDatabase.backups.endpointURL | default "" }}"
+  endpointCA:
+    create: false
+    name: ""
+    key: ""
+    value: ""
+
+  destinationPath: "{{ .Environment.Values.embeddedDatabase.backups.destinationPath | default "" }}"
+  provider: s3
+  s3:
+    region: "{{ .Environment.Values.embeddedDatabase.backups.s3.region | default "" }}"
+    bucket: "{{ .Environment.Values.embeddedDatabase.backups.s3.bucket | default "" }}"
+    path: "{{ .Environment.Values.embeddedDatabase.backups.s3.path | default "" }}"
+    accessKey: "{{ .Environment.Values.embeddedDatabase.backups.s3.accessKey | default "" }}"
+    secretKey: "{{ .Environment.Values.embeddedDatabase.backups.s3.secretKey | default "" }}"
+    inheritFromIAMRole: false
+  secret:
+    create: {{ .Environment.Values.embeddedDatabase.backups.secret.create | default true }}
+    name: "{{ .Environment.Values.embeddedDatabase.backups.secret.name | default "" }}"
+
+  wal:
+    compression: {{ .Environment.Values.embeddedDatabase.backups.wal.compression | default "gzip" }}
+    encryption: {{ .Environment.Values.embeddedDatabase.backups.wal.encryption | default "AES256" }}
+    maxParallel: {{ .Environment.Values.embeddedDatabase.backups.wal.maxParallel | default 1 }}
+  data:
+    compression: {{ .Environment.Values.embeddedDatabase.backups.data.compression | default "gzip" }}
+    encryption: {{ .Environment.Values.embeddedDatabase.backups.data.encryption | default "AES256" }}
+    jobs: {{ .Environment.Values.embeddedDatabase.backups.data.jobs | default 2 }}
+
+  scheduledBackups:
+    {{- range .Environment.Values.embeddedDatabase.backups.scheduledBackups }}
+    -
+      name: {{ .name }}
+      schedule: {{ .schedule }}
+      backupOwnerReference: {{ .backupOwnerReference | default "self" }}
+      method: {{ .method | default "barmanObjectStore" }}
+    {{- end }}
+
+  retentionPolicy: "{{ .Environment.Values.embeddedDatabase.backups.retentionPolicy | default "30d" }}"
+
+imageCatalog:
+  create: true
+  images: []
+
+poolers: []
