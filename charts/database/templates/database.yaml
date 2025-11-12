@@ -1,0 +1,70 @@
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+    name: {{ .Values.name | default .Values.database.name }}
+    labels:
+        {{- include "database.labels" . | nindent 6 }}
+    {{- if .Values.annotations }}
+    annotations:
+        {{- toYaml .Values.annotations | nindent 4 }}
+    {{- end }}
+spec:
+    {{- if .Values.database.allowConnections }}
+    allowConnections: {{ .Values.database.allowConnections }}
+    {{- end }}
+    {{- if .Values.database.builtinLocale }}
+    builtinLocale: {{ .Values.database.builtinLocale }}
+    {{- end }}
+    cluster:
+        name: {{ .Values.database.cluster.name }}
+    {{- if .Values.database.collationVersion }}
+    collationVersion: {{ .Values.database.collationVersion }}
+    {{- end }}
+    {{- if .Values.database.connectionLimit }}
+    connectionLimit: {{ .Values.database.connectionLimit }}
+    {{- end }}
+    {{- if .Values.database.databaseReclaimPolicy }}
+    databaseReclaimPolicy: {{ .Values.database.databaseReclaimPolicy }}
+    {{- end }}
+    {{- if .Values.database.encoding }}
+    encoding: {{ .Values.database.encoding }}
+    {{- end }}
+    ensure: {{ .Values.database.ensure }}
+    {{- if .Values.database.extensions }}
+    extensions:
+    {{- toYaml .Values.database.extensions | nindent 4 }}
+    {{- end }}
+    {{- if .Values.database.icuLocale }}
+    icuLocale: {{ .Values.database.icuLocale }}
+    {{- end }}
+    {{- if .Values.database.icuRules }}
+    icuRules: {{ .Values.database.icuRules }}
+    {{- end }}
+    {{- if .Values.database.isTemplate }}
+    isTemplate: {{ .Values.database.isTemplate }}
+    {{- end }}
+    {{- if .Values.database.locale }}
+    locale: {{ .Values.database.locale }}
+    {{- end }}
+    {{- if .Values.database.localeCType }}
+    localeCType: {{ .Values.database.localeCType }}
+    {{- end }}
+    {{- if .Values.database.localeCollate }}
+    localeCollate: {{ .Values.database.localeCollate }}
+    {{- end }}
+        {{- if .Values.database.localeProvider }}
+    localeProvider: {{ .Values.database.localeProvider }}
+    {{- end }}
+    name: {{ .Values.database.name }}
+    owner: {{ .Values.database.owner }}
+    {{- if .Values.database.schema }}
+    schema:
+        {{- toYaml .Values.database.schema | nindent 8 }}
+    {{- end }}
+    {{- if .Values.database.tablespace }}
+    tablespace: {{ .Values.database.tablespace }}
+    {{- end }}
+    {{- if .Values.database.template }}
+    template: {{ .Values.database.template }}
+    {{- end }}

@@ -1,0 +1,23 @@
+---
+repositories: []
+---
+environments:
+  default:
+    values:
+      - ../environments/default/*.yaml
+  dev:
+    values:
+      - ../environments/dev/values.yaml
+---
+helmDefaults:
+  wait: true
+  waitForJobs: true
+---
+releases:
+  - name: keycloak-db
+    namespace: "{{- if .Environment.Values.embeddedDatabase.clusterWide -}}{{ .Environment.Values.keycloak.namespace }}{{- else -}}{{ .Environment.Values.embeddedDatabase.namespace }}{{- end -}}"
+    chart: ../charts/database
+    createNamespace: true
+    condition: keycloak.database.embedded.enabled
+    values:
+      - ../values/keycloak-db.yaml.gotmpl

@@ -1,0 +1,115 @@
+annotations: []
+
+labels: []
+
+# Name of the database resource. If not set, defaults to the same as
+# the PostgreSQL database
+name: 
+
+database:
+  # Maps to the `ALLOW_CONNECTIONS` parameter of `CREATE DATABASE` and
+  # `ALTER DATABASE`. If false then no one can connect to this database. (boolean)
+  allowConnections:
+  # Maps to the `BUILTIN_LOCALE` parameter of `CREATE DATABASE`. This
+  # setting cannot be changed. Specifies the locale name when the
+  # builtin provider is used. This option requires `localeProvider` to
+  # be set to `builtin`. Available from PostgreSQL 17.
+  builtinLocale:
+  # The name of the PostgreSQL cluster hosting the database.
+  cluster:
+    # Name of the referent.
+    # This field is effectively required, but due to backwards compatibility is
+    # allowed to be empty. Instances of this type with an empty value here are
+    # almost certainly wrong.
+    # More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+    name: "cluster"
+  # Maps to the `COLLATION_VERSION` parameter of `CREATE DATABASE`. This
+  # setting cannot be changed.
+  collationVersion:
+  # Maps to the `CONNECTION LIMIT` clause of `CREATE DATABASE` and
+  # `ALTER DATABASE`. How many concurrent connections can be made to
+  # this database. -1 (the default) means no limit.
+  connectionLimit:
+  # The policy for end-of-life maintenance of this database. (delete, retain)
+  databaseReclaimPolicy:
+  # Maps to the `ENCODING` parameter of `CREATE DATABASE`. This setting
+  # cannot be changed. Character set encoding to use in the database.
+  encoding:
+  # Ensure the PostgreSQL database is `present` or `absent` - defaults to "present".
+  ensure: present
+  # The list of extensions to be managed in the database
+  extensions: []
+    #   # Specifies whether an extension/schema should be present or absent in
+    #   # the database. If set to `present`, the extension/schema will be
+    #   # created if it does not exist. If set to `absent`, the
+    #   # extension/schema will be removed if it exists. ( present, absent)
+    # - ensure: present
+    #   # Name of the extension/schema
+    #   name: "postgis"
+    #   # The name of the schema in which to install the extension's objects,
+    #   # in case the extension allows its contents to be relocated. If not
+    #   # specified (default), and the extension's control file does not
+    #   # specify a schema either, the current default object creation schema
+    #   # is used.
+    #   schema: "public"
+    #   # The version of the extension to install. If empty, the operator will
+    #   # install the default version (whatever is specified in the
+    #   # extension's control file)
+    #   version: ""
+  # Maps to the `ICU_LOCALE` parameter of `CREATE DATABASE`. This
+  # setting cannot be changed. Specifies the ICU locale when the ICU
+  # provider is used. This option requires `localeProvider` to be set to
+  # `icu`. Available from PostgreSQL 15.
+  icuLocale:
+  # Maps to the `ICU_RULES` parameter of `CREATE DATABASE`. This setting
+  # cannot be changed. Specifies additional collation rules to customize
+  # the behavior of the default collation. This option requires
+  # `localeProvider` to be set to `icu`. Available from PostgreSQL 16.
+  icuRules:
+  # Maps to the `IS_TEMPLATE` parameter of `CREATE DATABASE` and `ALTER
+  # DATABASE`. If true, this database is considered a template and can
+  # be cloned by any user with `CREATEDB` privileges. (boolean)
+  isTemplate:
+  # Maps to the `LOCALE` parameter of `CREATE DATABASE`. This setting
+  # cannot be changed. Sets the default collation order and character
+  # classification in the new database.
+  locale:
+  # Maps to the `LC_CTYPE` parameter of `CREATE DATABASE`. This setting
+  # cannot be changed.
+  localeCType:
+  # Maps to the `LC_COLLATE` parameter of `CREATE DATABASE`. This
+  # setting cannot be changed.
+  localeCollate:
+  # Maps to the `LOCALE_PROVIDER` parameter of `CREATE DATABASE`. This
+  # setting cannot be changed. This option sets the locale provider for
+  # databases created in the new cluster. Available from PostgreSQL 16.
+  localeProvider:
+  # The name of the database to create inside PostgreSQL. This setting cannot be changed.
+  name: "database"
+  # Maps to the `OWNER` parameter of `CREATE DATABASE`.
+  # Maps to the `OWNER TO` command of `ALTER DATABASE`.
+  # The role name of the user who owns the database inside PostgreSQL.
+  owner: "user"
+  # The list of schemas to be managed in the database
+  schemas: []
+    #   # Specifies whether an extension/schema should be present or absent in
+    #   # the database. If set to `present`, the extension/schema will be
+    #   # created if it does not exist. If set to `absent`, the
+    #   # schema will be removed if it exists. ( present, absent)
+    # - ensure: present
+    #   # Name of the extension/schema
+    #   name: "postgis_schema"
+    #   # The role name of the user who owns the schema inside PostgreSQL.
+    #   # It maps to the `AUTHORIZATION` parameter of `CREATE SCHEMA` and the
+    #   # `OWNER TO` command of `ALTER SCHEMA`.
+    #   owner: "user"
+  # Maps to the `TABLESPACE` parameter of `CREATE DATABASE`.
+  # Maps to the `SET TABLESPACE` command of `ALTER DATABASE`.
+  # The name of the tablespace (in PostgreSQL) that will be associated
+  # with the new database. This tablespace will be the default
+  # tablespace used for objects created in this database.
+  tablespace:
+  # Maps to the `TEMPLATE` parameter of `CREATE DATABASE`. This setting
+  # cannot be changed. The name of the template from which to create    
+  # the new database.
+  template:

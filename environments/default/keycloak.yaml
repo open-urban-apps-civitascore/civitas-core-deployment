@@ -1,0 +1,9 @@
+---
+keycloak:
+  enabled: true
+  namespace: civitas
+  database:
+    embedded:
+      enabled: true
+    name: keycloak
+    user: "keycloak"
