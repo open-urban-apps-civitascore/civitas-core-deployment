@@ -14,14 +14,14 @@ helmDefaults:
 ---
 releases:
   - name: kafka-operator
-    namespace: {{ .Values.global.namespacePrefix }}-{{ .Values.kafkaOperator.namespace }}
+    namespace: {{ .Values.global.namespacePrefix }}-kafka-operator
     chart: oci://quay.io/strimzi-helm/strimzi-kafka-operator
-    version: {{ .Values.kafkaOperator.versions.operator }}
+    version: "0.48.0"
     createNamespace: true
     values:
       - ../values/kafka-operator.yaml.gotmpl
   - name: kafka
-    namespace: {{ .Values.global.namespacePrefix }}-{{ .Values.kafka.namespace }}
+    namespace: {{ .Values.global.namespacePrefix }}-kafka
     chart: ../charts/kafka
     createNamespace: true
     values:
