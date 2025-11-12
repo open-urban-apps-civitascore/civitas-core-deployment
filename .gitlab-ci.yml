@@ -1,0 +1,25 @@
+---
+stages:
+  - lint
+
+pre-commit:
+  stage: lint
+  image: debian:bookworm-slim
+  before_script:
+    # Install system dependencies
+    - apt-get update && apt-get install -y git bash gcc libffi-dev python3 python3-pip python3-venv wget
+
+    # Install pre-commit
+    - pip3 install --no-cache-dir --break-system-packages pre-commit
+
+    # Install Helm
+    - wget -qO- https://get.helm.sh/helm-v3.19.0-linux-amd64.tar.gz | tar xz
+    - mv linux-amd64/helm /usr/local/bin/
+    - rm -rf linux-amd64
+
+    # Install Helmfile
+    - wget -qO- https://github.com/helmfile/helmfile/releases/download/v1.1.9/helmfile_1.1.9_linux_amd64.tar.gz | tar xz
+    - mv helmfile /usr/local/bin/
+    - chmod +x /usr/local/bin/helmfile
+  script:
+    - pre-commit run --all-files

@@ -1,4 +1,4 @@
 ---
 databases:
-  - name: "keycloak"
-    user: "keycloak"
+  - name: 'keycloak'
+    user: 'keycloak'
