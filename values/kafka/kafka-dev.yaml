@@ -17,3 +17,11 @@ broker:
     limits:
       cpu: "1"
       memory: "1Gi"
+
+kafka:
+  # Listener presets; adjust as needed
+  listeners:
+    - name: internal
+      port: 9092
+      type: internal
+      tls: false

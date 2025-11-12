@@ -1,0 +1,29 @@
+# Development-specific configuration for Kafka UI
+
+# Enable ingress for dev environment
+ingress:
+  enabled: true
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-staging
+  hosts:
+    - host: kafka-ui.dev.local
+      paths:
+        - path: /
+          pathType: Prefix
+  # Optionally enable TLS
+  # tls:
+  #   - secretName: kafka-ui-tls
+  #     hosts:
+  #       - kafka-ui.dev.local
+
+# Lower resource requirements for dev
+resources:
+  requests:
+    cpu: 200m
+    memory: 512Mi
+  limits:
+    cpu: 800m
+    memory: 2Gi
+
+replicaCount: 1
+
