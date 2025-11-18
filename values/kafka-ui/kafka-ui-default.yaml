@@ -11,19 +11,19 @@ image:
   repository: kafbat/kafka-ui
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
-  tag: ""
+  tag: ''
 
 ## @param imagePullSecrets Docker registry secret names as an array
 imagePullSecrets: []
 ## @param nameOverride String to partially override chart name
-nameOverride: ""
+nameOverride: ''
 ## @param fullnameOverride String to fully override app name
-fullnameOverride: ""
+fullnameOverride: ''
 
 ## @section ServiceAccount configuration
 serviceAccount:
   ## @param serviceAccount.name The name of the ServiceAccount to use.
-  name: ""
+  name: ''
   ## @param serviceAccount.create Specifies whether a ServiceAccount should be created
   create: true
   ## @param serviceAccount.annotations Additional Service Account annotations
@@ -33,7 +33,7 @@ serviceAccount:
 
 ## @section Application configuration
 ## @param existingConfigMap [string] Name of the existing ConfigMap with kafbat-ui environment variables
-existingConfigMap: ""
+existingConfigMap: ''
 ## @param yamlApplicationConfig Kafbat-UI config in Yaml format
 yamlApplicationConfig:
   {}
@@ -61,7 +61,7 @@ yamlApplicationConfigSecret:
   # keyName: config.yml
   # name: secretName
 ## @param existingSecret Name of the existing Secret with Kafbat-UI environment variables
-existingSecret: ""
+existingSecret: ''
 ### @section Environment variables from
 envs:
   ## @param envs.secret Set of the sensitive environment variables to pass to Kafbat-UI
@@ -69,12 +69,14 @@ envs:
   ## @param envs.config Set of the environment variables to pass to Kafbat-UI
   config: {}
   ## @param envs.secretMappings The mapping of existing secret to env variable.
-  secretMappings: {}
+  secretMappings:
+    {}
     #ENV_NAME:
     #  name: kubernetes-secret-name
     #  keyName: kubernetes-secret-key
   ## @param envs.configMappings  The mapping of configmap and keyName to get env variable.
-  configMappings: {}
+  configMappings:
+    {}
     #ENV_NAME:
     #  name: kubernetes-configmap-name
     #  keyName: kubernetes-configmap-key
@@ -227,19 +229,18 @@ ingress:
   ## This is supported in Kubernetes 1.18+ and required if you have more than one IngressClass marked as the default for your cluster .
   ## ref: https://kubernetes.io/blog/2020/04/02/improvements-to-the-ingress-api-in-kubernetes-1.18/
   ##
-  ingressClassName: ""
+  ingressClassName: ''
 
   ## @param ingress.path Default path for the ingress record
   ## NOTE: You may need to set this to '/*' in order to use this with ALB ingress controllers
   ##
-  path: "/"
-
+  path: '/'
 
   ## @param ingress.pathType Ingress path type
-  pathType: "Prefix"
+  pathType: 'Prefix'
 
   ## @param ingress.host Default hostname for the ingress record
-  host: ""
+  host: ''
 
   # configs for Ingress TLS
   tls:
@@ -247,7 +248,7 @@ ingress:
     ## @param ingress.tls.enabled Enable TLS configuration for the host defined at `ingress.host` parameter
     enabled: false
     ## @param ingress.tls.secretName [string] The name of a pre-created Secret containing a TLS private key and certificate
-    secretName: ""
+    secretName: ''
 
   ## @param ingress.precedingPaths [array] HTTP paths to add to the Ingress before the default path
   precedingPaths: []

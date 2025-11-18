@@ -1,3 +1,4 @@
+---
 apiVersion: v2
 name: kafka
 description: Helm chart to provision a production-ready Apache Kafka cluster using Strimzi custom resources
@@ -20,4 +21,4 @@ version: 0.1.0
 # This is the version number of the application being deployed. For Strimzi Kafka, this tracks the
 # Kafka broker version requested by the CR. It does not have to strictly follow SemVer.
 # It is recommended to use it with quotes.
-appVersion: "4.1.0"
+appVersion: '4.1.0'

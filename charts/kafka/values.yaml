@@ -1,3 +1,4 @@
+---
 # Values for Strimzi-based Kafka cluster
 
 # Kafka cluster identity
@@ -8,21 +9,21 @@ controller:
   replicas: 1
   resources:
     requests:
-      cpu: "500m"
-      memory: "1Gi"
+      cpu: '500m'
+      memory: '1Gi'
     limits:
-      cpu: "1"
-      memory: "2Gi"
+      cpu: '1'
+      memory: '2Gi'
 
 broker:
   replicas: 1
   resources:
     requests:
-      cpu: "500m"
-      memory: "2Gi"
+      cpu: '500m'
+      memory: '2Gi'
     limits:
-      cpu: "2"
-      memory: "4Gi"
+      cpu: '2'
+      memory: '4Gi'
 
 kafka:
   # Listener presets; adjust as needed
@@ -39,7 +40,7 @@ kafka:
         bootstrap:
           nodePort: null
         brokers: []
-  config: {}  # we gradually add more default configs here
+  config: {} # we gradually add more default configs here
 
 # Optional topics to create
 # topics:

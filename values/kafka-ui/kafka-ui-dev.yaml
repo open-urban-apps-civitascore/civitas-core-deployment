@@ -26,4 +26,3 @@ resources:
     memory: 2Gi
 
 replicaCount: 1
-

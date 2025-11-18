@@ -1,22 +1,23 @@
+---
 controller:
   replicas: 1
   resources:
     requests:
-      cpu: "200m"
-      memory: "512Mi"
+      cpu: '200m'
+      memory: '512Mi'
     limits:
-      cpu: "1"
-      memory: "1Gi"
+      cpu: '1'
+      memory: '1Gi'
 
 broker:
   replicas: 1
   resources:
     requests:
-      cpu: "200m"
-      memory: "512Mi"
+      cpu: '200m'
+      memory: '512Mi'
     limits:
-      cpu: "1"
-      memory: "1Gi"
+      cpu: '1'
+      memory: '1Gi'
 
 kafka:
   # Listener presets; adjust as needed

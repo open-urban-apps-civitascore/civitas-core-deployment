@@ -40,4 +40,3 @@ Customization
 Notes
 - Ensure replication factors do not exceed the number of brokers.
 - When enabling external exposure in production, prefer type: loadbalancer or ingress (OpenShift route), and secure via TLS.
-
