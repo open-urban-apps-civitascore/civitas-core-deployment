@@ -2,7 +2,7 @@ annotations: []
 
 labels: []
 
-name: {{ default "keycloak" .Environment.Values.keycloak.database.name }}
+name: {{ default "keycloak" .Environment.Values.databases.keycloak.name }}
 
 database:
   allowConnections: true
@@ -22,12 +22,12 @@ database:
   localeCType:
   localeCollate:
   localeProvider:
-  name: "{{ default "keycloak" .Environment.Values.keycloak.database.name }}"
-  owner: "{{ default "keycloak" .Environment.Values.keycloak.database.user }}"
+  name: {{ default "keycloak" .Environment.Values.databases.keycloak.name }}
+  owner: {{ default "keycloak" .Environment.Values.databases.keycloak.user }}
   schemas: []
   tablespace:
   template:
   createSecret:
-    enabled: true
-    name: "{{ default "keycloak" .Environment.Values.keycloak.database.secret.name }}"
-    username: "{{ default "keycloak" .Environment.Values.keycloak.database.user }}"
+    enabled: false
+    name: {{ .Environment.Values.databases.keycloak.secret.name }}
+    username: {{ default "keycloak" .Environment.Values.databases.keycloak.user }}

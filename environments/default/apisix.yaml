@@ -12,7 +12,6 @@ apisix:
       domain: apisix.main.civitas2.fw-web.space
       path: /
       credentials:
-        # TODO: fix secret management
         secretName: apisix-admin-credentials
         secretAdminKey: admin
         secretViewerKey: viewer

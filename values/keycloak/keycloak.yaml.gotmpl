@@ -17,6 +17,8 @@ extraEnv: |
     value: dump_requests=true,port_range=0,namespace={{ .Environment.Values.global.namespace | default "civitas" }}
   - name: KC_BOOTSTRAP_ADMIN_USERNAME
     value: {{ .Environment.Values.keycloak.admin.user | default "admin" }}
+  - name: KC_PROXY_HEADERS
+    value: "xforwarded" 
   - name: KC_BOOTSTRAP_ADMIN_PASSWORD
     valueFrom:
       secretKeyRef:
@@ -85,12 +87,12 @@ dbchecker:
       memory: {{ default "32Mi" .Environment.Values.keycloak.database.checker.resources.limits.memory }}
 database:
   vendor: postgres
-  hostname: {{ .Environment.Values.keycloak.database.host}}
-  port: {{ default 5432 .Environment.Values.keycloak.database.port }}
-  database: {{ default "keycloak" .Environment.Values.keycloak.database.name }}
-  username: {{ default "keycloak" .Environment.Values.keycloak.database.user }}
-  existingSecret: {{ .Environment.Values.keycloak.database.secret.name }}
-  existingSecretKey: {{ .Environment.Values.keycloak.database.secret.key }}
+  hostname: {{ .Environment.Values.databases.keycloak.host }}
+  port: {{ default 5432 .Environment.Values.databases.keycloak.port }}
+  database: {{ default "keycloak" .Environment.Values.databases.keycloak.name }}
+  username: {{ default "keycloak" .Environment.Values.databases.keycloak.user }}
+  existingSecret: {{ .Environment.Values.databases.keycloak.secret.name }}
+  existingSecretKey: {{ .Environment.Values.databases.keycloak.secret.key }}
 proxy:
   enabled: true
   mode: forwarded

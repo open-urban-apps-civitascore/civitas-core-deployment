@@ -1,7 +1,0 @@
-The postgres-init-job has been installed.
-
-To check the job status, run:
-  kubectl get job {{ include "postgres-init-job.fullname" . }} -n {{ .Release.Namespace }}
-
-To view the job logs, run:
-  kubectl logs -l job-name={{ include "postgres-init-job.fullname" . }} -n {{ .Release.Namespace }}

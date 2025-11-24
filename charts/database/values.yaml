@@ -122,6 +122,6 @@ database:
     # Whether to create the secret.
     enabled: true
     # Name of the secret to create.
-    name: "secret-name"
+    name: 'secret-name'
     # Username to store in the secret.
-    username: "username"
+    username: 'username'
