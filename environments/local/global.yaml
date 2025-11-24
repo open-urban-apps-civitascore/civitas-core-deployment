@@ -1,6 +1,6 @@
 ---
 global:
   namespaced: true
-  namespace: main-civitas-core-v2
+  namespace: civitas
   metrics:
     enabled: false

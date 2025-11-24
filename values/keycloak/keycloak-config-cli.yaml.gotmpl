@@ -20,6 +20,33 @@ env:
 
 existingSecret: "{{ default "keycloak-admin-user" .Environment.Values.keycloak.admin.secret.name }}"
 existingSecretKey: "{{ default "admin-password" .Environment.Values.keycloak.admin.secret.key }}"
+
+extraEnv:
+  - name: SMTP_HOST
+    valueFrom:
+      secretKeyRef:
+        name: keycloak-smtp
+        key: host
+  - name: SMTP_PORT
+    valueFrom:
+      secretKeyRef:
+        name: keycloak-smtp
+        key: port
+  - name: SMTP_FROM
+    valueFrom:
+      secretKeyRef:
+        name: keycloak-smtp
+        key: from
+  - name: SMTP_USER
+    valueFrom:
+      secretKeyRef:
+        name: keycloak-smtp
+        key: user
+  - name: SMTP_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        name: keycloak-smtp
+        key: password
 config:
   {{ .Environment.Values.keycloak.config.realm.name }}:
     inline:
@@ -110,15 +137,15 @@ config:
         xXSSProtection: 1; mode=block
         strictTransportSecurity: max-age=31536000; includeSubDomains
       smtpServer:
-        # TODO: find a solution for secret management
-        password: "{{ .Environment.Values.keycloak.config.realm.smtp.password }}"
-        starttls: {{ default true .Environment.Values.keycloak.config.realm.smtp.starttls }}
-        auth: {{- if .Environment.Values.keycloak.config.realm.smtp.password }}true{{ else }}false{{ end -}}
-        host: "{{ .Environment.Values.keycloak.config.realm.smtp.host }}"
-        port: "{{ default "587" .Environment.Values.keycloak.config.realm.smtp.port }}"
-        from: "{{ .Environment.Values.keycloak.config.realm.smtp.from }}"
+        # TODO: This is a temporary solution. Find a better way to manage secrets in templates.
+        password: "${env:SMTP_PASSWORD}"
+        host: "${env:SMTP_HOST}"
+        port: "${env:SMTP_PORT}"
+        from: "${env:SMTP_FROM}"
+        user: "${env:SMTP_USER}"
+        starttls: true
+        auth: true
         ssl: ""
-        user: "{{ .Environment.Values.keycloak.config.realm.smtp.user }}"
       loginTheme: "{{ .Environment.Values.keycloak.config.realm.theme }}"
       accountTheme: "{{ .Environment.Values.keycloak.config.realm.theme }}"
       adminTheme: "{{ .Environment.Values.keycloak.config.realm.theme }}"
