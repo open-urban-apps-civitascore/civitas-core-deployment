@@ -49,7 +49,7 @@ keycloak:
   ingress:
     annotations: {}
     labels: {}
-    domain: keycloak.192.168.49.2.nip.io
+    domain: keycloak.civitas.test
     relativePath: '/auth'
     # TODO: fix TLS
     tls:
