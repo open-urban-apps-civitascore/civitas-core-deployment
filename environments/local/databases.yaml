@@ -1,5 +1,5 @@
 ---
 databases:
-  - name: "keycloak"
-    user: "keycloak"
-    secretName: "db-keycloak"
+  - name: 'keycloak'
+    user: 'keycloak'
+    secretName: 'db-keycloak'
