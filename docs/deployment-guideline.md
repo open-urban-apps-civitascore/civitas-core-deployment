@@ -38,6 +38,7 @@ Mono-Namespace Deployment:
 # Secrets
 
 Before deploying Civitas Core V2, you need to set up the following secrets:
+(See "Managing Secrets" section below for instructions on creating and managing secrets.)
 
 ## Required Secrets
 
@@ -50,7 +51,23 @@ Before deploying Civitas Core V2, you need to set up the following secrets:
     - `user`: SMTP username
     - `password`: SMTP password
 
-## Managing Secrets
+# Deployment
+
+## Environments
+
+Last step before deploying is to configure your environment.
+
+Update files inside environments/default or even create your own environment based on the default one.
+
+## Deploying Civitas Core V2
+
+To deploy Civitas Core V2, use the following command:
+
+```bash
+helmfile -f ./helmfile.d/ sync -e default
+```
+
+# Managing Secrets
 
 ### Create a Secret
 
