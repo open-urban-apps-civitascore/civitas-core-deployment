@@ -11,15 +11,14 @@ keycloak:
     createSecret: true
     forceRecreateSecret: false
   database:
-    embedded:
-      enabled: true
-    name: db-keycloak
-    user: 'keycloak'
-    secret:
-      name: db-keycloak
-      key: password
-    host: db-cluster-rw.main-civitas2.svc.cluster.local
-    port: 5432
+    #   enabled: true
+    # name: db-keycloak
+    # user: "keycloak"
+    # secret:
+    #   name: db-keycloak
+    #   key: password
+    # host: db-cluster-rw.civitas.svc.cluster.local
+    # port: 5432
     checker:
       enabled: true
       image:
