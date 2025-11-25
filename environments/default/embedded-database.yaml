@@ -3,7 +3,7 @@ embeddedDatabase:
   enabled: true
   crdVersion: '0.26.0'
   clusterVersion: '0.3.1'
-  namespace: main-civitas-core-v2
+  namespace: main-civitas2
   clusterWide: false
   recovery:
     backupName: civitas-database-backups
@@ -48,7 +48,7 @@ embeddedDatabase:
     certificates: {}
   backups:
     enabled: false
-    endpointURL: https://minio.main-civitas-core-v2.svc.cluster.local:9000
+    endpointURL: https://minio.main-civitas2.svc.cluster.local:9000
     destinationPath: s3://civitas-database-backups/civitas
     s3:
       region: us-east-1

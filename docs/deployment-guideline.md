@@ -127,3 +127,20 @@ To delete a secret (e.g., to recreate it):
 ```bash
 kubectl delete secret <SECRET_NAME> -n <NAMESPACE>
 ```
+
+# Undeployment
+
+## Mono-Namespace Undeployment
+
+To undeploy Civitas Core V2 from a mono-namespace setup, use the following commands:
+
+```bash
+# Remove ressources
+helmfile --environment <ENVIRONMENT> apply
+
+# Delete namespace and CRDs (if applicable)
+kubectl delete namespace <NAMESPACE>
+
+# Remove CRDs manually:
+kubectl delete crd $(kubectl get crd | grep cnpg.io | awk '{print $1}')
+```

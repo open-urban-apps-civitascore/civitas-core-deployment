@@ -7,5 +7,5 @@ databases:
     secret:
       name: 'db-keycloak'
       key: 'password'
-    host: 'db-cluster-rw.main-civitas-core-v2.svc.cluster.local'
+    host: 'db-cluster-rw.main-civitas2.svc.cluster.local'
     port: 5432

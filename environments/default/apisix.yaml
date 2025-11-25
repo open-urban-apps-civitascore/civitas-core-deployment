@@ -1,6 +1,6 @@
 ---
 apisix:
-  namespace: main-civitas-core-v2
+  namespace: main-civitas2
   enabled: true
   chartVersion: '2.12.0'
   image:
