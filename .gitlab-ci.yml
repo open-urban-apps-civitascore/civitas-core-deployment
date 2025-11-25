@@ -61,6 +61,6 @@ deploy:
     - kubectl get nodes
   script:
     - helmfile -f ./helmfile.d/ sync -e default
-  # only:
-  #   - main
+  only:
+    - main
   when: manual
