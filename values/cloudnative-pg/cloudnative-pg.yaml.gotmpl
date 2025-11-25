@@ -128,11 +128,15 @@ cluster:
 
   {{- if .Environment.Values.databases }}
   roles:
-    {{- range .Environment.Values.databases }}
-    - name: "{{ .user }}"
+    {{- range $key, $db := .Environment.Values.databases }}
+    {{- if eq $db.embedded true }}
+    - name: "{{ $db.user }}"
       ensure: present
       login: true
       superuser: false
+      passwordSecret:
+        name: "{{ $db.secret.name }}"
+    {{- end }}
     {{- end }}
   {{- else }}
   roles: []
@@ -154,6 +158,7 @@ cluster:
   postgresql:
     parameters: {}
     synchronous: {}
+    # TODO: Fix pg_hba according to real needs
     pg_hba:
       - local     all           all                     trust
       - hostnossl quantumleap   all       all           md5

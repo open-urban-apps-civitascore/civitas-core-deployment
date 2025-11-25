@@ -1,4 +1,11 @@
 ---
 databases:
-  - name: 'keycloak'
+  keycloak:
+    name: 'keycloak'
+    embedded: true
     user: 'keycloak'
+    secret:
+      name: 'db-keycloak'
+      key: 'password'
+    host: 'db-cluster-rw.civitas.svc.cluster.local'
+    port: 5432
