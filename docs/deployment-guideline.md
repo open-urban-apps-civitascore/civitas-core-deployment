@@ -1,10 +1,20 @@
 # Deployment Guideline
 
-This docuemtation guides you throw the deployment process of Civitas Core V2.
+This documentation guides you through the deployment process of Civitas Core V2.
+
+# Cluster Prerequisites
+
+Ensure the following are installed and configured:
+
+- **NGINX Ingress Controller** - `kubectl get ingressclass nginx`
+- **cert-manager** with at least one ClusterIssuer (e.g., `letsencrypt-prod`) - `kubectl get clusterissuer`
+- **Storage Class** with RWO support for PostgreSQL
+- **DNS records** pointing to ingress endpoint for all configured domains
+- **Metrics Server** (optional, required only if autoscaling enabled)
 
 # Preparation
 
-First of all, there a few considerations to make before starting the deployment process.
+First of all, there are a few considerations to make before starting the deployment process.
 
 ### Mono vs. Multi-Namespace Deployment
 
