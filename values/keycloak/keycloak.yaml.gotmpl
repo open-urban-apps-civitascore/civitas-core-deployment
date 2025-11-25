@@ -57,11 +57,10 @@ ingress:
       paths:
         - path: {{ default "/" .Environment.Values.keycloak.ingress.relativePath | trimSuffix "/" }}/
           pathType: Prefix
-# TODO: fix TLS
-  tls: []
-#    - hosts:
-#        - {{ .Environment.Values.keycloak.ingress.domain }}
-#      secretName: {{ .Environment.Values.keycloak.ingress.tls.secretName }}
+  tls:
+    - hosts:
+        - {{ .Environment.Values.keycloak.ingress.domain }}
+      secretName: {{ .Environment.Values.keycloak.ingress.tls.secretName }}
   console:
     enabled: true
     rules:

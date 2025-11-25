@@ -48,11 +48,11 @@ keycloak:
     annotations: {}
     labels: {}
   ingress:
-    annotations: {}
+    annotations:
+      cert-manager.io/cluster-issuer: 'letsencrypt-prod'
     labels: {}
     domain: keycloak.main.civitas2.fw-web.space
     relativePath: '/auth'
-    # TODO: fix TLS
     tls:
       secretName: keycloak-tls
   autoscaling:
