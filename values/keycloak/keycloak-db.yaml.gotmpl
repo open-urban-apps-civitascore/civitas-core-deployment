@@ -1,0 +1,33 @@
+annotations: []
+
+labels: []
+
+name: {{ default "keycloak" .Environment.Values.databases.keycloak.name }}
+
+database:
+  allowConnections: true
+  builtinLocale:
+  cluster:
+    name: "{{ .Environment.Values.embeddedDatabase.cluster.name }}"
+  collationVersion:
+  connectionLimit:
+  databaseReclaimPolicy:
+  encoding:
+  ensure: present
+  extensions: []
+  icuLocale:
+  icuRules:
+  isTemplate:
+  locale:
+  localeCType:
+  localeCollate:
+  localeProvider:
+  name: {{ default "keycloak" .Environment.Values.databases.keycloak.name }}
+  owner: {{ default "keycloak" .Environment.Values.databases.keycloak.user }}
+  schemas: []
+  tablespace:
+  template:
+  createSecret:
+    enabled: false
+    name: {{ .Environment.Values.databases.keycloak.secret.name }}
+    username: {{ default "keycloak" .Environment.Values.databases.keycloak.user }}
