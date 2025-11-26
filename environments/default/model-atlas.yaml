@@ -1,7 +1,7 @@
 ---
 modelAtlas:
   enabled: true
-  namespace: civitas
+  namespace: main-civitas2
   chartVersion: '0.1.0'
   image:
     repository: eclipsefennec/model.atlas
