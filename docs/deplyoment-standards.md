@@ -23,9 +23,9 @@ Staging environment domains:
 Development environment domains:
 `*.dev1.civitas2.fw-web.space`: Used by Andreas Linneweber (linneweber@kernblick.de) for development and testing
 `*.dev2.civitas2.fw-web.space`: Used by Florian Graßmann (fg@codestryke.com) for development and testing
-`*.dev3.civitas2.fw-web.space`: Not yet in use
-`*.dev4.civitas2.fw-web.space`: Not yet in use
-`*.dev5.civitas2.fw-web.space`: Not yet in use
+`*.dev3.civitas2.fw-web.space`: Used by Patrick Kopp (pk@codestryke.com) for development and testing
+`*.dev4.civitas2.fw-web.space`: Used by Julian Sobott (julian.sobott@frachtwerk.de) for development and testing
+`*.dev5.civitas2.fw-web.space`: Used by Tobias Dillig (tobias.dillig@frachtwerk.de) for development and testing
 
 For local development, simply use minikube.
 
@@ -40,7 +40,7 @@ kubectl port-forward -n ingress-nginx service/ingress-nginx-controller 443:443
 # Now you can access service on https://<service name>.127.0.0.1.nip.io
 
 # Login to keycloak on https://keycloak.127.0.0.1.nip.io/auth to create user accounts on real civitas(user: admin, password: ...)
-kubectl get secret keycloak-admin-user -n local-civitas2 -o jsonpath='{.data.admin-password}' | base64 --decode
+sudo kubectl get secret keycloak-admin-user -n local-civitas2 -o jsonpath='{.data.admin-password}' | base64 --decode
 ```
 
 ## Repository Structure
