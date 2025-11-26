@@ -9,3 +9,12 @@ databases:
       key: 'password'
     host: 'db-cluster-rw.local-civitas2.svc.cluster.local'
     port: 5432
+  portal:
+    name: 'portal'
+    embedded: true
+    user: 'portal'
+    secret:
+      name: 'portal-db-credentials'
+      key: 'password'
+    host: 'db-cluster-rw.local-civitas2.svc.cluster.local'
+    port: 5432

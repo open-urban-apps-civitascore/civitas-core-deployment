@@ -1,0 +1,33 @@
+annotations: []
+
+labels: []
+
+name: {{ default "portal" .Environment.Values.databases.portal.name }}
+
+database:
+  allowConnections: true
+  builtinLocale:
+  cluster:
+    name: "{{ .Environment.Values.embeddedDatabase.cluster.name }}"
+  collationVersion:
+  connectionLimit:
+  databaseReclaimPolicy:
+  encoding:
+  ensure: present
+  extensions: []
+  icuLocale:
+  icuRules:
+  isTemplate:
+  locale:
+  localeCType:
+  localeCollate:
+  localeProvider:
+  name: {{ default "portal" .Environment.Values.databases.portal.name }}
+  owner: {{ default "portal" .Environment.Values.databases.portal.user }}
+  schemas: []
+  tablespace:
+  template:
+  createSecret:
+    enabled: true
+    name: {{ .Environment.Values.databases.portal.secret.name }}
+    username: {{ default "portal" .Environment.Values.databases.portal.user }}

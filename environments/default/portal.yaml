@@ -1,0 +1,50 @@
+---
+portal:
+  enabled: true
+  chartVersion: 0.1.0
+  namespace: main-civitas2
+
+  keycloakAuthServerUrl: http://keycloak.main.civitas2.fw-web.space/auth
+  keycloakRealm: civitas-core
+  ingressDomain: portal.main.civitas2.fw-web.space
+
+  logLevel: INFO
+
+  backend:
+    replicaCount: 2
+    image:
+      repository: registry.gitlab.com/civitas-connect/civitas-core/civitas-core-v2/civitas-core-platform/backend-portal
+      tag: 0e8d328
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: 1000m
+        memory: 1Gi
+
+  frontend:
+    replicaCount: 2
+    image:
+      repository: registry.gitlab.com/civitas-connect/civitas-core/civitas-core-v2/civitas-core-platform/frontend-portal
+      tag: cf977fd
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+
+  # Optional: Autoscaling (if needed)
+  # autoscaling:
+  #   backend:
+  #     enabled: true
+  #     minReplicas: 2
+  #     maxReplicas: 5
+  #     targetCPUUtilizationPercentage: 80
+  #   frontend:
+  #     enabled: true
+  #     minReplicas: 2
+  #     maxReplicas: 5
+  #     targetCPUUtilizationPercentage: 80

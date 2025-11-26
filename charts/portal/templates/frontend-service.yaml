@@ -1,0 +1,18 @@
+{{- if .Values.frontend.enabled }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "portal.frontend.serviceName" . }}
+  labels:
+    {{- include "portal.frontend.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  ports:
+    - port: 3000
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "portal.frontend.selectorLabels" . | nindent 4 }}
+{{- end }}

@@ -1,0 +1,62 @@
+---
+# Database configuration (from environment)
+database:
+  host: {{ .Environment.Values.databases.portal.host }}
+  port: {{ .Environment.Values.databases.portal.port }}
+  name: {{ .Environment.Values.databases.portal.name }}
+  owner: {{ .Environment.Values.databases.portal.user }}
+  secret:
+    name: {{ .Environment.Values.databases.portal.secret.name }}
+    passwordKey: {{ .Environment.Values.databases.portal.secret.key }}
+
+# Backend configuration
+backend:
+  replicaCount: {{ .Environment.Values.portal.backend.replicaCount }}
+  image:
+    repository: {{ .Environment.Values.portal.backend.image.repository }}
+    tag: {{ .Environment.Values.portal.backend.image.tag }}
+  resources:
+    {{- toYaml .Environment.Values.portal.backend.resources | nindent 4 }}
+  env:
+    loggingLevelRoot: {{ default "INFO" .Environment.Values.portal.logLevel }}
+
+# Frontend configuration
+frontend:
+  replicaCount: {{ .Environment.Values.portal.frontend.replicaCount }}
+  image:
+    repository: {{ .Environment.Values.portal.frontend.image.repository }}
+    tag: {{ .Environment.Values.portal.frontend.image.tag }}
+  resources:
+    {{- toYaml .Environment.Values.portal.frontend.resources | nindent 4 }}
+
+# Keycloak configuration (environment-specific URLs)
+keycloak:
+  authServerUrl: {{ .Environment.Values.portal.keycloakAuthServerUrl }}
+  realm: {{ .Environment.Values.portal.keycloakRealm }}
+
+# NextAuth configuration (derived from ingress domain, ingress terminates TLS)
+nextAuth:
+  url: https://{{ .Environment.Values.portal.ingressDomain }}
+
+# Ingress configuration
+ingress:
+  domain: {{ .Environment.Values.portal.ingressDomain }}
+
+# Autoscaling (optional, only if defined in environment)
+{{- if hasKey .Environment.Values.portal "autoscaling" }}
+{{- if .Environment.Values.portal.autoscaling }}
+autoscaling:
+  {{- if hasKey .Environment.Values.portal.autoscaling "backend" }}
+  {{- if .Environment.Values.portal.autoscaling.backend }}
+  backend:
+    {{- toYaml .Environment.Values.portal.autoscaling.backend | nindent 4 }}
+  {{- end }}
+  {{- end }}
+  {{- if hasKey .Environment.Values.portal.autoscaling "frontend" }}
+  {{- if .Environment.Values.portal.autoscaling.frontend }}
+  frontend:
+    {{- toYaml .Environment.Values.portal.autoscaling.frontend | nindent 4 }}
+  {{- end }}
+  {{- end }}
+{{- end }}
+{{- end }}
