@@ -1,6 +1,4 @@
-# Production-specific configuration for Kafka UI
-
-# Ingress disabled in production (keep it internal)
+---
 ingress:
   enabled: false
 
