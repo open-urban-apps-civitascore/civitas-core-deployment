@@ -32,7 +32,15 @@ For local development, simply use minikube.
 ```bash
 minikube start
 minikube addons enable ingress
-helmfile -f ./helmfile.d/ sync -e default
+
+helmfile -f ./helmfile.d/ sync -e local
+
+kubectl port-forward -n ingress-nginx service/ingress-nginx-controller 443:443
+
+# Now you can access service on https://<service name>.127.0.0.1.nip.io
+
+# Login to keycloak on https://keycloak.127.0.0.1.nip.io/auth to create user accounts on real civitas(user: admin, password: ...)
+kubectl get secret keycloak-admin-user -n local-civitas2 -o jsonpath='{.data.admin-password}' | base64 --decode
 ```
 
 ## Repository Structure

@@ -2,7 +2,7 @@
 keycloak:
   enabled: true
   chartVersion: '7.1.4'
-  namespace: civitas
+  namespace: local-civitas2
   admin:
     user: admin
     secret:
@@ -18,7 +18,7 @@ keycloak:
     secret:
       name: db-keycloak
       key: password
-    host: db-cluster-rw.civitas.svc.cluster.local
+    host: db-cluster-rw.local-civitas2.svc.cluster.local
     port: 5432
     checker:
       enabled: true
@@ -50,7 +50,7 @@ keycloak:
   ingress:
     annotations: {}
     labels: {}
-    domain: keycloak.192.168.49.2.nip.io
+    domain: keycloak.127.0.0.1.nip.io
     relativePath: '/auth'
     # TODO: fix TLS
     tls:
