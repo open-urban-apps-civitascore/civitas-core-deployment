@@ -156,20 +156,22 @@ cluster:
     customQueriesSecret: []
 
   postgresql:
-    parameters: {}
+    parameters:
+      # Improve connection handling for connection pooling
+      tcp_keepalives_idle: "30"
+      tcp_keepalives_interval: "10"
+      tcp_keepalives_count: "3"
+      # Optimize for connection pool scenarios
+      idle_in_transaction_session_timeout: "300000"  # 5 minutes
+      statement_timeout: "300000"  # 5 minutes
     synchronous: {}
     # TODO: Fix pg_hba according to real needs
     pg_hba:
       - local     all           all                     trust
-      - hostnossl quantumleap   all       all           md5
-      - hostssl   all           +zalandos 127.0.0.1/32  pam
       - host      all           all       127.0.0.1/32  md5
-      - hostssl   all           +zalandos ::1/128       pam
       - host      all           all       ::1/128       md5
       - hostssl   replication   standby   all           md5
       - hostnossl all           all       10.0.0.0/8    md5
-      - hostnossl all           all       10.0.0.0/8    pam
-      - hostssl   all           +zalandos all           pam
       - hostssl   all           all       all           md5
     pg_ident: []
     shared_preload_libraries: []
