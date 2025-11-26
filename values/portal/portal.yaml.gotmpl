@@ -40,6 +40,19 @@ nextAuth:
 
 # Ingress configuration
 ingress:
+  {{- if hasKey .Environment.Values.portal "ingress" }}
+  enabled: {{ default true .Environment.Values.portal.ingress.enabled }}
+  {{- if hasKey .Environment.Values.portal.ingress "annotations" }}
+  annotations:
+    {{- toYaml .Environment.Values.portal.ingress.annotations | nindent 4 }}
+  {{- end }}
+  {{- if hasKey .Environment.Values.portal.ingress "tls" }}
+  tls:
+    {{- toYaml .Environment.Values.portal.ingress.tls | nindent 4 }}
+  {{- end }}
+  {{- else }}
+  enabled: true
+  {{- end }}
   domain: {{ .Environment.Values.portal.ingressDomain }}
 
 # Autoscaling (optional, only if defined in environment)

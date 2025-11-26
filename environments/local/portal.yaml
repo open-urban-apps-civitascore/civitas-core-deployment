@@ -9,6 +9,13 @@ portal:
   keycloakRealm: civitas-core
   ingressDomain: portal.127.0.0.1.nip.io
 
+  ingress:
+    enabled: true
+    annotations:
+      cert-manager.io/cluster-issuer: 'letsencrypt-prod'
+    tls:
+      secretName: portal-tls
+
   logLevel: INFO
 
   backend:
