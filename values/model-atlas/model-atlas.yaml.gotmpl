@@ -1,0 +1,63 @@
+---
+# Model Atlas Values Template for Helmfile
+# This file is processed by Helmfile and can use Go templating
+
+image:
+  repository: {{ .Environment.Values.modelAtlas.image.repository }}
+  tag: {{ .Environment.Values.modelAtlas.image.tag }}
+  pullPolicy: Always
+
+replicaCount: 1
+
+resources:
+  requests:
+    memory: {{ default "256Mi" .Environment.Values.modelAtlas.resources.requests.memory }}
+    cpu: {{ default "100m" .Environment.Values.modelAtlas.resources.requests.cpu }}
+  limits:
+    memory: {{ default "512Mi" .Environment.Values.modelAtlas.resources.limits.memory }}
+    cpu: {{ default "1000m" .Environment.Values.modelAtlas.resources.limits.cpu }}
+
+ingress:
+  enabled: {{ default false .Environment.Values.modelAtlas.ingress.enabled }}
+  className: {{ default "nginx" .Environment.Values.modelAtlas.ingress.className }}
+  annotations: {}
+  hosts:
+    - host: {{ default "model-atlas.local" (index .Environment.Values.modelAtlas.ingress.hosts 0).host }}
+      paths:
+        - path: {{ default "/" (index (index .Environment.Values.modelAtlas.ingress.hosts 0).paths 0).path }}
+          pathType: {{ default "Prefix" (index (index .Environment.Values.modelAtlas.ingress.hosts 0).paths 0).pathType }}
+  tls: []
+
+# Service configuration
+service:
+  type: ClusterIP
+  port: 8080
+
+# Security context (best practices)
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  fsGroup: 1000
+  seccompProfile:
+    type: RuntimeDefault
+
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+    - ALL
+  readOnlyRootFilesystem: true
+
+# Volumes for read-only filesystem
+volumes:
+  - name: tmp
+    emptyDir: {}
+  - name: cache
+    emptyDir: {}
+
+volumeMounts:
+  - name: tmp
+    mountPath: /tmp
+  - name: cache
+    mountPath: /var/cache
+

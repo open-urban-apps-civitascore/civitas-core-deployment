@@ -1,0 +1,21 @@
+---
+environments:
+  default:
+    values:
+      - ../environments/default/*.yaml
+  local:
+    values:
+      - ../environments/local/*.yaml
+---
+helmDefaults:
+  wait: true
+  waitForJobs: true
+---
+releases:
+  - name: model-atlas
+    namespace: '{{ .Environment.Values.modelAtlas.namespace }}'
+    chart: ../charts/model-atlas
+    createNamespace: true
+    condition: modelAtlas.enabled
+    values:
+      - ../values/model-atlas/model-atlas.yaml.gotmpl
