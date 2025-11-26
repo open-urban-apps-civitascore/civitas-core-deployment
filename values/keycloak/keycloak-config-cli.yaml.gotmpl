@@ -15,39 +15,20 @@ job:
 env:
   KEYCLOAK_AVAILABILITYCHECK_ENABLED: "true"
   KEYCLOAK_AVAILABILITYCHECK_RETRIES: "{{ default "10s" .Environment.Values.keycloak.config.availabilityCheckTimeout }}"
-  KEYCLOAK_URL: http://keycloak-keycloakx-http.{{ .Environment.Values.keycloak.namespace }}.svc.cluster.local:80{{ .Environment.Values.keycloak.ingress.relativePath | trimSuffix "/" }}
+  KEYCLOAK_URL: http://keycloak-keycloakx-http.{{ .Environment.Values.keycloak.namespace }}.svc.cluster.local:80
   KEYCLOAK_USER: {{ default "admin" .Environment.Values.keycloak.admin.user }}
   IMPORT_FILES_LOCATIONS: /config/*
+  IMPORT_VARSUBSTITUTION_ENABLED: "true"
 
 existingSecret: "{{ default "keycloak-admin-user" .Environment.Values.keycloak.admin.secret.name }}"
 existingSecretKey: "{{ default "admin-password" .Environment.Values.keycloak.admin.secret.key }}"
 
-extraEnv:
-  - name: SMTP_HOST
-    valueFrom:
-      secretKeyRef:
-        name: keycloak-smtp
-        key: host
-  - name: SMTP_PORT
-    valueFrom:
-      secretKeyRef:
-        name: keycloak-smtp
-        key: port
-  - name: SMTP_FROM
-    valueFrom:
-      secretKeyRef:
-        name: keycloak-smtp
-        key: from
-  - name: SMTP_USER
-    valueFrom:
-      secretKeyRef:
-        name: keycloak-smtp
-        key: user
-  - name: SMTP_PASSWORD
-    valueFrom:
-      secretKeyRef:
-        name: keycloak-smtp
-        key: password
+secrets:
+  SMTP_HOST: {{ exec "sh" (list "-c" (printf "kubectl get secret keycloak-smtp -n %s -o jsonpath='{.data.host}' | base64 -d" .Environment.Values.keycloak.namespace)) | squote }}
+  SMTP_PORT: {{ exec "sh" (list "-c" (printf "kubectl get secret keycloak-smtp -n %s -o jsonpath='{.data.port}' | base64 -d" .Environment.Values.keycloak.namespace)) | squote }}
+  SMTP_FROM: {{ exec "sh" (list "-c" (printf "kubectl get secret keycloak-smtp -n %s -o jsonpath='{.data.from}' | base64 -d" .Environment.Values.keycloak.namespace)) | squote }}
+  SMTP_USER: {{ exec "sh" (list "-c" (printf "kubectl get secret keycloak-smtp -n %s -o jsonpath='{.data.user}' | base64 -d" .Environment.Values.keycloak.namespace)) | squote }}
+  SMTP_PASSWORD: {{ exec "sh" (list "-c" (printf "kubectl get secret keycloak-smtp -n %s -o jsonpath='{.data.password}' | base64 -d" .Environment.Values.keycloak.namespace)) | squote }}
 config:
   {{ .Environment.Values.keycloak.config.realm.name }}:
     inline:
@@ -139,11 +120,11 @@ config:
         strictTransportSecurity: max-age=31536000; includeSubDomains
       smtpServer:
         # TODO: This is a temporary solution. Find a better way to manage secrets in templates.
-        password: "${env:SMTP_PASSWORD}"
-        host: "${env:SMTP_HOST}"
-        port: "${env:SMTP_PORT}"
-        from: "${env:SMTP_FROM}"
-        user: "${env:SMTP_USER}"
+        password: "$(env:SMTP_PASSWORD)"
+        host: "$(env:SMTP_HOST)"
+        port: "$(env:SMTP_PORT)"
+        from: "$(env:SMTP_FROM)"
+        user: "$(env:SMTP_USER)"
         starttls: true
         auth: true
         ssl: ""

@@ -9,6 +9,8 @@ image:
 updateStrategy: {{ .Environment.Values.keycloak.updateStrategy | default "RollingUpdate" }}
 restartPolicy: Always
 extraEnv: |
+  - name: KC_HTTP_RELATIVE_PATH
+    value: "/"
   - name: KC_HOSTNAME_STRICT
     value: "false"
   - name: JGROUPS_DISCOVERY_PROTOCOL
@@ -55,7 +57,7 @@ ingress:
   rules:
     - host: {{ .Environment.Values.keycloak.ingress.domain }}
       paths:
-        - path: {{ default "/" .Environment.Values.keycloak.ingress.relativePath | trimSuffix "/" }}/
+        - path: /
           pathType: Prefix
   tls:
     - hosts:
@@ -66,7 +68,7 @@ ingress:
     rules:
       - host: {{ .Environment.Values.keycloak.ingress.domain }}
         paths:
-          - path: {{ default "/" .Environment.Values.keycloak.ingress.relativePath | trimSuffix "/" }}/admin
+          - path: /admin
             pathType: Prefix
 route:
   enabled: false
@@ -114,26 +116,24 @@ autoscaling:
 command:
   - "/opt/keycloak/bin/kc.sh"
   - "start"
-http:
-  relativePath: {{ default "/" .Environment.Values.keycloak.ingress.relativePath }}
 
 livenessProbe: |
   httpGet:
-    path: '{{ .Environment.Values.keycloak.ingress.relativePath | trimSuffix "/" }}/realms/master'
+    path: '/realms/master'
     port: 'http'
     scheme: 'HTTP'
   initialDelaySeconds: {{ default 0 .Environment.Values.keycloak.probesInitialDelaySeconds.liveness }}
   timeoutSeconds: 5
 readinessProbe: |
   httpGet:
-    path: '{{ .Environment.Values.keycloak.ingress.relativePath | trimSuffix "/" }}/realms/master'
+    path: '/realms/master'
     port: 'http'
     scheme: 'HTTP'
   initialDelaySeconds: {{ default 10 .Environment.Values.keycloak.probesInitialDelaySeconds.readiness }}
   timeoutSeconds: 1
 startupProbe: |
   httpGet:
-    path: '{{ .Environment.Values.keycloak.ingress.relativePath | trimSuffix "/" }}/realms/master'
+    path: '/realms/master'
     port: 'http'
     scheme: 'HTTP'
   initialDelaySeconds: {{ default 15 .Environment.Values.keycloak.probesInitialDelaySeconds.startup }}

@@ -17,24 +17,17 @@ job:
 env:
   KEYCLOAK_AVAILABILITYCHECK_ENABLED: "true"
   KEYCLOAK_AVAILABILITYCHECK_RETRIES: {{ default "120s" .Environment.Values.keycloak.config.availabilityCheckTimeout }}
-  KEYCLOAK_URL: http://keycloak-keycloakx-http.{{ .Environment.Values.keycloak.namespace }}.svc.cluster.local:80{{ .Environment.Values.keycloak.ingress.relativePath | trimSuffix "/" }}
+  KEYCLOAK_URL: http://keycloak-keycloakx-http.{{ .Environment.Values.keycloak.namespace }}.svc.cluster.local:80
   KEYCLOAK_USER: {{ default "admin" .Environment.Values.keycloak.admin.user }}
   IMPORT_FILES_LOCATIONS: /config/*
+  IMPORT_VARSUBSTITUTION_ENABLED: "true"
 
 existingSecret: {{ default "keycloak-admin-user" .Environment.Values.keycloak.admin.secret.name }}
 existingSecretKey: {{ default "admin-password" .Environment.Values.keycloak.admin.secret.key }}
 
-extraEnv:
-  - name: PORTAL_CLIENT_SECRET
-    valueFrom:
-      secretKeyRef:
-        name: portal-keycloak-secrets
-        key: client-secret
-  - name: NEXTAUTH_SECRET
-    valueFrom:
-      secretKeyRef:
-        name: portal-nextauth-secret
-        key: secret
+secrets:
+  PORTAL_CLIENT_SECRET: {{ exec "sh" (list "-c" (printf "kubectl get secret portal-keycloak-secrets -n %s -o jsonpath='{.data.client-secret}' | base64 -d" .Environment.Values.portal.namespace)) | squote }}
+  NEXTAUTH_SECRET: {{ exec "sh" (list "-c" (printf "kubectl get secret portal-nextauth-secret -n %s -o jsonpath='{.data.secret}' | base64 -d" .Environment.Values.portal.namespace)) | squote }}
 
 config:
   {{ .Environment.Values.keycloak.config.realm.name }}:
@@ -48,7 +41,9 @@ config:
           enabled: true
           protocol: openid-connect
           publicClient: false
-          secret: "${env:PORTAL_CLIENT_SECRET}"
+          secret: "$(env:PORTAL_CLIENT_SECRET)"
+          rootUrl: https://{{ .Environment.Values.portal.ingressDomain }}
+          baseUrl: https://{{ .Environment.Values.portal.ingressDomain }}
           bearerOnly: false
           standardFlowEnabled: true
           implicitFlowEnabled: false

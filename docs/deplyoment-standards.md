@@ -39,7 +39,7 @@ kubectl port-forward -n ingress-nginx service/ingress-nginx-controller 443:443
 
 # Now you can access service on https://<service name>.127.0.0.1.nip.io
 
-# Login to keycloak on https://keycloak.127.0.0.1.nip.io/auth to create user accounts on real civitas(user: admin, password: ...)
+# Login to keycloak on https://keycloak.127.0.0.1.nip.io to create user accounts on real civitas(user: admin, password: ...)
 sudo kubectl get secret keycloak-admin-user -n local-civitas2 -o jsonpath='{.data.admin-password}' | base64 --decode
 ```
 

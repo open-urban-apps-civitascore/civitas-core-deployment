@@ -5,8 +5,8 @@ portal:
   namespace: local-civitas2
 
   # Environment-specific URLs (operators configure these per environment)
-  keycloakAuthServerUrl: http://keycloak.127.0.0.1.nip.io/auth
-  keycloakRealm: civitas-core
+  keycloakAuthServerUrl: http://keycloak.127.0.0.1.nip.io
+  keycloakRealm: civitas
   ingressDomain: portal.127.0.0.1.nip.io
 
   ingress:

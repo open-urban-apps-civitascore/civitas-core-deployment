@@ -51,7 +51,6 @@ keycloak:
       cert-manager.io/cluster-issuer: 'letsencrypt-prod'
     labels: {}
     domain: keycloak.main.civitas2.fw-web.space
-    relativePath: '/auth'
     tls:
       secretName: keycloak-tls
   autoscaling:
