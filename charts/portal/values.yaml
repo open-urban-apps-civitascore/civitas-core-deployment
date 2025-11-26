@@ -51,3 +51,27 @@ autoscaling:
     minReplicas: 1
     maxReplicas: 3
     targetCPUUtilizationPercentage: 80
+
+ingress:
+  enabled: false
+  domain: ''
+  annotations: {}
+  tls:
+    enabled: false
+    secretName: ''
+
+nextAuth:
+  url: ''
+
+keycloak:
+  authServerUrl: ''
+  realm: ''
+
+database:
+  host: ''
+  port: 5432
+  name: ''
+  owner: ''
+  secret:
+    name: ''
+    passwordKey: password
