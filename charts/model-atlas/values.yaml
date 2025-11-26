@@ -1,3 +1,4 @@
+---
 # Default values for model-atlas.
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
@@ -6,13 +7,13 @@ replicaCount: 1
 
 image:
   repository: eclipsefennec/model.atlas
-  pullPolicy: Always #IfNotPresent
+  pullPolicy: Always # IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
-  tag: ""
+  tag: ''
 
 imagePullSecrets: []
-nameOverride: ""
-fullnameOverride: ""
+nameOverride: ''
+fullnameOverride: ''
 
 serviceAccount:
   # Specifies whether a service account should be created
@@ -23,7 +24,7 @@ serviceAccount:
   annotations: {}
   # The name of the service account to use.
   # If not set and create is true, a name is generated using the fullname template
-  name: ""
+  name: ''
 
 podAnnotations: {}
 podLabels: {}
@@ -39,7 +40,7 @@ securityContext:
   allowPrivilegeEscalation: false
   capabilities:
     drop:
-    - ALL
+      - ALL
   readOnlyRootFilesystem: true
 
 service:
@@ -48,8 +49,9 @@ service:
 
 ingress:
   enabled: false
-  className: "nginx"
-  annotations: {}
+  className: 'nginx'
+  annotations:
+    {}
     # kubernetes.io/ingress.class: nginx
     # kubernetes.io/tls-acme: "true"
   hosts:
@@ -70,26 +72,26 @@ resources:
     cpu: 100m
     memory: 256Mi
 
-#livenessProbe:
-#  httpGet:
+# livenessProbe:
+#   httpGet:
 #    path: /actuator/health/liveness
 #    port: http
 #  initialDelaySeconds: 30
 #  periodSeconds: 10
 #  timeoutSeconds: 5
-#  failureThreshold: 3
+#   failureThreshold: 3
 #
-#readinessProbe:
-#  httpGet:
+# readinessProbe:
+#   httpGet:
 #    path: /actuator/health/readiness
 #    port: http
 #  initialDelaySeconds: 20
 #  periodSeconds: 5
 #  timeoutSeconds: 3
-#  failureThreshold: 3
+#   failureThreshold: 3
 #
-#startupProbe:
-#  httpGet:
+# startupProbe:
+#   httpGet:
 #    path: /actuator/health/readiness
 #    port: http
 #  initialDelaySeconds: 10

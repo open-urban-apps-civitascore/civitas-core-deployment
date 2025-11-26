@@ -2,7 +2,7 @@
 modelAtlas:
   enabled: true
   namespace: civitas
-  chartVersion: "0.1.0"
+  chartVersion: '0.1.0'
   image:
     repository: eclipsefennec/model.atlas
     tag: snapshot
@@ -15,7 +15,7 @@ modelAtlas:
       memory: 256Mi
   ingress:
     enabled: false
-    className: "nginx"
+    className: 'nginx'
     annotations: {}
     hosts:
       - host: model-atlas.local
