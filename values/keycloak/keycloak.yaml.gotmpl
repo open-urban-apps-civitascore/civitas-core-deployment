@@ -17,8 +17,6 @@ extraEnv: |
     value: dump_requests=true,port_range=0,namespace={{ .Environment.Values.global.namespace | default "civitas" }}
   - name: KC_BOOTSTRAP_ADMIN_USERNAME
     value: {{ .Environment.Values.keycloak.admin.user | default "admin" }}
-  - name: KC_PROXY_HEADERS
-    value: "xforwarded" 
   - name: KC_BOOTSTRAP_ADMIN_PASSWORD
     valueFrom:
       secretKeyRef:
@@ -59,11 +57,10 @@ ingress:
       paths:
         - path: {{ default "/" .Environment.Values.keycloak.ingress.relativePath | trimSuffix "/" }}/
           pathType: Prefix
-# TODO: fix TLS
-  tls: []
-#    - hosts:
-#        - {{ .Environment.Values.keycloak.ingress.domain }}
-#      secretName: {{ .Environment.Values.keycloak.ingress.tls.secretName }}
+  tls:
+    - hosts:
+        - {{ .Environment.Values.keycloak.ingress.domain }}
+      secretName: {{ .Environment.Values.keycloak.ingress.tls.secretName }}
   console:
     enabled: true
     rules:
@@ -95,7 +92,7 @@ database:
   existingSecretKey: {{ .Environment.Values.databases.keycloak.secret.key }}
 proxy:
   enabled: true
-  mode: forwarded
+  mode: xforwarded
   http:
     enabled: true
 metrics:
