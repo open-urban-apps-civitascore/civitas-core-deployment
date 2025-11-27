@@ -2,7 +2,7 @@
 keycloak:
   enabled: true
   chartVersion: '7.1.4'
-  namespace: main-civitas2
+  namespace: civitas
   admin:
     user: admin
     secret:
@@ -11,14 +11,15 @@ keycloak:
     createSecret: true
     forceRecreateSecret: false
   database:
-    #   enabled: true
-    # name: db-keycloak
-    # user: "keycloak"
-    # secret:
-    #   name: db-keycloak
-    #   key: password
-    # host: db-cluster-rw.civitas.svc.cluster.local
-    # port: 5432
+    embedded:
+      enabled: true
+    name: db-keycloak
+    user: 'keycloak'
+    secret:
+      name: db-keycloak
+      key: password
+    host: db-cluster-rw.civitas.svc.cluster.local
+    port: 5432
     checker:
       enabled: true
       image:
@@ -47,11 +48,11 @@ keycloak:
     annotations: {}
     labels: {}
   ingress:
-    annotations:
-      cert-manager.io/cluster-issuer: 'letsencrypt-prod'
+    annotations: {}
     labels: {}
-    domain: keycloak.main.civitas2.fw-web.space
+    domain: keycloak.192.168.49.2.nip.io
     relativePath: '/auth'
+    # TODO: fix TLS
     tls:
       secretName: keycloak-tls
   autoscaling:
