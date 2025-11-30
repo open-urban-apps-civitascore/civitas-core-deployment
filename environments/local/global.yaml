@@ -1,7 +1,6 @@
 ---
 global:
   namespaced: true
-  namespace: main-civitas2
+  namespace: civitas
   metrics:
     enabled: false
-  namespacePrefix: civitas
