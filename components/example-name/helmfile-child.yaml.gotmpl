@@ -1,0 +1,11 @@
+
+---
+releases:
+  - name: example-name
+    namespace: '\{\{ .Values.global.namespacePrefix \}\}-example-name'
+    chart: my/chart
+    installed: \{\{ .Values.example-name.enabled \}\}
+    values:
+      - values/example-name-base.yaml
+      - values/example-name-\{\{ .Values.profile \}\}.yaml
+      - ../../../helpers/environment-merger.yaml.gotmpl

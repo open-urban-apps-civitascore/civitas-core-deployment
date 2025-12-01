@@ -1,0 +1,8 @@
+---
+bases:
+  - "../../bases/environments.yaml.gotmpl"
+---
+helmfiles:
+  - path: "./helmfile-child.yaml.gotmpl"
+    values:
+      - {{ toYaml .Values | nindent 8 }}
