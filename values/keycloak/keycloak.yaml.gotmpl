@@ -10,7 +10,7 @@ updateStrategy: {{ .Environment.Values.keycloak.updateStrategy | default "Rollin
 restartPolicy: Always
 extraEnv: |
   - name: KC_HTTP_RELATIVE_PATH
-    value: "/"
+    value: {{ .Environment.Values.keycloak.ingress.relativePath | default "/" | quote }}
   - name: KC_HOSTNAME_STRICT
     value: "false"
   - name: JGROUPS_DISCOVERY_PROTOCOL

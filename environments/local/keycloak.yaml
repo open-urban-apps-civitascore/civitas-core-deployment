@@ -51,6 +51,7 @@ keycloak:
     annotations: {}
     labels: {}
     domain: keycloak.127.0.0.1.nip.io
+    relativePath: '/'
     # TODO: fix TLS
     tls:
       secretName: keycloak-tls
