@@ -85,7 +85,7 @@ keycloak:
       #   port: '587'
       #   from: no-reply@civitas.io
       #   user: smtp-user
-      theme: civitas-theme
+      theme: keycloak
       enable_events: true
       enable_adminEvents: true
   probesInitialDelaySeconds:
