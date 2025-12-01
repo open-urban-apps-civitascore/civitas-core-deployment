@@ -1,0 +1,8 @@
+---
+kafka:
+  operator:
+    enabled: true
+  cluster:
+    enabled: true
+  ui:
+    enabled: true

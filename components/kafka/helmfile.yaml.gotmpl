@@ -1,8 +1,6 @@
 ---
 bases:
-  - "../../bases/environments.yaml.gotmpl"
-  - "../../bases/templates.yaml"
-  - "../../bases/helm-defaults.yaml.gotmpl"
+  - "../../bases/environments.yaml"
 ---
 helmfiles:
   - path: "./helmfile-child.yaml.gotmpl"
