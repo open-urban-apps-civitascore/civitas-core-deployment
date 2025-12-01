@@ -24,6 +24,7 @@ duplicate-files:
 exclude-patterns:
   - '__pycache__'
   - "\\.git/"
+  - "\\.idea/"
   # Allow .yaml.gotmpl because it's better than -yaml.gotmpl
   - ".*\\.yaml\\.gotmpl$"
   - ".*\\.yml\\.gotmpl$"

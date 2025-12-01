@@ -1,0 +1,4 @@
+---
+helmDefaults:
+  wait: true
+  waitForJobs: true

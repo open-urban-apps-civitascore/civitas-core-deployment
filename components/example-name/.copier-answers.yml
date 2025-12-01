@@ -1,8 +1,0 @@
-# Changes here will be overwritten by Copier.
-_commit: 7e40660
-_src_path: /home/julian/projects/civitas/civitas-2/template-component
-componentName: Example Name
-componentSlug: example-name
-helmChartName: my/chart
-helmRepository: ''
-shortDescription: ''

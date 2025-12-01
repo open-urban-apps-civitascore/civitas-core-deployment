@@ -1,0 +1,7 @@
+---
+templates:
+  default:
+    values:
+      - values/{{ .Release.Name }}/{{ .Release.Name }}-base.yaml
+      - values/{{ .Release.Name }}/{{ .Release.Name }}-{{ .Values.profile }}.yaml
+      - ../../../helpers/environment-merger.yaml.gotmpl

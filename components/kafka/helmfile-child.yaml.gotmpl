@@ -1,0 +1,14 @@
+
+---
+repositories:
+  - name: kafka
+    url: https://kafbat.github.io/helm-charts
+
+---
+releases:
+  - name: kafka
+    namespace: '{{ .Values.global.namespacePrefix }}-kafka'
+    chart: oci://quay.io/strimzi-helm/strimzi-kafka-operator
+    installed: {{ .Values.kafka.enabled }}
+    inherit:
+      - template: default
