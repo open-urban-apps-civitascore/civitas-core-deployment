@@ -1,0 +1,10 @@
+---
+kafka:
+  enabled: true
+  namespace: main-civitas2
+  operator:
+    chartVersion: '0.48.0'
+  ui:
+    chartVersion: '1.5.2'
+    ingress:
+      domain: kafka-ui.civitas.test
