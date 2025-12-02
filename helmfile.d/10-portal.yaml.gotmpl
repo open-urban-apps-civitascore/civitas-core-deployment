@@ -18,20 +18,20 @@ helmDefaults:
 releases:
   - name: portal-db
     namespace: >-
-      {{ if .Environment.Values.embeddedDatabase.clusterWide }}
-        {{ .Environment.Values.portal.namespace }}
+      {{ if .Values.embeddedDatabase.clusterWide }}
+        {{ .Values.portal.namespace }}
       {{ else }}
-        {{ .Environment.Values.embeddedDatabase.namespace }}
+        {{ .Values.embeddedDatabase.namespace }}
       {{ end }}
     chart: ../charts/database
     createNamespace: true
-    installed: {{ .Environment.Values.databases.portal.embedded }}
+    installed: {{ .Values.databases.portal.embedded }}
     values:
       - ../values/portal/portal-db.yaml.gotmpl
   - name: portal
-    namespace: '{{ .Environment.Values.portal.namespace }}'
+    namespace: '{{ .Values.portal.namespace }}'
     chart: ../charts/portal
-    version: '{{ .Environment.Values.portal.chartVersion }}'
+    version: '{{ .Values.portal.chartVersion }}'
     createNamespace: false
     needs:
       - portal-db

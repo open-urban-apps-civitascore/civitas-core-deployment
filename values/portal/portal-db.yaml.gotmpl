@@ -2,13 +2,13 @@ annotations: []
 
 labels: []
 
-name: {{ default "portal" .Environment.Values.databases.portal.name }}
+name: {{ default "portal" .Values.databases.portal.name }}
 
 database:
   allowConnections: true
   builtinLocale:
   cluster:
-    name: "{{ .Environment.Values.embeddedDatabase.cluster.name }}"
+    name: "{{ .Values.embeddedDatabase.cluster.name }}"
   collationVersion:
   connectionLimit:
   databaseReclaimPolicy:
@@ -22,12 +22,12 @@ database:
   localeCType:
   localeCollate:
   localeProvider:
-  name: {{ default "portal" .Environment.Values.databases.portal.name }}
-  owner: {{ default "portal" .Environment.Values.databases.portal.user }}
+  name: {{ default "portal" .Values.databases.portal.name }}
+  owner: {{ default "portal" .Values.databases.portal.user }}
   schemas: []
   tablespace:
   template:
   createSecret:
     enabled: true
-    name: {{ .Environment.Values.databases.portal.secret.name }}
-    username: {{ default "portal" .Environment.Values.databases.portal.user }}
+    name: {{ .Values.databases.portal.secret.name }}
+    username: {{ default "portal" .Values.databases.portal.user }}
