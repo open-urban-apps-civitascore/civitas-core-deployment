@@ -95,7 +95,7 @@ kubectl create secret generic keycloak-smtp \
   --from-literal=from='noreply@example.com' \
   --from-literal=user='noreply@example.com' \
   --from-literal=password='YOUR_SMTP_PASSWORD' \
-  -n main-civitas-core-v2
+  -n main-civitas2
 ```
 
 **Parameters:**
