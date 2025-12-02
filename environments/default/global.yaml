@@ -1,4 +1,6 @@
 ---
 global:
+  domain: civitas.cc
+  profile: dev # small,
   namespacePrefix: civitas
   instanceSlug: cc-dev

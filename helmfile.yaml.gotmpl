@@ -1,0 +1,8 @@
+---
+bases:
+  - bases/environments.yaml
+---
+helmfiles:
+  - path: "./components/kafka/helmfile.yaml.gotmpl"
+    values:
+      - {{ toYaml .Values | nindent 8 }}

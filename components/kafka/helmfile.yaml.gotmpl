@@ -1,8 +1,46 @@
 ---
 bases:
-  - "../../bases/environments.yaml"
+  - "../../bases/templates.yaml"
+  - "../../bases/helm-defaults.yaml"
 ---
-helmfiles:
-  - path: "./helmfile-child.yaml.gotmpl"
-    values:
-      - {{ toYaml .Values | nindent 8 }}
+repositories:
+  - name: kafbat-ui
+    url: https://kafbat.github.io/helm-charts
+---
+releases:
+  - name: kafka-operator
+    labels:
+      release: kafka-operator
+      operator: true
+    namespace: {{ .Values.global.namespacePrefix }}-kafka-operator
+    chart: {{ .Values.charts.kafkaOperator.chart}}
+    version: "{{ .Values.charts.kafkaOperator.version}}"
+    createNamespace: true
+    installed: {{ .Values.kafka.operator.enabled }}
+    inherit:
+      - template: default
+
+  - name: kafka-cluster
+    labels:
+      release: kafka-cluster
+    namespace: {{ .Values.global.namespacePrefix }}-kafka-cluster
+    chart: charts/kafka
+    createNamespace: true
+    installed: {{ .Values.kafka.cluster.enabled }}
+    inherit:
+      - template: default
+
+  - name: kafka-ui
+    labels:
+      release: kafka-ui
+    namespace: {{ .Values.global.namespacePrefix }}-kafka-cluster
+    chart: kafbat-ui/kafka-ui
+    version: "1.5.2"
+    installed: {{ .Values.kafka.ui.enabled }}
+    needs:
+      - {{ .Values.global.namespacePrefix }}-kafka-cluster/kafka-cluster
+    inherit:
+      - template: default
+---
+commonLabels:
+  component: kafka

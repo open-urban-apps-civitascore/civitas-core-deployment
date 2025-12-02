@@ -2,14 +2,14 @@
 environments:
   default:
     values:
-      - ../../environments/default/*.yaml
+      - environments/default/*.yaml
       - profile: local
   staging:
     values:
-      - ../../environments/default/*.yaml
+      - environments/default/*.yaml
       - profile: small
   production:
     values:
-      - ../../environments/default/*.yaml
-      - ../../environments/production/*.yaml
+      - environments/default/*.yaml
+      - environments/production/*.yaml
       - profile: large
