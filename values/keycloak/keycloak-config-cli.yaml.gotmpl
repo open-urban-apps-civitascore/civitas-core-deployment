@@ -150,7 +150,6 @@ config:
         xXSSProtection: 1; mode=block
         strictTransportSecurity: max-age=31536000; includeSubDomains
       smtpServer:
-        # TODO: This is a temporary solution. Find a better way to manage secrets in templates.
         password: "$(env:SMTP_PASSWORD)"
         host: "$(env:SMTP_HOST)"
         port: "$(env:SMTP_PORT)"
