@@ -1,9 +1,7 @@
 ---
 ingress:
   enabled: true
-  annotations:
-    cert-manager.io/cluster-issuer: letsencrypt-staging
-  host: kafka-ui.civitas.test
+  host: {{ .Values.kafka.ui.ingress.domain }}
   path: '/'
   ingressClassName: nginx
 

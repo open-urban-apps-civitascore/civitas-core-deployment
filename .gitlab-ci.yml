@@ -1,6 +1,7 @@
 ---
 stages:
   - lint
+  - deploy
 
 pre-commit:
   stage: lint
@@ -23,3 +24,43 @@ pre-commit:
     - chmod +x /usr/local/bin/helmfile
   script:
     - pre-commit run --all-files
+
+deploy:
+  stage: deploy
+  image: debian:bookworm-slim
+  before_script:
+    # Install system dependencies
+    - apt-get update && apt-get install -y git bash curl wget ca-certificates
+
+    # Install kubectl
+    - KUBECTL_VERSION=$(curl -L -s https://dl.k8s.io/release/stable.txt)
+    - curl -LO "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl"
+    - install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+    - kubectl version --client
+
+    # Install Helm
+    - wget -qO- https://get.helm.sh/helm-v3.19.0-linux-amd64.tar.gz | tar xz
+    - mv linux-amd64/helm /usr/local/bin/
+    - rm -rf linux-amd64
+    - helm version
+
+    # Install Helmfile
+    - wget -qO- https://github.com/helmfile/helmfile/releases/download/v1.1.9/helmfile_1.1.9_linux_amd64.tar.gz | tar xz
+    - mv helmfile /usr/local/bin/
+    - chmod +x /usr/local/bin/helmfile
+    - helmfile version
+
+    # Setup kubeconfig
+    - mkdir -p ~/.kube
+    - echo "$KUBECONFIG_CONTENT" | base64 -d > ~/.kube/config
+    - chmod 600 ~/.kube/config
+    - export KUBECONFIG=~/.kube/config
+
+    # Verify connectivity
+    - kubectl cluster-info
+    - kubectl get nodes
+  script:
+    - helmfile -f ./helmfile.d/ sync -e default
+  only:
+    - main
+  when: manual

@@ -24,6 +24,7 @@ duplicate-files:
 exclude-patterns:
   - '__pycache__'
   - "\\.git/"
+  - '.idea/'
   # Allow .yaml.gotmpl because it's better than -yaml.gotmpl
   - ".*\\.yaml\\.gotmpl$"
   - ".*\\.yml\\.gotmpl$"
@@ -34,3 +35,5 @@ exclude-patterns:
   - 'charts/.*/.helmignore' # ignore duplicate warning
   # GitLab merge_request_templates directory uses underscores by convention
   - '.*\.gitlab/merge_request_templates.*'
+  # Exclude gitlab-ci-local build directory
+  - '.*\.gitlab-ci-local/.*'
