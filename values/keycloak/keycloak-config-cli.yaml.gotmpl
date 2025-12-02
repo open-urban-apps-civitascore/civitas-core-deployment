@@ -29,6 +29,8 @@ secrets:
   SMTP_FROM: {{ exec "sh" (list "-c" (printf "kubectl get secret keycloak-smtp -n %s -o jsonpath='{.data.from}' | base64 -d" .Environment.Values.keycloak.namespace)) | squote }}
   SMTP_USER: {{ exec "sh" (list "-c" (printf "kubectl get secret keycloak-smtp -n %s -o jsonpath='{.data.user}' | base64 -d" .Environment.Values.keycloak.namespace)) | squote }}
   SMTP_PASSWORD: {{ exec "sh" (list "-c" (printf "kubectl get secret keycloak-smtp -n %s -o jsonpath='{.data.password}' | base64 -d" .Environment.Values.keycloak.namespace)) | squote }}
+  PORTAL_CLIENT_SECRET: {{ exec "sh" (list "-c" (printf "kubectl get secret portal-keycloak-secrets -n %s -o jsonpath='{.data.client-secret}' | base64 -d" .Environment.Values.portal.namespace)) | squote }}
+  NEXTAUTH_SECRET: {{ exec "sh" (list "-c" (printf "kubectl get secret portal-nextauth-secret -n %s -o jsonpath='{.data.secret}' | base64 -d" .Environment.Values.portal.namespace)) | squote }}
 config:
   {{ .Environment.Values.keycloak.config.realm.name }}:
     inline:
@@ -235,3 +237,38 @@ config:
         clientSessionMaxLifespan: "0"
         clientOfflineSessionIdleTimeout: "0"
       userManagedAccessAllowed: false
+      clients:
+        - clientId: portal-frontend
+          name: Portal Frontend
+          description: CIVITAS Portal Frontend Application
+          enabled: true
+          protocol: openid-connect
+          publicClient: false
+          secret: "$(env:PORTAL_CLIENT_SECRET)"
+          rootUrl: https://{{ .Environment.Values.portal.ingressDomain }}
+          baseUrl: https://{{ .Environment.Values.portal.ingressDomain }}
+          bearerOnly: false
+          standardFlowEnabled: true
+          implicitFlowEnabled: false
+          directAccessGrantsEnabled: true
+          serviceAccountsEnabled: false
+          authorizationServicesEnabled: false
+          redirectUris:
+            - https://{{ .Environment.Values.portal.ingressDomain }}/*
+            - http://localhost:3000/*
+          webOrigins:
+            - https://{{ .Environment.Values.portal.ingressDomain }}
+            - http://localhost:3000
+          defaultClientScopes:
+            - email
+            - profile
+            - roles
+            - web-origins
+          optionalClientScopes:
+            - address
+            - phone
+            - offline_access
+            - microprofile-jwt
+          attributes:
+            post.logout.redirect.uris: +
+            pkce.code.challenge.method: S256
