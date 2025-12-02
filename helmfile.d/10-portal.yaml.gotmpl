@@ -35,7 +35,6 @@ releases:
     createNamespace: false
     needs:
       - portal-db
-      - portal-keycloak-config-cli
     condition: portal.enabled
     values:
       - ../values/portal/portal.yaml.gotmpl
