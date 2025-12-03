@@ -1,0 +1,4 @@
+charts:
+  airflow:
+    airflow:
+      version: 'lock-addon'

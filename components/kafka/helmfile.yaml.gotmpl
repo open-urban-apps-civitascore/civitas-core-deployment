@@ -13,8 +13,8 @@ releases:
       release: kafka-operator
       operator: true
     namespace: {{ .Values.global.namespacePrefix }}-kafka-operator
-    chart: {{ .Values.charts.kafkaOperator.chart}}
-    version: "{{ .Values.charts.kafkaOperator.version}}"
+    chart: {{ .Values.charts.kafka.operatorQ.chart}}
+    version: "{{ .Values.charts.kafka.operator.version }}"
     createNamespace: true
     installed: {{ .Values.kafka.operator.enabled }}
     inherit:

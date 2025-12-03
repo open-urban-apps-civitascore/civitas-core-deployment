@@ -2,6 +2,7 @@
 environments:
   default:
     values:
+      - locks/*.lock.yaml
       - environments/default/*.yaml
       - profile: local
   staging:
