@@ -1,5 +1,4 @@
-watchNamespaces:
-  - {{ .Values.kafka.namespace }}
+watchNamespaces: [] # own namespace is always watched and must not be set. TODO: once we know how to handle namespaces, we can set this again.
 labels:
   app.kubernetes.io/name: strimzi-kafka-operator
   app.kubernetes.io/instance: {{ .Values.global.namespace }}
