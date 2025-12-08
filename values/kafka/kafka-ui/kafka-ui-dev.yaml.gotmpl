@@ -1,0 +1,17 @@
+---
+ingress:
+  enabled: true
+  host: {{ .Values.kafka.ui.ingress.domain }}
+  path: '/'
+  ingressClassName: nginx
+
+# Lower resource requirements for dev
+resources:
+  requests:
+    cpu: 200m
+    memory: 512Mi
+  limits:
+    cpu: 800m
+    memory: 2Gi
+
+replicaCount: 1
