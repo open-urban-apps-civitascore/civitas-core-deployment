@@ -1,6 +1,6 @@
 ---
 apisix:
-  namespace: civitas
+  namespace: local-civitas2
   enabled: true
   chartVersion: '2.12.0'
   image:
@@ -9,7 +9,7 @@ apisix:
   apisix:
     enable: true
     admin:
-      domain: apisix.192.168.49.2.nip.io
+      domain: apisix.127.0.0.1.nip.io
       path: /
       credentials:
         # TODO: fix secret management

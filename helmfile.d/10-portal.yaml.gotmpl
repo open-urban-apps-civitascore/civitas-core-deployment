@@ -1,0 +1,40 @@
+---
+repositories:
+  - name: keycloak-config-cli
+    url: https://jkroepke.github.io/helm-charts/
+---
+environments:
+  default:
+    values:
+      - ../environments/default/*.yaml
+  local:
+    values:
+      - ../environments/local/*.yaml
+---
+helmDefaults:
+  wait: true
+  waitForJobs: true
+---
+releases:
+  - name: portal-db
+    namespace: >-
+      {{ if .Values.embeddedDatabase.clusterWide }}
+        {{ .Values.portal.namespace }}
+      {{ else }}
+        {{ .Values.embeddedDatabase.namespace }}
+      {{ end }}
+    chart: ../charts/database
+    createNamespace: true
+    installed: {{ .Values.databases.portal.embedded }}
+    values:
+      - ../values/portal/portal-db.yaml.gotmpl
+  - name: portal
+    namespace: '{{ .Values.portal.namespace }}'
+    chart: ../charts/portal
+    version: '{{ .Values.portal.chartVersion }}'
+    createNamespace: false
+    needs:
+      - portal-db
+    condition: portal.enabled
+    values:
+      - ../values/portal/portal.yaml.gotmpl

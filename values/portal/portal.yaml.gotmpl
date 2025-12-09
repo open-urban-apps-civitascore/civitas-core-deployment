@@ -1,0 +1,75 @@
+---
+# Database configuration (from environment)
+database:
+  host: {{ .Values.databases.portal.host }}
+  port: {{ .Values.databases.portal.port }}
+  name: {{ .Values.databases.portal.name }}
+  owner: {{ .Values.databases.portal.user }}
+  secret:
+    name: {{ .Values.databases.portal.secret.name }}
+    passwordKey: {{ .Values.databases.portal.secret.key }}
+
+# Backend configuration
+backend:
+  replicaCount: {{ .Values.portal.backend.replicaCount }}
+  image:
+    repository: {{ .Values.portal.backend.image.repository }}
+    tag: {{ .Values.portal.backend.image.tag }}
+  resources:
+    {{- toYaml .Values.portal.backend.resources | nindent 4 }}
+  env:
+    loggingLevelRoot: {{ default "INFO" .Values.portal.logLevel }}
+
+# Frontend configuration
+frontend:
+  replicaCount: {{ .Values.portal.frontend.replicaCount }}
+  image:
+    repository: {{ .Values.portal.frontend.image.repository }}
+    tag: {{ .Values.portal.frontend.image.tag }}
+  resources:
+    {{- toYaml .Values.portal.frontend.resources | nindent 4 }}
+
+# Keycloak configuration (environment-specific URLs)
+keycloak:
+  authServerUrl: {{ .Values.portal.keycloakAuthServerUrl }}
+  realm: {{ .Values.portal.keycloakRealm }}
+
+# NextAuth configuration (derived from ingress domain, ingress terminates TLS)
+nextAuth:
+  url: https://{{ .Values.portal.ingressDomain }}
+
+# Ingress configuration
+ingress:
+  {{- if hasKey .Values.portal "ingress" }}
+  enabled: {{ default true .Values.portal.ingress.enabled }}
+  {{- if hasKey .Values.portal.ingress "annotations" }}
+  annotations:
+    {{- toYaml .Values.portal.ingress.annotations | nindent 4 }}
+  {{- end }}
+  {{- if hasKey .Values.portal.ingress "tls" }}
+  tls:
+    {{- toYaml .Values.portal.ingress.tls | nindent 4 }}
+  {{- end }}
+  {{- else }}
+  enabled: true
+  {{- end }}
+  domain: {{ .Values.portal.ingressDomain }}
+
+# Autoscaling (optional, only if defined in environment)
+{{- if hasKey .Values.portal "autoscaling" }}
+{{- if .Values.portal.autoscaling }}
+autoscaling:
+  {{- if hasKey .Values.portal.autoscaling "backend" }}
+  {{- if .Values.portal.autoscaling.backend }}
+  backend:
+    {{- toYaml .Values.portal.autoscaling.backend | nindent 4 }}
+  {{- end }}
+  {{- end }}
+  {{- if hasKey .Values.portal.autoscaling "frontend" }}
+  {{- if .Values.portal.autoscaling.frontend }}
+  frontend:
+    {{- toYaml .Values.portal.autoscaling.frontend | nindent 4 }}
+  {{- end }}
+  {{- end }}
+{{- end }}
+{{- end }}
