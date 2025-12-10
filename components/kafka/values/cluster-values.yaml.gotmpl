@@ -1,0 +1,18 @@
+---
+controller:
+  replicas: {{ .Values.defaults.replicas }}
+  resources:
+    {{- .Values.defaults.resources | toYaml | nindent 4  }}
+
+broker:
+  replicas: {{ .Values.defaults.replicas }}
+  resources:
+    {{- .Values.defaults.resources | toYaml | nindent 4  }}
+
+# TODO: Enable TLS and configure certs for production use
+kafka:
+  listeners:
+  - name: internal
+    port: 9092
+    type: internal
+    tls: false

@@ -1,5 +1,8 @@
+---
+{{- if ne .Values.kafka.operator.namespace .Values.kafka.ui.namespace  }}
 watchNamespaces:
-  - {{ .Values.global.namespacePrefix }}-kafka-cluster
+  - {{ .Values.kafka.ui.namespace }}
+{{ end }}
 
 labels:
   app.kubernetes.io/name: strimzi-kafka-operator

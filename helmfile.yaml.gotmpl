@@ -1,6 +1,12 @@
 ---
-bases:
-  - bases/environments.yaml
+environments:
+  default:
+    values:
+      - environments/default/global.yaml
+  testing:
+    values:
+      - environments/default/global.yaml
+      - environments/testing/global.yaml.gotmpl
 ---
 helmfiles:
   - path: "./components/kafka/helmfile.yaml.gotmpl"

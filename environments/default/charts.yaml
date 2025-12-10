@@ -1,9 +1,12 @@
 ---
 charts:
-  kafkaOperator:
-    chart: oci://quay.io/strimzi-helm/strimzi-kafka-operator
-    version: '0.48.0'
-  kafkaUi:
-    registry:
-    chart: kafbat-ui/kafka-ui
-    version: '1.5.2'
+  kafka:
+    operator:
+      chart: oci://quay.io/strimzi-helm/strimzi-kafka-operator
+      version: '0.48.0'
+    cluster:
+      chart: charts/kafka
+      version: '0.1.0'
+    ui:
+      chart: kafbat-ui/kafka-ui
+      version: '1.5.2'

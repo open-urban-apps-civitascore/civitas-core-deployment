@@ -1,5 +1,0 @@
----
-databases:
-  - name: 'keycloak'
-    user: 'keycloak'
-    secretName: 'db-keycloak'

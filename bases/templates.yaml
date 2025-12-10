@@ -2,6 +2,4 @@
 templates:
   default:
     values:
-      - values/{{ .Release.Name }}-base.yaml.gotmpl
-      - values/{{ .Release.Name }}-{{ .Values.profile }}.yaml.gotmpl
-      - ../../helpers/environment-merger.yaml.gotmpl
+      - values/{{ .Release.Name }}-values.yaml.gotmpl

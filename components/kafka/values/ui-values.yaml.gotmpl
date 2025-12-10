@@ -1,0 +1,23 @@
+---
+yamlApplicationConfig:
+  kafka:
+    clusters:
+      - name: kafka-cluster
+        bootstrapServers: {{ .Values.kafka.cluster.bootstrapService }}:{{ .Values.kafka.cluster.bootstrapPort }}
+
+ingress:
+  enabled: true
+  annotations:
+    cert-manager.io/cluster-issuer: {{ .Values.defaults.ingress.certManager.clusterIssuer }}
+  host: kafka-ui.{{ .Values.global.domain }}
+  path: '/'
+  ingressClassName: nginx
+
+resources:
+  {{- .Values.defaults.resources | toYaml | nindent 2  }}
+
+replicaCount: {{ .Values.defaults.replicas }}
+
+podDisruptionBudget:
+  enabled: {{ .Values.defaults.podDisruptionBudget.enabled }}
+  minAvailable: {{ .Values.defaults.podDisruptionBudget.minAvailable }}

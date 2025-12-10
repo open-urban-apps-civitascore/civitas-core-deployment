@@ -1,6 +1,22 @@
 ---
 global:
-  domain: civitas.cc
-  profile: dev # small,
+  domain: civitas.test
   namespacePrefix: civitas
   instanceSlug: dev
+
+defaults:
+  replicas: 1
+  resources:
+    requests:
+      cpu: 500m
+      memory: '1Gi'
+    limits:
+      cpu: '2'
+      memory: '4Gi'
+  podDisruptionBudget:
+    enabled: true
+    minAvailable: 1
+  ingress:
+    enabled: true
+    certManager:
+      clusterIssuer: letsencrypt-prod

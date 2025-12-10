@@ -2,13 +2,17 @@
 environments:
   default:
     values:
-      - locks/*.lock.yaml
-      - environments/default/*.yaml
       - profile: local
-  staging:
+      - ../../locks/*.lock.yaml
+      - ../../environments/default/*.yaml
+      - ../../environments/default/*.yaml.gotmpl
+  testing:
     values:
-      - environments/default/*.yaml
-      - profile: small
+      - profile: local
+      - ../../locks/*.lock.yaml
+      - ../../environments/default/*.yaml
+      - ../../environments/default/*.yaml.gotmpl
+      - ../../environments/testing/*.yaml.gotmpl
   production:
     values:
       - environments/default/*.yaml

@@ -1,0 +1,15 @@
+kafka:
+  operator:
+    enabled: true
+    namespace: {{ .Values.global.namespacePrefix }}-kafka
+    rawValues:
+      controller:
+        replicas: 3
+  cluster:
+    enabled: true
+    namespace: {{ .Values.global.namespacePrefix }}-kafka
+    bootstrapService: kafka-cluster-kafka-bootstrap
+    bootstrapPort: 9092
+  ui:
+    enabled: true
+    namespace: {{ .Values.global.namespacePrefix }}-kafka
