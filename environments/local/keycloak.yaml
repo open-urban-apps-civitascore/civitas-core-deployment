@@ -79,7 +79,6 @@ keycloak:
     realm:
       name: civitas
       id: civitas
-      # TODO: find a solution for secret management
       # smtp:
       #   password: password
       #   starttls: true

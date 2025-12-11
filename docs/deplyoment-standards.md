@@ -33,6 +33,8 @@ For local development, simply use minikube.
 minikube start
 minikube addons enable ingress
 
+# CREATE SECRETS HERE, see docs/deployment-guideline.md for details
+
 helmfile -f ./helmfile.d/ sync -e local
 
 sudo kubectl port-forward -n ingress-nginx service/ingress-nginx-controller 443:443
