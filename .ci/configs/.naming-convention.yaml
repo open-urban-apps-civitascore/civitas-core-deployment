@@ -27,6 +27,7 @@ exclude-patterns:
   - 'uv\.lock'
   - "\\.git/"
   - "\\.idea/"
+  - '_helpers\.tpl$' # ignore Helm helper templates
   # Allow .yaml.gotmpl because it's better than -yaml.gotmpl
   - ".*\\.yaml\\.gotmpl$"
   - ".*\\.yml\\.gotmpl$"

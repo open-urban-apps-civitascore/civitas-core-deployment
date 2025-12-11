@@ -9,15 +9,5 @@ repositories:
     url: https://kafbat.github.io/helm-charts
 ---
 
-{{- $componentData := (readFile "./releases.yaml" | fromYaml) }}
+{{ include "civitas.component" .Values }}
 
-releases:
-  - {{ include "civitas.release" (dict
-      "AllHelmfileValues" .Values
-      "Component" $componentData.component
-      "Part" $componentData.part
-      "ExtraLabels" (dict "operator" true))
-     | indent 4 }}
----
-commonLabels:
-  component: kafka

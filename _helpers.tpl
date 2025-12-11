@@ -1,15 +1,16 @@
 {{- define "civitas.component" }}
-{{- $componentData := (readFile "./releases.yaml" | fromYaml) }}
+{{- $componentData := (readFile "./component.yaml" | fromYaml) }}
 releases:
   {{- $root := . }}
   {{- $component := $componentData.component }}
   {{- $parts :=  $componentData.parts }}
   {{- range $parts }}
   {{- $part := . }}
-  - name: {{ printf "%s-%s" $component $part.name }}
+  {{- $releaseName := printf "%s-%s" $component $part.name }}
+  - name: {{ $releaseName }}
     labels:
-      release: {{ $part.name }}
-      {{ range $key, $value := (index $part "extraLabels" | default dict) }}
+      release: {{ $releaseName }}
+      {{- range $key, $value := (index $part "extraLabels" | default dict) }}
       {{ $key }}: {{ $value }}
       {{- end }}
     namespace: {{ index $root $component $part.name "namespace" }}
@@ -17,28 +18,27 @@ releases:
     version: {{ index $root.charts $component $part.name "version" }}
     createNamespace: true
     installed: {{ index $root $component $part.name "enabled" }}
+    condition: {{ $component }}.{{ $part.name }}.enabled
+    {{- if index $part "needs" }}
+    needs:
+      {{ range index $part "needs" }}
+        {{- $items := splitList "." . -}}
+        {{- $depComponent := index $items 0 -}}
+        {{- $depPart := index $items 1 -}}
+      - {{ index $root $depComponent $depPart "namespace" }}/{{ printf "%s-%s" $depComponent $depPart }}
+      {{- end }}
+    {{- end }}
+    {{- if index $part "hooks" }}
+    hooks:
+      {{- range index $part "hooks" }}
+      - {{ . }}
+      {{- end }}
+    {{- end }}
     values:
       - values/{{ $part.name }}-values.yaml.gotmpl
-      - {{ index $root $component $part.name "rawValues" | default dict | toYaml | nindent 8 }}
+      - {{- index $root $component $part.name "rawValues" | default dict | toYaml | nindent 8 }}
   {{- end }}
-{{- end }}
-
-
-{{- define "civitas.release" }}
-  {{- $root := . }}
-  {{- $component := .Component }}
-  {{- $part := .Part }}
-  {{- $labels := .ExtraLabels }}
-name: {{ printf "%s-%s" $component $part }}
-labels:
-  release: {{ $part }}
-  {{ $labels | toYaml }}
-namespace: {{ index $root.AllHelmfileValues $component $part "namespace" }}
-chart: {{ index $root.AllHelmfileValues.charts $component $part "chart" }}
-version: {{ index $root.AllHelmfileValues.charts $component $part "version" }}
-createNamespace: true
-installed: {{ index $root.AllHelmfileValues $component $part "enabled" }}
-values:
-  - values/{{ $part }}-values.yaml.gotmpl
-  - {{ index $root.AllHelmfileValues $component $part "rawValues" | default dict | toYaml | nindent 4 }}
+---
+commonLabels:
+  component: {{ $componentData.component }}
 {{- end }}
