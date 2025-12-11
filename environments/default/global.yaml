@@ -4,3 +4,4 @@ global:
   instanceSlug: dev
   profile: development
   createNamespaces: true
+  singleNamespace: false

@@ -2,19 +2,16 @@
 environments:
   default:
     values:
-      - profile: local
-      - ../../locks/*.lock.yaml
       - ../../environments/default/*.yaml
-      - ../../environments/default/*.yaml.gotmpl
+      - ../../environments/default/components/*.yaml.gotmpl
   testing:
     values:
-      - profile: local
-      - ../../locks/*.lock.yaml
       - ../../environments/default/*.yaml
-      - ../../environments/default/*.yaml.gotmpl
+      - ../../environments/default/components/*.yaml.gotmpl
       - ../../environments/testing/*.yaml.gotmpl
+      - ../../environments/testing/components/*.yaml.gotmpl
+    missingFileHandler: Warn
   production:
     values:
       - environments/default/*.yaml
       - environments/production/*.yaml
-      - profile: large

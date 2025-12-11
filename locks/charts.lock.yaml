@@ -1,4 +1,0 @@
-charts:
-  kafka:
-    operator:
-      version: 'lock-original'

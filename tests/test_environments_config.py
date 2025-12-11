@@ -34,6 +34,7 @@ def configure_environment(project_root):
     if env_dir.exists():
         shutil.rmtree(env_dir)
     env_dir.mkdir(parents=True)
+    (env_dir / "components").mkdir(parents=True)
 
     def set_value(target, dotted_path, value):
         keys = dotted_path.split(".")
@@ -121,7 +122,7 @@ def test_can_overwrite_global_values(configure_environment, render_helmfile):
 
 def test_can_overwrite_component_global_values(configure_environment, render_helmfile):
     configure_environment({
-        "kafka.yaml.gotmpl": {
+        "components/kafka.yaml.gotmpl": {
             "kafka.operator.namespace": "my-new-namespace"
         }
     })
@@ -138,7 +139,7 @@ def test_can_overwrite_component_global_values(configure_environment, render_hel
 
 def test_can_overwrite_component_helm_values(configure_environment, render_helmfile):
     configure_environment({
-        "kafka.yaml.gotmpl": {
+        "components/kafka.yaml.gotmpl": {
             "kafka.cluster.rawValues.controller.replicas": 5
         }
     })

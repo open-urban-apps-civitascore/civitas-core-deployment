@@ -16,7 +16,7 @@ ingress:
   host: {{ .Values.global.domain }}
   path: '{{ .Values.kafka.ui.pathPrefix }}'
   {{- end }}
-  ingressClassName: {{ .Values.global.ingress.ingressClass }}
+  ingressClassName: {{ .Values.defaults.ingress.ingressClass }}
 
 resources:
   {{- .Values.defaults.resources | toYaml | nindent 2  }}
