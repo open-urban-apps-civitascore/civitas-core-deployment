@@ -1,0 +1,12 @@
+component: 'kafka'
+parts:
+  - name: operator
+    extraLabels:
+      operator: 'true'
+      myLabel: 'true'
+  - name: cluster
+    needs:
+      - operator
+  - name: ui
+    needs:
+      - cluster

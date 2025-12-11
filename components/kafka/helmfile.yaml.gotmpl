@@ -8,14 +8,16 @@ repositories:
   - name: kafbat-ui
     url: https://kafbat.github.io/helm-charts
 ---
-{{- $templateData := dict
-      "AllHelmfileValues" .Values
-      "Component" "kafka"
-      "Parts" (list "operator" "cluster" "ui")
-      "SpecialLabels" (dict "operator" (dict "operator" true))
-}}
-{{ include "civitas.componentReleases" $templateData | indent 2 }}
 
+{{- $componentData := (readFile "./releases.yaml" | fromYaml) }}
+
+releases:
+  - {{ include "civitas.release" (dict
+      "AllHelmfileValues" .Values
+      "Component" $componentData.component
+      "Part" $componentData.part
+      "ExtraLabels" (dict "operator" true))
+     | indent 4 }}
 ---
 commonLabels:
   component: kafka
