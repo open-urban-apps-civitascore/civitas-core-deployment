@@ -6,12 +6,17 @@ yamlApplicationConfig:
         bootstrapServers: {{ .Values.kafka.cluster.bootstrapService }}:{{ .Values.kafka.cluster.bootstrapPort }}
 
 ingress:
-  enabled: true
+  enabled: {{ .Values.defaults.ingress.enabled }}
   annotations:
-    cert-manager.io/cluster-issuer: {{ .Values.defaults.ingress.certManager.clusterIssuer }}
-  host: kafka-ui.{{ .Values.global.domain }}
+    cert-manager.io/cluster-issuer: {{ .Values.defaults.ingress.clusterIssuer }}
+  {{- if index .Values.kafka.ui "subdomain" }}
+  host: {{ .Values.kafka.ui.subdomain }}.{{ .Values.global.domain }}
   path: '/'
-  ingressClassName: nginx
+  {{- else }}
+  host: {{ .Values.global.domain }}
+  path: '{{ .Values.kafka.ui.pathPrefix }}'
+  {{- end }}
+  ingressClassName: {{ .Values.global.ingress.ingressClass }}
 
 resources:
   {{- .Values.defaults.resources | toYaml | nindent 2  }}

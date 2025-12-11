@@ -39,8 +39,10 @@ releases:
       {{- end }}
     namespace: {{ index $root $component $part.name "namespace" }}
     chart: {{ index $root.charts $component $part.name "chart" }}
+    {{- if index $root.charts $component $part.name "version" }}
     version: {{ index $root.charts $component $part.name "version" }}
-    createNamespace: true
+    {{- end }}
+    createNamespace: {{ $root.global.createNamespaces }}
     installed: {{ index $root $component $part.name "enabled" }}
     condition: {{ $component }}.{{ $part.name }}.enabled
     {{- if index $part "needs" }}

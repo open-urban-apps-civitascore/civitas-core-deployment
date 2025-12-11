@@ -13,6 +13,6 @@ broker:
 kafka:
   listeners:
   - name: internal
-    port: 9092
+    port: {{ .Values.kafka.cluster.bootstrapPort }}
     type: internal
     tls: false

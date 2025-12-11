@@ -1,0 +1,17 @@
+---
+defaults:
+  replicas: 1
+  resources:
+    requests:
+      cpu: 1
+      memory: '200Mi'
+    limits:
+      cpu: 1
+      memory: '1Gi'
+  podDisruptionBudget:
+    enabled: true
+    minAvailable: 1
+  ingress:
+    enabled: true
+    clusterIssuer: 'selfsigned-ca'
+    ingressClass: 'nginx'
