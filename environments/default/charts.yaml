@@ -8,5 +8,6 @@ charts:
       chart: charts/kafka
       version: '1.1.0'
     ui:
+      repository: https://kafbat.github.io/helm-charts
       chart: kafbat-ui/kafka-ui
       version: '1.5.2'
