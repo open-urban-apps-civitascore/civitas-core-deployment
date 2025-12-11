@@ -8,47 +8,14 @@ repositories:
   - name: kafbat-ui
     url: https://kafbat.github.io/helm-charts
 ---
-{{- $component := "kafka" }}
-releases:
-  {{- $part := "operator" }}
-  - name: {{ printf "%s-%s" $component $part }}
-    labels:
-      release: {{ $part }}
-      operator: true
-    namespace: {{ index .Values $component $part "namespace" }}
-    chart: {{ index .Values.charts $component $part "chart" }}
-    version: {{ index .Values.charts $component $part "version" }}
-    createNamespace: true
-    installed: {{ index .Values $component $part "enabled" }}
-    values:
-      - values/{{ $part }}-values.yaml.gotmpl
-      - {{ index .Values $component $part "rawValues" | default dict | toYaml | nindent 8 }}
+{{- $templateData := dict
+      "AllHelmfileValues" .Values
+      "Component" "kafka"
+      "Parts" (list "operator" "cluster" "ui")
+      "SpecialLabels" (dict "operator" (dict "operator" true))
+}}
+{{ include "civitas.componentReleases" $templateData | indent 2 }}
 
-  {{- $part = "cluster" }}
-  - name: {{ printf "%s-%s" $component $part }}
-    labels:
-      release: {{ $part }}
-    namespace: {{ index .Values $component $part "namespace" }}
-    chart: {{ index .Values.charts $component $part "chart" }}
-    version: {{ index .Values.charts $component $part "version" }}
-    createNamespace: true
-    installed: {{ index .Values $component $part "enabled" }}
-    values:
-      - values/{{ $part }}-values.yaml.gotmpl
-      - {{ index .Values $component $part "rawValues" | default dict | toYaml | nindent 8 }}
-
-  {{- $part = "ui" }}
-  - name: {{ printf "%s-%s" $component $part }}
-    labels:
-      release: {{ $part }}
-    namespace: {{ index .Values $component $part "namespace" }}
-    chart: {{ index .Values.charts $component $part "chart" }}
-    version: {{ index .Values.charts $component $part "version" }}
-    createNamespace: true
-    installed: {{ index .Values $component $part "enabled" }}
-    values:
-      - values/{{ $part }}-values.yaml.gotmpl
-      - {{ index .Values $component $part "rawValues" | default dict | toYaml | nindent 8 }}
 ---
 commonLabels:
   component: kafka
