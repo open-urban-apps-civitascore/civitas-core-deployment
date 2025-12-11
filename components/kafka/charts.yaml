@@ -1,0 +1,11 @@
+---
+kafka:
+  operator:
+    chart: oci://quay.io/strimzi-helm/strimzi-kafka-operator
+    version: '0.48.0'
+  cluster:
+    chart: charts/kafka
+  ui:
+    repository: https://kafbat.github.io/helm-charts
+    chart: kafbat-ui/kafka-ui
+    version: '1.5.2'

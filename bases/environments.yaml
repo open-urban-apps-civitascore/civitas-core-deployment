@@ -3,6 +3,7 @@ environments:
   default:
     values:
       - ../../environments/default/*.yaml
+      - ../../environments/default/*.yaml.gotmpl
       - ../../environments/default/components/*.yaml.gotmpl
   testing:
     values:
