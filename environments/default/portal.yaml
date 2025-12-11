@@ -34,7 +34,7 @@ portal:
     replicaCount: 2
     image:
       repository: registry.gitlab.com/civitas-connect/civitas-core/civitas-core-v2/civitas-core-platform/frontend-portal
-      tag: 877dec5
+      tag: 90e4047
     resources:
       requests:
         cpu: 100m

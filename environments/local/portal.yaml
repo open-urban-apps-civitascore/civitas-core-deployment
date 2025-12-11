@@ -5,7 +5,7 @@ portal:
   namespace: local-civitas2
 
   # Environment-specific URLs (operators configure these per environment)
-  keycloakAuthServerUrl: http://keycloak.127.0.0.1.nip.io
+  keycloakAuthServerUrl: https://keycloak.127.0.0.1.nip.io
   keycloakRealm: civitas
   ingressDomain: portal.127.0.0.1.nip.io
 
@@ -35,7 +35,7 @@ portal:
     replicaCount: 1
     image:
       repository: registry.gitlab.com/civitas-connect/civitas-core/civitas-core-v2/civitas-core-platform/frontend-portal
-      tag: cf977fd
+      tag: 90e4047
     resources:
       requests:
         cpu: 100m
