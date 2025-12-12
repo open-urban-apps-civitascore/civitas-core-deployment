@@ -1,0 +1,48 @@
+---
+repositories:
+  - name: redpanda-connect
+    url: https://charts.redpanda.com
+---
+environments:
+  default:
+    values:
+      - ../environments/default/*.yaml
+      - profile: dev
+  prod:
+    values:
+      - ../environments/default/*.yaml
+      - profile: prod
+---
+helmDefaults:
+  wait: true
+  waitForJobs: true
+---
+releases:
+  - name: redpanda-connect
+    namespace: '{{ .Environment.Values.kafka.namespace }}'
+    chart: redpanda-connect/connect
+    version: '{{ .Environment.Values.kafka.operator.chartVersion }}'
+    condition: kafka.enabled
+    createNamespace: true
+    values:
+      - ../values/kafka/kafka-operator.yaml.gotmpl
+  - name: kafka
+    namespace: '{{ .Environment.Values.kafka.namespace }}'
+    chart: ../charts/kafka
+    condition: kafka.enabled
+    createNamespace: true
+    values:
+      - ../values/kafka/kafka-cluster/kafka-base.yaml
+      - ../values/kafka/kafka-cluster/kafka-{{ .Values.profile | default "dev" }}.yaml
+      - ../values/environment-merger.yaml.gotmpl
+  - name: kafka-ui
+    namespace: '{{ .Environment.Values.kafka.namespace }}'
+    chart: kafbat-ui/kafka-ui
+    condition: kafka.enabled
+    version: '{{ .Environment.Values.kafka.ui.chartVersion }}'
+    needs:
+      - {{ .Environment.Values.kafka.namespace }}/kafka
+    values:
+      - ../values/kafka/kafka-ui/kafka-ui-base.yaml.gotmpl
+      - ../values/kafka/kafka-ui/kafka-ui-{{ .Values.profile | default "dev" }}.yaml.gotmpl
+      - ../values/environment-merger.yaml.gotmpl

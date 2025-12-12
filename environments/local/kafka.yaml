@@ -7,4 +7,4 @@ kafka:
   ui:
     chartVersion: '1.5.2'
     ingress:
-      domain: kafka-ui.main.civitas2.fw-web.space
+      domain: kafka-ui.civitas.test
