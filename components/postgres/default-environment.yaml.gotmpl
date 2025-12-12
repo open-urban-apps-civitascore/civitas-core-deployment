@@ -7,6 +7,7 @@ postgres:
   cluster:
     enabled: true
     namespace: {{ include "civitas.namespace" (dict "global" .Values.global "suffix" "postgres") }}
+    name: postgres-cluster
     recovery:
       s3:
         accessKey: ""

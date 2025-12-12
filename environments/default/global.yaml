@@ -5,8 +5,14 @@ global:
   profile: development
   createNamespaces: true
   singleNamespace: true
+  ingress:
+    enabled: true
+    clusterIssuer: 'selfsigned-ca'
+    ingressClass: 'nginx'
   storage:
     storageClass:
       rwo: ''
       rwx: ''
       loc: ''
+  metrics:
+    enabled: false

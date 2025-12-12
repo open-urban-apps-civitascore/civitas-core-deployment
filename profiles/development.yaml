@@ -11,7 +11,8 @@ defaults:
   podDisruptionBudget:
     enabled: true
     minAvailable: 1
-  ingress:
-    enabled: true
-    clusterIssuer: 'selfsigned-ca'
-    ingressClass: 'nginx'
+  autoscaling:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 80

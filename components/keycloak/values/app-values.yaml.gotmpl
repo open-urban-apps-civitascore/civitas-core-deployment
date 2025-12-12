@@ -1,0 +1,136 @@
+---
+{{- $this := .Values.keycloak.app -}}
+{{- $defaults := .Values.defaults -}}
+{{- $global := .Values.global -}}
+
+fullnameOverride: ""
+nameOverride: ""
+replicas: {{ $defaults.replicas }}
+image:
+{{- with .Values.images.keycloak.app }}
+  repository: {{ .repository }}
+  tag: {{ .tag }}
+{{- end }}
+  pullPolicy: IfNotPresent
+updateStrategy: "RollingUpdate"
+restartPolicy: Always
+extraEnv: |
+  - name: KC_HOSTNAME_STRICT
+    value: "false"
+  - name: JGROUPS_DISCOVERY_PROTOCOL
+    value: kubernetes.KUBE_PING
+  - name: JGROUPS_DISCOVERY_PROPERTIES
+    value: dump_requests=true,port_range=0,namespace={{ $this.namespace }}
+  - name: KC_BOOTSTRAP_ADMIN_USERNAME
+    value: {{ $this.admin.username }}
+  - name: KC_BOOTSTRAP_ADMIN_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        name: {{ $this.admin.secret.name }}
+        key: {{ $this.admin.secret.passwordKey }}
+resources:
+  {{- .Values.defaults.resources | toYaml | nindent 2  }}
+
+service:
+  httpsPort: 8443
+ingress:
+  enabled: {{ $global.ingress.enabled }}
+  ingressClassName: {{ $global.ingress.ingressClass }}
+  servicePort: http
+  annotations:
+    ingress.kubernetes.io/affinity: cookie
+  rules:
+    {{- $domain := printf "%s.%s" (default "" $this.subdomain) $global.domain | trimPrefix "." }}
+    - host: {{ $domain }}
+      paths:
+        - path: '{{ $this.pathPrefix }}'
+          pathType: Prefix
+  tls:
+    - hosts:
+        - {{ $domain }}
+      secretName: {{ $domain }}-tls
+  console:
+    # TODO: separate values for console ingress?
+    enabled: true
+    rules:
+      - host: {{ $domain }}
+        paths:
+          - path: '{{ $this.pathPrefix | trimSuffix "/" }}/admin'
+            pathType: Prefix
+route:
+  enabled: false
+dbchecker:
+  enabled: true
+  image:
+    {{- with .Values.images.keycloak.dbchecker }}
+    repository: {{ .repository }}
+    tag: {{ .tag }}
+    {{- end }}
+  resources:
+    # resources are hardcoded, because dbchecker won't need more resources, even when the platform scales up
+    requests:
+      cpu: "20m"
+      memory: "32Mi"
+    limits:
+      cpu: "20m"
+      memory: "32Mi"
+database:
+  vendor: postgres
+  hostname: {{ .Values.databases.keycloak.host }}
+  port: {{ .Values.databases.keycloak.port }}
+  database: {{ .Values.databases.keycloak.name }}
+  username: {{ .Values.databases.keycloak.user }}
+  existingSecret: {{ .Values.databases.keycloak.secret.name }}
+  existingSecretKey: {{ .Values.databases.keycloak.secret.key }}
+proxy:
+  enabled: true
+  mode: xforwarded
+  http:
+    enabled: true
+metrics:
+  enabled: {{ $global.metrics.enabled }}
+serviceMonitor:
+  enabled: {{ $global.metrics.enabled }}
+  namespace: {{ $this.namespace }}
+autoscaling:
+  enabled: {{ $defaults.autoscaling.enabled }}
+  minReplicas: {{ $defaults.autoscaling.minReplicas }}
+  maxReplicas: {{ $defaults.autoscaling.maxReplicas }}
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: {{ $defaults.autoscaling.targetCPUUtilizationPercentage }}
+command:
+  - "/opt/keycloak/bin/kc.sh"
+  - "start"
+http:
+  relativePath: '{{ $this.pathPrefix }}'
+
+livenessProbe: |
+  httpGet:
+    path: '{{ $this.pathPrefix | trimSuffix "/" }}/realms/master'
+    port: 'http'
+    scheme: 'HTTP'
+  initialDelaySeconds: 0
+  timeoutSeconds: 5
+readinessProbe: |
+  httpGet:
+    path: '{{ $this.pathPrefix | trimSuffix "/" }}/realms/master'
+    port: 'http'
+    scheme: 'HTTP'
+  initialDelaySeconds: 10
+  timeoutSeconds: 1
+startupProbe: |
+  httpGet:
+    path: '{{ $this.pathPrefix | trimSuffix "/" }}/realms/master'
+    port: 'http'
+    scheme: 'HTTP'
+  initialDelaySeconds: 15
+  timeoutSeconds: 1
+  failureThreshold: 60
+  periodSeconds: 5
+health:
+  enabled: true

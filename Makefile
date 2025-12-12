@@ -6,7 +6,7 @@ validate:
 
 .PHONY: new-component
 new-component:
-	copier copy /home/julian/projects/civitas/civitas-2/template-component components/
+	copier copy /home/julian/projects/civitas/civitas-2/template-component components/ --trust
 
 .PHONY: update-components
 update-components:

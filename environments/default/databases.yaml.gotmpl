@@ -1,2 +1,2 @@
 databases:
-{{/*  {{- readFile "../../../components/keycloak/databases.yaml" | nindent 2 }}*/}}
+  {{- readFile "../../components/keycloak/databases.yaml.gotmpl" | nindent 2 }}

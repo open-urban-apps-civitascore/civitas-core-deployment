@@ -1,0 +1,38 @@
+---
+{{- $this := .Values.keycloak.app -}}
+{{- $defaults := .Values.defaults -}}
+{{- $global := .Values.global -}}
+
+annotations: []
+
+labels: []
+
+name: {{ .Values.databases.keycloak.name }}
+
+database:
+  allowConnections: true
+  builtinLocale:
+  cluster:
+    name: {{ .Values.postgres.cluster.name }}
+  collationVersion:
+  connectionLimit:
+  databaseReclaimPolicy:
+  encoding:
+  ensure: present
+  extensions: []
+  icuLocale:
+  icuRules:
+  isTemplate:
+  locale:
+  localeCType:
+  localeCollate:
+  localeProvider:
+  name: {{ .Values.databases.keycloak.name }}
+  owner: {{ .Values.databases.keycloak.user }}
+  schemas: []
+  tablespace:
+  template:
+  createSecret:
+    enabled: false
+    name: {{ .Values.databases.keycloak.secret.name }}
+    username: {{ .Values.databases.keycloak.user }}

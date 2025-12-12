@@ -1,0 +1,10 @@
+keycloak:
+  name: 'keycloak'
+  embedded: true
+  user: 'keycloak'
+  secret:
+    name: 'db-keycloak'
+    key: 'password'
+  # TODO: different namespace does not yet work. Namespace of the cluster is not known, when rendering this.
+  host: 'postgres-cluster-rw'
+  port: 5432

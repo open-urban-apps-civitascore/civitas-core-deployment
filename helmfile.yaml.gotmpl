@@ -18,3 +18,8 @@ helmfiles:
     values:
       - {{ toYaml .Values | nindent 8 }}
       - profiles/{{ .Values.global.profile }}.yaml
+
+  - path: "./components/keycloak/helmfile.yaml.gotmpl"
+    values:
+      - {{ toYaml .Values | nindent 8 }}
+      - profiles/{{ .Values.global.profile }}.yaml
