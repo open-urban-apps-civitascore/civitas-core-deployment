@@ -14,6 +14,6 @@ update-components:
 		if [ -d "$$d" ]; then \
 			name=$$(basename "$$d"); \
 			echo "Updating $$name..."; \
-			( cd components && copier update --skip-answered -a "$$name/.copier-answers.yml" ) || echo "copier update failed for $$name"; \
+			( cd components && copier update --skip-answered --trust -a "$$name/.copier-answers.yml" ) || echo "copier update failed for $$name"; \
 		fi; \
 	done;
