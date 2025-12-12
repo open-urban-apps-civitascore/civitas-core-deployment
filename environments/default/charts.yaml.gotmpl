@@ -1,3 +1,4 @@
 ---
 charts:
-  {{ readFile "../../components/kafka/charts.yaml" | nindent 2 }}
+  {{ readFile "../../components/postgres/charts.yaml" | fromYaml | toYaml | nindent 2 }}
+  {{ readFile "../../components/kafka/charts.yaml" | fromYaml | toYaml | nindent 2 }}

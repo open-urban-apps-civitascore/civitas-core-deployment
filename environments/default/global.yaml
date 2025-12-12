@@ -4,4 +4,9 @@ global:
   instanceSlug: dev
   profile: development
   createNamespaces: true
-  singleNamespace: false
+  singleNamespace: true
+  storage:
+    storageClass:
+      rwo: ''
+      rwx: ''
+      loc: ''

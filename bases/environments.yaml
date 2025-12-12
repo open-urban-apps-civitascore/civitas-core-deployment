@@ -7,8 +7,12 @@ environments:
       - ../../environments/default/components/*.yaml.gotmpl
   testing:
     values:
+      # default
       - ../../environments/default/*.yaml
+      - ../../environments/default/*.yaml.gotmpl
       - ../../environments/default/components/*.yaml.gotmpl
+
+      # testing
       - ../../environments/testing/*.yaml.gotmpl
       - ../../environments/testing/components/*.yaml.gotmpl
     missingFileHandler: Warn

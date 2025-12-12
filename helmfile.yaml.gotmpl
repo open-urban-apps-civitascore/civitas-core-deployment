@@ -13,3 +13,8 @@ helmfiles:
     values:
       - {{ toYaml .Values | nindent 8 }}
       - profiles/{{ .Values.global.profile }}.yaml
+
+  - path: "./components/postgres/helmfile.yaml.gotmpl"
+    values:
+      - {{ toYaml .Values | nindent 8 }}
+      - profiles/{{ .Values.global.profile }}.yaml

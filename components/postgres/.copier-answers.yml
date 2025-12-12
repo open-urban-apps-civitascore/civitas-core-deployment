@@ -1,0 +1,8 @@
+---
+# Changes here will be overwritten by Copier.
+_commit: 07d39f7
+_src_path: /home/julian/projects/civitas/civitas-2/template-component
+componentName: Postgres
+componentSlug: postgres
+releases: operator, cluster
+shortDescription: Central managed PostgreSQL database for Civitas platform

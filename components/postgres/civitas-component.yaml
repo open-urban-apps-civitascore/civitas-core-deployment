@@ -1,0 +1,9 @@
+---
+component: postgres
+parts:
+  - name: operator
+    extraLabels:
+      operator: 'true'
+  - name: cluster
+    needs:
+      - postgres.operator

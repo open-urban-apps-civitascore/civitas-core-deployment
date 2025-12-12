@@ -1,0 +1,13 @@
+---
+postgres:
+  operator:
+    enabled: true
+    namespace: {{ include "civitas.namespace" (dict "global" .Values.global "suffix" "postgres") }}
+    clusterWide: false
+  cluster:
+    enabled: true
+    namespace: {{ include "civitas.namespace" (dict "global" .Values.global "suffix" "postgres") }}
+    recovery:
+      s3:
+        accessKey: ""
+        secretKey: ""
