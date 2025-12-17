@@ -1,0 +1,6 @@
+---
+component: {{ componentSlug }}
+parts:
+  {%- for release in releasesList %}
+  - name: {{ release }}
+  {%- endfor %}
