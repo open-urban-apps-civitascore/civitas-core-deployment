@@ -1,6 +1,6 @@
 ---
 global:
-  domain: civitas.test
+  domain: https://civitas.test
   instanceSlug: dev
   profile: development
   createNamespaces: true
@@ -16,3 +16,7 @@ global:
       loc: ''
   metrics:
     enabled: false
+components:
+  - postgres
+  - kafka
+  - keycloak

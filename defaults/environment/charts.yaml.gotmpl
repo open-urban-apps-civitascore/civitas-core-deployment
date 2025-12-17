@@ -1,0 +1,6 @@
+---
+charts:
+  {{- range .Values.components }}
+  {{- $component := . }}
+  {{- readFile (printf "../../components/%s/charts.yaml" $component) | fromYaml | toYaml | nindent 2 }}
+  {{- end }}

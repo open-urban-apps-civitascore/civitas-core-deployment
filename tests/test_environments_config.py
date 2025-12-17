@@ -11,11 +11,15 @@ def project_root():
     return Path(__file__).resolve().parent.parent
 
 @pytest.fixture
-def render_helmfile(project_root):
+def deployment_dir(project_root):
+    return project_root / "deployment"
+
+@pytest.fixture
+def render_helmfile(deployment_dir):
     def _render_helmfile(*, use_test_environment: bool)  -> str:
         result = subprocess.run(
-            ["helmfile", "template", "-f", "helmfile.yaml.gotmpl"] + (["-e", "testing"] if use_test_environment else []),
-            cwd=project_root,
+            ["helmfile", "template", "-f", "helmfile.yaml"] + (["-e", "testing"] if use_test_environment else []),
+            cwd=deployment_dir,
             capture_output=True,
             text=True,
             check=False,
@@ -29,12 +33,11 @@ def render_helmfile(project_root):
     return _render_helmfile
 
 @pytest.fixture
-def configure_environment(project_root):
-    env_dir = project_root / "environments" / "testing"
+def configure_environment(deployment_dir):
+    env_dir = deployment_dir / "environments" / "testing"
     if env_dir.exists():
         shutil.rmtree(env_dir)
     env_dir.mkdir(parents=True)
-    (env_dir / "components").mkdir(parents=True)
 
     def set_value(target, dotted_path, value):
         keys = dotted_path.split(".")
@@ -122,7 +125,7 @@ def test_can_overwrite_global_values(configure_environment, render_helmfile):
 
 def test_can_overwrite_component_global_values(configure_environment, render_helmfile):
     configure_environment({
-        "components/kafka.yaml.gotmpl": {
+        "kafka.yaml.gotmpl": {
             "kafka.operator.namespace": "my-new-namespace"
         }
     })
@@ -139,7 +142,7 @@ def test_can_overwrite_component_global_values(configure_environment, render_hel
 
 def test_can_overwrite_component_helm_values(configure_environment, render_helmfile):
     configure_environment({
-        "components/kafka.yaml.gotmpl": {
+        "kafka.yaml.gotmpl": {
             "kafka.cluster.rawValues.controller.replicas": 5
         }
     })

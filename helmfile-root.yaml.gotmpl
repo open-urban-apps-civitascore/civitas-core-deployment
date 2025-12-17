@@ -1,0 +1,18 @@
+---
+environments:
+  default:
+    values:
+      - defaults/environment/global.yaml
+  # We need to iterate over all environments even the file is always the same, because as soon as an environment is defined,
+  # helmfile will not fall back to default environment automatically
+  {{- range .Values.environments }}
+  {{ . }}:
+    values:
+      - defaults/environment/global.yaml
+      - deployment/environments/{{ . }}/global.yaml.gotmpl
+  {{- end }}
+---
+helmfiles:
+  - path: "./helmfile-components.yaml.gotmpl"
+    values:
+      - {{ toYaml .Values | nindent 8 }}
