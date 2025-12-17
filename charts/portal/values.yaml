@@ -12,8 +12,8 @@ backend:
   enabled: true
   replicaCount: 1
   image:
-    repository: registry.gitlab.com/civitas-connect/civitas-core/civitas-core-v2/civitas-core-platform/backend-portal
-    tag: latest
+    repository: ''
+    tag: ''
   resources:
     requests:
       cpu: 100m
@@ -23,6 +23,10 @@ backend:
       memory: 1Gi
   env:
     loggingLevelRoot: INFO
+  modelAtlas:
+    baseUrl: ''
+    port: 8080
+    scope: 'civitas'
 
 # Frontend configuration
 frontend:
@@ -38,6 +42,10 @@ frontend:
     limits:
       cpu: 500m
       memory: 512Mi
+  api:
+    baseUrl: ''
+    port: 8080
+    scope: 'civitas'
 
 # Autoscaling (optional)
 autoscaling:

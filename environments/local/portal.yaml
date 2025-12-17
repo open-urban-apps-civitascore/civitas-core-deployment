@@ -3,6 +3,7 @@ portal:
   enabled: true
   chartVersion: 0.1.0
   namespace: local-civitas2
+  scope: civitas
 
   # Environment-specific URLs (operators configure these per environment)
   keycloakAuthServerUrl: https://keycloak.127.0.0.1.nip.io

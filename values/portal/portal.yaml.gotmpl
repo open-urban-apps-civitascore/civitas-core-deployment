@@ -19,6 +19,10 @@ backend:
     {{- toYaml .Values.portal.backend.resources | nindent 4 }}
   env:
     loggingLevelRoot: {{ default "INFO" .Values.portal.logLevel }}
+  modelAtlas:
+    baseUrl: "http://model-atlas.{{ .Values.portal.namespace }}.svc.cluster.local"
+    port: 8080
+    scope: {{ default "civitas" .Values.portal.scope | quote }}
 
 # Frontend configuration
 frontend:
@@ -28,6 +32,10 @@ frontend:
     tag: {{ .Values.portal.frontend.image.tag }}
   resources:
     {{- toYaml .Values.portal.frontend.resources | nindent 4 }}
+  api:
+    baseUrl: "http://portal-backend.{{ .Values.portal.namespace }}.svc.cluster.local"
+    port: 8080
+    scope: {{ default "civitas" .Values.portal.scope | quote }}
 
 # Keycloak configuration (environment-specific URLs)
 keycloak:

@@ -3,6 +3,7 @@ portal:
   enabled: true
   chartVersion: 0.1.0
   namespace: main-civitas2
+  scope: civitas
 
   keycloakAuthServerUrl: https://keycloak.main.civitas2.fw-web.space
   keycloakRealm: civitas
