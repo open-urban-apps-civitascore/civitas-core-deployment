@@ -1,7 +1,6 @@
 ---
 bases:
-  - "../../bases/templates.yaml"
-  - "../../bases/helm-defaults.yaml"
+  - "../../defaults/helm-defaults.yaml"
 ---
 {{- $componentData := (readFile "./civitas-component.yaml" | fromYaml) }}
 

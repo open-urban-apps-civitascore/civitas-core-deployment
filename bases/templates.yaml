@@ -1,5 +1,0 @@
----
-templates:
-  default:
-    values:
-      - values/{{ .Release.Name }}-values.yaml.gotmpl
