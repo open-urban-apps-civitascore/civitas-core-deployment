@@ -112,12 +112,96 @@ For development environments, scale down resources and replicas as needed. Consi
 - **Set CPU & memory limits** (prevent resource exhaustion)
 - Make resource configuration environment-aware (production vs. development)
 
-### Security
+### Security & Code Review
 
-- **Containers run as non-root** with `readOnlyRootFilesystem`
-- **Secrets**: No plaintext secrets, use secure secret management
-- **RBAC** (if applicable): ServiceAccount with least privilege where required
-- **NetworkPolicy** (where accessible): Default-deny with minimal allowed traffic
+Follow these security guidelines when working with Kubernetes manifests, Helm charts, and infrastructure code. Based on our [SSDLC](https://docs.core.civitasconnect.digital/docs_v2/Development/Development%20Process/SSDLC_Distilled).
+
+#### Container Security
+
+- Run all containers as non-root user (`runAsNonRoot: true`)
+- Use read-only root filesystem (`readOnlyRootFilesystem: true`)
+- Drop all capabilities and add only what's needed
+- No privileged containers unless absolutely necessary (document why)
+- Pin all image tags (never use `latest` or mutable tags)
+
+```yaml
+❌ Insecure container
+securityContext:
+  privileged: true
+
+✅ Secure container
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  readOnlyRootFilesystem: true
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop: ["ALL"]
+```
+
+#### Secrets Management
+
+- No plaintext secrets in Git (use Kubernetes Secrets or external secret managers)
+- No secrets in ConfigMaps or environment variables visible in pod specs
+- Use `stringData` for creating secrets, not base64 in manifests
+- Document secret rotation procedures
+- Reference secrets via `secretKeyRef` or volume mounts
+
+#### Network Security
+
+- Implement NetworkPolicies (default-deny, then allow specific traffic)
+- All external endpoints use TLS (ingress with cert-manager)
+- Internal service-to-service communication over TLS where possible
+- Minimize exposed ports and services
+
+#### RBAC & Access Control
+
+- Use ServiceAccounts with least privilege principle
+- Never use `cluster-admin` for applications
+- Create specific Roles/ClusterRoles for each component
+- Document why each permission is needed
+
+#### Resource Management
+
+- Set both requests and limits for CPU and memory
+- Use ResourceQuotas for namespaces in multi-tenant setups
+- Implement PodDisruptionBudgets for production workloads
+- Configure appropriate `terminationGracePeriodSeconds`
+
+#### Configuration & Defaults
+
+- Use secure defaults in Helm charts
+- Make security features opt-out, not opt-in
+- Validate all user-provided values in Helm templates
+- Document security implications of configuration options
+
+#### Observability
+
+- Configure health probes (startup, liveness, readiness)
+- Ensure logs don't contain secrets or PII
+- Use structured logging where possible
+- Enable audit logging for security-relevant events
+
+#### Pull Request Checklist
+
+Developer:
+- [ ] All container images pinned to specific tags (no `latest`)
+- [ ] Containers run as non-root with read-only filesystem
+- [ ] No secrets in plaintext (Git, ConfigMaps, or pod specs)
+- [ ] NetworkPolicies defined for new services
+- [ ] Resource requests and limits configured
+- [ ] ServiceAccount with least privilege (if needed)
+- [ ] Health probes configured for long-running workloads
+- [ ] TLS enabled for external endpoints
+
+Reviewer:
+- [ ] SecurityContext properly configured (non-root, read-only FS, dropped caps)
+- [ ] No privileged containers without documented justification
+- [ ] Secrets referenced correctly (not hardcoded)
+- [ ] NetworkPolicy follows default-deny principle
+- [ ] RBAC permissions follow least privilege
+- [ ] Configuration defaults are secure
+- [ ] Changes align with [deployment standards](deplyoment-standards.md)
 
 ### Observability & Reliability
 
