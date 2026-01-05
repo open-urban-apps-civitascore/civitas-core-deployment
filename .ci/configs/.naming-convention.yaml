@@ -37,3 +37,4 @@ exclude-patterns:
   - '.*\.gitlab/merge_request_templates.*'
   # Exclude gitlab-ci-local build directory
   - '.*\.gitlab-ci-local/.*'
+  - '.idea/'

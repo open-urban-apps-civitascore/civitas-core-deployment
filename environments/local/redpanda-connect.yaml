@@ -1,0 +1,7 @@
+redpanda-connect:
+  enabled: true
+  namespace: local-civitas2
+  chartVersion: '4.68.0'
+  image:
+    repository: ghcr.io/redpanda-data/connect
+    tag: 4.30.1
