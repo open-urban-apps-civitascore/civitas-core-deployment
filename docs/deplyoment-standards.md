@@ -182,26 +182,9 @@ securityContext:
 - Use structured logging where possible
 - Enable audit logging for security-relevant events
 
-#### Pull Request Checklist
+---
 
-Developer:
-- [ ] All container images pinned to specific tags (no `latest`)
-- [ ] Containers run as non-root with read-only filesystem
-- [ ] No secrets in plaintext (Git, ConfigMaps, or pod specs)
-- [ ] NetworkPolicies defined for new services
-- [ ] Resource requests and limits configured
-- [ ] ServiceAccount with least privilege (if needed)
-- [ ] Health probes configured for long-running workloads
-- [ ] TLS enabled for external endpoints
-
-Reviewer:
-- [ ] SecurityContext properly configured (non-root, read-only FS, dropped caps)
-- [ ] No privileged containers without documented justification
-- [ ] Secrets referenced correctly (not hardcoded)
-- [ ] NetworkPolicy follows default-deny principle
-- [ ] RBAC permissions follow least privilege
-- [ ] Configuration defaults are secure
-- [ ] Changes align with [deployment standards](deplyoment-standards.md)
+See also: [SSDLC Guidelines](../../documentation/docs_v2/Development/Development%20Process/SSDLC_Distilled.md) for comprehensive security requirements.
 
 ### Observability & Reliability
 
