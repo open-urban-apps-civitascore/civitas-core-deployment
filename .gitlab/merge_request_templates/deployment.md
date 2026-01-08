@@ -4,6 +4,13 @@ Short description of changes being merged:
 
 Link to gitlab issue:
 
+## Security Review
+
+Before requesting review, ensure your changes follow the security guidelines:
+- [ ] [DevOps/Infrastructure Security Guidelines](../../docs/deplyoment-standards.md#security--code-review)
+- [ ] [SSDLC Requirements](../../../documentation/docs_v2/Development/Development%20Process/SSDLC_Distilled.md) (for Medium/High sensitivity changes)
+- [ ] CI security checks pass
+
 To ensure our deployments meet the required standards, please verify the following checklist before merging any changes:
 
 ## Required for All Deployments
