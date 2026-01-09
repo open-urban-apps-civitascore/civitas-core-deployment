@@ -11,14 +11,6 @@ keycloak:
     createSecret: true
     forceRecreateSecret: false
   database:
-    #   enabled: true
-    # name: db-keycloak
-    # user: "keycloak"
-    # secret:
-    #   name: db-keycloak
-    #   key: password
-    # host: db-cluster-rw.civitas.svc.cluster.local
-    # port: 5432
     checker:
       enabled: true
       image:
@@ -89,6 +81,37 @@ keycloak:
       theme: keycloak
       enable_events: true
       enable_adminEvents: true
+      clients:
+        apicurio-registry:
+          clientId: apicurioRegistry
+          name: Apicurio Registry
+          description: Apicurio Registry
+          enabled: true
+          clientAuthenticatorType: client-secret
+          secret:
+            name: apicurio-registry-oicd
+            key: secret
+            createSecret: true
+            forceRecreateSecret: false
+          redirectUris:
+            - 'https://apicurio.civitas.test/*'
+          webOrigins:
+            - '+'
+        apicurio-ui:
+          clientId: apicurio-ui
+          name: Apicurio UI
+          description: Apicurio UI
+          enabled: true
+          clientAuthenticatorType: client-secret
+          secret:
+            name: apicurio-ui-oicd
+            key: secret
+            createSecret: true
+            forceRecreateSecret: false
+          redirectUris:
+            - 'https://apicurio-ui.civitas.test/*'
+          webOrigins:
+            - '+'
   probesInitialDelaySeconds:
     liveness: 60
     readiness: 60

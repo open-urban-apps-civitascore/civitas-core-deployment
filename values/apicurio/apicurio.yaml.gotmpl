@@ -1,0 +1,95 @@
+---
+registry:
+  enabled: true
+  app:
+    image:
+      repository: {{ .Values.apicurio.image.registry.repository }}
+      tag: {{ .Values.apicurio.image.registry.tag }}
+      pullPolicy: IfNotPresent
+    features:
+      resourceDeleteEnabled: false
+      versionMutabilityEnabled: false
+    storage:
+      type: kafkasql
+      kafkasql:
+        bootstrapServers: "{{ .Values.apicurio.kafka.host }}:{{ .Values.apicurio.kafka.port }}"
+#        auth:
+#          # TODO: Set to true when Kafka is ready
+#          enabled: false
+#          mechanism: "PLAIN"
+#          clientIdRef:
+#            name: {{ .Values.apicurio.kafka.auth.idSecret.name }}
+#            key: {{ .Values.apicurio.kafka.auth.idSecret.key }}
+#          clientSecretRef:
+#            name: {{ .Values.apicurio.kafka.auth.secretSecret.name }}
+#            key: {{ .Values.apicurio.kafka.auth.secretSecret.key }}
+    service:
+      type: ClusterIP
+      port: 8080
+    ingress:
+      enabled: true
+      host: "{{ .Values.apicurio.domain }}"
+      path: "/apis/registry/v3"
+    auth:
+      enabled: {{ default "true" .Values.apicurio.auth.enabled }}
+      authServerUrl: "https://{{ .Values.keycloak.ingress.domain }}{{ .Values.keycloak.ingress.relativePath }}realms/{{ .Values.keycloak.config.realm.name }}"
+      appClientId: "apicurioRegistry"
+      uiClientId: "apicurioUI"
+      redirectUri: "https://{{ .Values.apicurio.domain }}/auth/callback"
+      logoutUrl: "https://{{ .Values.keycloak.ingress.domain }}{{ .Values.keycloak.ingress.relativePath }}realms/{{ .Values.keycloak.config.realm.name }}/protocol/openid-connect/logout?redirect_uri=https://{{ .Values.apicurio.domain }}"
+
+    startupProbe:
+      failureThreshold: 30
+      httpGet:
+        path: /health/ready
+        port: http
+        scheme: HTTP
+      initialDelaySeconds: 10
+      periodSeconds: 5
+      successThreshold: 1
+      timeoutSeconds: 3
+    livenessProbe:
+      failureThreshold: 3
+      httpGet:
+        path: /health/live
+        port: http
+        scheme: HTTP
+      initialDelaySeconds: 60
+      periodSeconds: 10
+      successThreshold: 1
+      timeoutSeconds: 5
+    readinessProbe:
+      failureThreshold: 3
+      httpGet:
+        path: /health/ready
+        port: http
+        scheme: HTTP
+      initialDelaySeconds: 30
+      periodSeconds: 10
+      successThreshold: 1
+      timeoutSeconds: 5
+    env:
+      {{- if .Values.apicurio.debug.enabled }}
+      - name: QUARKUS_LOG_LEVEL
+        value: DEBUG
+      - name: QUARKUS_LOG_CATEGORY__IO_APICURIO__LEVEL
+        value: DEBUG
+      {{- end }}
+      - name: REGISTRY_KAFKASQL_TOPIC_AUTO_CREATE
+        value: "false"
+
+  ui:
+    enabled: true
+    image:
+      repository: {{ .Values.apicurio.image.registryUI.repository }}
+      tag: {{ .Values.apicurio.image.registryUI.tag }}
+      pullPolicy: IfNotPresent
+    service:
+      type: ClusterIP
+      port: 8080
+    ingress:
+      enabled: true
+      host: "{{ .Values.apicurio.domain }}"
+    replicas: 2
+    podDisruptionBudget:
+      enabled: false
