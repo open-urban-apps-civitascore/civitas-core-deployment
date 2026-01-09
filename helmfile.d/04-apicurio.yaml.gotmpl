@@ -12,9 +12,10 @@ helmDefaults:
   waitForJobs: true
 ---
 releases:
-  - name: application-secrets
-    namespace: '{{ .Values.global.namespace }}'
-    chart: ../charts/secrets
+  - name: apicurio
+    namespace: {{ .Values.apicurio.namespace }}
+    chart: ../charts/apicurio
     createNamespace: true
+    installed: {{ .Values.apicurio.enabled }}
     values:
-      - ../values/secrets/all-secrets.yaml.gotmpl
+      - ../values/apicurio/apicurio.yaml.gotmpl

@@ -7,11 +7,11 @@ environments:
   default:
     values:
       - ../environments/default/*.yaml
-      - profile: dev
-  prod:
-    values:
-      - ../environments/default/*.yaml
       - profile: prod
+  local:
+    values:
+      - ../environments/local/*.yaml
+      - profile: dev
 ---
 helmDefaults:
   wait: true
@@ -19,29 +19,31 @@ helmDefaults:
 ---
 releases:
   - name: kafka-operator
-    namespace: '{{ .Environment.Values.kafka.namespace }}'
+    namespace: '{{ .Values.kafka.namespace }}'
     chart: oci://quay.io/strimzi-helm/strimzi-kafka-operator
-    version: '{{ .Environment.Values.kafka.operator.chartVersion }}'
+    version: '{{ .Values.kafka.operator.chartVersion }}'
     condition: kafka.enabled
     createNamespace: true
     values:
       - ../values/kafka/kafka-operator.yaml.gotmpl
   - name: kafka
-    namespace: '{{ .Environment.Values.kafka.namespace }}'
+    namespace: '{{ .Values.kafka.namespace }}'
     chart: ../charts/kafka
     condition: kafka.enabled
     createNamespace: true
+    needs:
+      - {{ .Values.kafka.namespace }}/kafka-operator
     values:
       - ../values/kafka/kafka-cluster/kafka-base.yaml
       - ../values/kafka/kafka-cluster/kafka-{{ .Values.profile | default "dev" }}.yaml
       - ../values/environment-merger.yaml.gotmpl
   - name: kafka-ui
-    namespace: '{{ .Environment.Values.kafka.namespace }}'
+    namespace: '{{ .Values.kafka.namespace }}'
     chart: kafbat-ui/kafka-ui
     condition: kafka.enabled
-    version: '{{ .Environment.Values.kafka.ui.chartVersion }}'
+    version: '{{ .Values.kafka.ui.chartVersion }}'
     needs:
-      - {{ .Environment.Values.kafka.namespace }}/kafka
+      - {{ .Values.kafka.namespace }}/kafka
     values:
       - ../values/kafka/kafka-ui/kafka-ui-base.yaml.gotmpl
       - ../values/kafka/kafka-ui/kafka-ui-{{ .Values.profile | default "dev" }}.yaml.gotmpl

@@ -1,0 +1,41 @@
+---
+apicurio:
+  enabled: true
+  debug:
+    enabled: false
+  namespace: local-civitas2
+  chartVersion: '0.1.0'
+  image:
+    operator:
+      repository: quay.io/apicurio/apicurio-registry-3-operator
+      tag: '3.1.3'
+    registry:
+      repository: quay.io/apicurio/apicurio-registry
+      tag: '3.1.3'
+    registryUI:
+      repository: quay.io/apicurio/apicurio-registry-ui
+      tag: '3.1.3'
+
+  operator:
+    watchedNamespaces: 'current'
+
+  registry:
+    name: civitas
+    auth:
+      enabled: false
+
+  domain: apicurio.civitas.test
+
+  auth:
+    enabled: true
+
+  kafka:
+    host: kafka-cluster-kafka-bootstrap.local-civitas2.svc.cluster.local
+    port: 9092
+    auth:
+      idSecret:
+        name: 'apicurio-kafka-client'
+        key: 'id'
+      secretSecret:
+        name: 'apicurio-kafka-client'
+        key: 'secret'

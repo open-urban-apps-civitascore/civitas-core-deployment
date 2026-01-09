@@ -18,7 +18,7 @@ modelAtlas:
     className: 'nginx'
     annotations: {}
     hosts:
-      - host: model-atlas.local
+      - host: model-atlas.main.civitas2.fw-web.space
         paths:
           - path: /
             pathType: Prefix

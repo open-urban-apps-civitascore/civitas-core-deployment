@@ -3,7 +3,7 @@ embeddedDatabase:
   enabled: true
   crdVersion: '0.26.0'
   clusterVersion: '0.3.1'
-  namespace: local-civitas2
+  namespace: '{{ .Values.global.namespace }}'
   clusterWide: false
   recovery:
     backupName: civitas-database-backups

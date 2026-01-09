@@ -3,29 +3,29 @@
 # This file is processed by Helmfile and can use Go templating
 
 image:
-  repository: {{ .Environment.Values.modelAtlas.image.repository }}
-  tag: {{ .Environment.Values.modelAtlas.image.tag }}
+  repository: {{ .Values.modelAtlas.image.repository }}
+  tag: {{ .Values.modelAtlas.image.tag }}
   pullPolicy: Always
 
 replicaCount: 1
 
 resources:
   requests:
-    memory: {{ default "256Mi" .Environment.Values.modelAtlas.resources.requests.memory }}
-    cpu: {{ default "100m" .Environment.Values.modelAtlas.resources.requests.cpu }}
+    memory: {{ default "256Mi" .Values.modelAtlas.resources.requests.memory }}
+    cpu: {{ default "100m" .Values.modelAtlas.resources.requests.cpu }}
   limits:
-    memory: {{ default "512Mi" .Environment.Values.modelAtlas.resources.limits.memory }}
-    cpu: {{ default "1000m" .Environment.Values.modelAtlas.resources.limits.cpu }}
+    memory: {{ default "512Mi" .Values.modelAtlas.resources.limits.memory }}
+    cpu: {{ default "1000m" .Values.modelAtlas.resources.limits.cpu }}
 
 ingress:
-  enabled: {{ default false .Environment.Values.modelAtlas.ingress.enabled }}
-  className: {{ default "nginx" .Environment.Values.modelAtlas.ingress.className }}
+  enabled: {{ default false .Values.modelAtlas.ingress.enabled }}
+  className: {{ default "nginx" .Values.modelAtlas.ingress.className }}
   annotations: {}
   hosts:
-    - host: {{ default "model-atlas.local" (index .Environment.Values.modelAtlas.ingress.hosts 0).host }}
+    - host: {{ default "model-atlas.local" (index .Values.modelAtlas.ingress.hosts 0).host }}
       paths:
-        - path: {{ default "/" (index (index .Environment.Values.modelAtlas.ingress.hosts 0).paths 0).path }}
-          pathType: {{ default "Prefix" (index (index .Environment.Values.modelAtlas.ingress.hosts 0).paths 0).pathType }}
+        - path: {{ default "/" (index (index .Values.modelAtlas.ingress.hosts 0).paths 0).path }}
+          pathType: {{ default "Prefix" (index (index .Values.modelAtlas.ingress.hosts 0).paths 0).pathType }}
   tls: []
 
 # Service configuration
