@@ -6,9 +6,9 @@ portal:
   scope: civitas
 
   # Environment-specific URLs (operators configure these per environment)
-  keycloakAuthServerUrl: https://keycloak.127.0.0.1.nip.io
+  keycloakAuthServerUrl: http://keycloak.civitas.test
   keycloakRealm: civitas
-  ingressDomain: portal.127.0.0.1.nip.io
+  ingressDomain: portal.civitas.test
 
   ingress:
     enabled: true

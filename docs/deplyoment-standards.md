@@ -27,21 +27,25 @@ Development environment domains:
 `*.dev4.civitas2.fw-web.space`: Used by Julian Sobott (julian.sobott@frachtwerk.de) for development and testing
 `*.dev5.civitas2.fw-web.space`: Used by Tobias Dillig (tobias.dillig@frachtwerk.de) for development and testing
 
-For local development, simply use minikube.
+For local development, use the provided Makefile commands:
 
 ```bash
-minikube start
-minikube addons enable ingress
+# Deploy minikube with local environment (starts minikube, enables addons, creates namespace and secrets, syncs helmfile)
+make deploy-local
 
-# CREATE SECRETS HERE, see docs/deployment-guideline.md for details
-
-helmfile -f ./helmfile.d/ sync -e local
-
+# On MacOS
+# Port-forward to access services locally
 sudo kubectl port-forward -n ingress-nginx service/ingress-nginx-controller 443:443
+# Optional: Add host entries to /etc/hosts for easier access
+make add-hosts-macos
 
-# Now you can access service on https://<service name>.127.0.0.1.nip.io
+# On Linux
+# Optional: Add host entries to /etc/hosts for easier access
+make add-hosts-linux
 
-# Login to keycloak on https://keycloak.127.0.0.1.nip.io to create user accounts with admin accounts (username: environments/default/keycloak.yaml > keycloak.admin.user, password: from k8s secrets, see below)
+# Now you can access services on https://<service name>.civitas.test
+
+# Login to keycloak on https://keycloak.civitas.test to create user accounts (username: environments/default/keycloak.yaml > keycloak.admin.user, password: from k8s secrets, see below)
 kubectl get secret keycloak-admin-user -n local-civitas2 -o jsonpath='{.data.admin-password}' | base64 --decode
 ```
 

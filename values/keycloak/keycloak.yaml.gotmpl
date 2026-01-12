@@ -2,28 +2,26 @@ fullnameOverride: ""
 nameOverride: ""
 replicas: 1
 image:
-  repository: {{ .Environment.Values.keycloak.image.repository | default "quay.io/keycloak/keycloak" }}
-  tag: {{ .Environment.Values.keycloak.image.tag | default "26.4.0" }}
-  digest: {{ .Environment.Values.keycloak.image.digest | default "" }}
+  repository: {{ .Values.keycloak.image.repository | default "quay.io/keycloak/keycloak" }}
+  tag: {{ .Values.keycloak.image.tag | default "26.4.0" }}
+  digest: {{ .Values.keycloak.image.digest | default "" }}
   pullPolicy: IfNotPresent
-updateStrategy: {{ .Environment.Values.keycloak.updateStrategy | default "RollingUpdate" }}
+updateStrategy: {{ .Values.keycloak.updateStrategy | default "RollingUpdate" }}
 restartPolicy: Always
 extraEnv: |
-  - name: KC_HTTP_RELATIVE_PATH
-    value: {{ .Environment.Values.keycloak.ingress.relativePath | default "/" | quote }}
   - name: KC_HOSTNAME_STRICT
     value: "false"
   - name: JGROUPS_DISCOVERY_PROTOCOL
     value: kubernetes.KUBE_PING
   - name: JGROUPS_DISCOVERY_PROPERTIES
-    value: dump_requests=true,port_range=0,namespace={{ .Environment.Values.global.namespace | default "civitas" }}
+    value: dump_requests=true,port_range=0,namespace={{ .Values.global.namespace | default "civitas" }}
   - name: KC_BOOTSTRAP_ADMIN_USERNAME
-    value: {{ .Environment.Values.keycloak.admin.user | default "admin" }}
+    value: {{ .Values.keycloak.admin.user | default "admin" }}
   - name: KC_BOOTSTRAP_ADMIN_PASSWORD
     valueFrom:
       secretKeyRef:
-        name: {{ .Environment.Values.keycloak.admin.secret.name | default "keycloak-admin-user" }}
-        key: {{ .Environment.Values.keycloak.admin.secret.key | default "admin-password" }}
+        name: {{ .Values.keycloak.admin.secret.name | default "keycloak-admin-user" }}
+        key: {{ .Values.keycloak.admin.secret.key | default "admin-password" }}
   - name: KC_DB_POOL_INITIAL_SIZE
     value: "5"
   - name: KC_DB_POOL_MIN_SIZE
@@ -36,93 +34,95 @@ extraEnv: |
     value: "false"
 resources:
   requests:
-    memory: {{ .Environment.Values.keycloak.resources.requests.memory | default "512Mi" }}
-    cpu: {{ .Environment.Values.keycloak.resources.requests.cpu | default "250m" }}
+    memory: {{ .Values.keycloak.resources.requests.memory | default "512Mi" }}
+    cpu: {{ .Values.keycloak.resources.requests.cpu | default "250m" }}
   limits:
-    memory: {{ .Environment.Values.keycloak.resources.limits.memory | default "1Gi" }}
-    cpu: {{ .Environment.Values.keycloak.resources.limits.cpu | default "500m" }}
+    memory: {{ .Values.keycloak.resources.limits.memory | default "1Gi" }}
+    cpu: {{ .Values.keycloak.resources.limits.cpu | default "500m" }}
 service:
-  {{- if .Environment.Values.keycloak.service.annotations }}
+  {{- if .Values.keycloak.service.annotations }}
   annotations:
-    {{ toYaml .Environment.Values.keycloak.service.annotations | indent 4 }}
+    {{ toYaml .Values.keycloak.service.annotations | indent 4 }}
   {{- end }}
-  {{- if .Environment.Values.keycloak.service.labels }}
+  {{- if .Values.keycloak.service.labels }}
   labels:
-    {{ toYaml .Environment.Values.keycloak.service.labels | indent 4 }}
+    {{ toYaml .Values.keycloak.service.labels | indent 4 }}
   {{- end }}
   httpsPort: 8443
+http:
+  relativePath: {{ .Values.keycloak.ingress.relativePath | default "/" | quote }}
 ingress:
   enabled: true
   ingressClassName: "nginx"
   servicePort: http
   annotations:
     ingress.kubernetes.io/affinity: cookie
-    {{- range $key, $value := .Environment.Values.keycloak.ingress.annotations }}
+    {{- range $key, $value := .Values.keycloak.ingress.annotations }}
     {{ $key }}: {{ $value | quote }}
     {{- end }}
-  {{- if .Environment.Values.keycloak.ingress.labels }}
+  {{- if .Values.keycloak.ingress.labels }}
   labels:
-    {{ toYaml .Environment.Values.keycloak.ingress.labels | indent 4 }}
+    {{ toYaml .Values.keycloak.ingress.labels | indent 4 }}
   {{- end }}
   rules:
-    - host: {{ .Environment.Values.keycloak.ingress.domain }}
+    - host: {{ .Values.keycloak.ingress.domain }}
       paths:
-        - path: /
+        - path: {{ .Values.keycloak.ingress.relativePath | default "/" | quote }}
           pathType: Prefix
   tls:
     - hosts:
-        - {{ .Environment.Values.keycloak.ingress.domain }}
-      secretName: {{ .Environment.Values.keycloak.ingress.tls.secretName }}
+        - {{ .Values.keycloak.ingress.domain }}
+      secretName: {{ .Values.keycloak.ingress.tls.secretName }}
   console:
     enabled: true
     rules:
-      - host: {{ .Environment.Values.keycloak.ingress.domain }}
+      - host: {{ .Values.keycloak.ingress.domain }}
         paths:
           - path: /admin
             pathType: Prefix
 route:
   enabled: false
 dbchecker:
-  enabled: {{ default true .Environment.Values.keycloak.database.checker.enabled }}
+  enabled: {{ default true .Values.keycloak.database.checker.enabled }}
   image:
-    repository: {{ default "docker.io/busybox" .Environment.Values.keycloak.database.checker.image.repository }}
-    tag: {{ default "1.32" .Environment.Values.keycloak.database.checker.image.tag }}
+    repository: {{ default "docker.io/busybox" .Values.keycloak.database.checker.image.repository }}
+    tag: {{ default "1.32" .Values.keycloak.database.checker.image.tag }}
   resources:
     requests:
-      cpu: {{ default "20m" .Environment.Values.keycloak.database.checker.resources.requests.cpu }}
-      memory: {{ default "32Mi" .Environment.Values.keycloak.database.checker.resources.requests.memory }}
+      cpu: {{ default "20m" .Values.keycloak.database.checker.resources.requests.cpu }}
+      memory: {{ default "32Mi" .Values.keycloak.database.checker.resources.requests.memory }}
     limits:
-      cpu: {{ default "20m" .Environment.Values.keycloak.database.checker.resources.limits.cpu }}
-      memory: {{ default "32Mi" .Environment.Values.keycloak.database.checker.resources.limits.memory }}
+      cpu: {{ default "20m" .Values.keycloak.database.checker.resources.limits.cpu }}
+      memory: {{ default "32Mi" .Values.keycloak.database.checker.resources.limits.memory }}
 database:
   vendor: postgres
-  hostname: {{ .Environment.Values.databases.keycloak.host }}
-  port: {{ default 5432 .Environment.Values.databases.keycloak.port }}
-  database: {{ default "keycloak" .Environment.Values.databases.keycloak.name }}
-  username: {{ default "keycloak" .Environment.Values.databases.keycloak.user }}
-  existingSecret: {{ .Environment.Values.databases.keycloak.secret.name }}
-  existingSecretKey: {{ .Environment.Values.databases.keycloak.secret.key }}
+  hostname: {{ .Values.databases.keycloak.host }}
+  port: {{ default 5432 .Values.databases.keycloak.port }}
+  database: {{ default "keycloak" .Values.databases.keycloak.name }}
+  username: {{ default "keycloak" .Values.databases.keycloak.user }}
+  existingSecret: {{ .Values.databases.keycloak.secret.name }}
+  existingSecretKey: {{ .Values.databases.keycloak.secret.key }}
 proxy:
   enabled: true
   mode: xforwarded
   http:
     enabled: true
 metrics:
-  enabled: {{ default false .Environment.Values.global.metrics.enabled }}
+  enabled: {{ default false .Values.global.metrics.enabled }}
 serviceMonitor:
-  enabled: {{ default false .Environment.Values.global.metrics.enabled }}
-  namespace: {{ .Environment.Values.global.namespace | default "civitas" }}
+  enabled: {{ default false .Values.global.metrics.enabled }}
+  namespace: {{ .Values.global.namespace | default "civitas" }}
 autoscaling:
-  enabled: {{ default false .Environment.Values.keycloak.autoscaling.enabled }}
-  minReplicas: {{ default 1 .Environment.Values.keycloak.autoscaling.minReplicas }}
-  maxReplicas: {{ default 3 .Environment.Values.keycloak.autoscaling.maxReplicas }}
+  enabled: {{ default false .Values.keycloak.autoscaling.enabled }}
+  minReplicas: {{ default 1 .Values.keycloak.autoscaling.minReplicas }}
+  maxReplicas: {{ default 3 .Values.keycloak.autoscaling.maxReplicas }}
   metrics:
     - type: Resource
       resource:
         name: cpu
         target:
           type: Utilization
-          averageUtilization: {{ default 80 .Environment.Values.keycloak.autoscaling.targetCPUtilizationPercentage }}
+          averageUtilization: {{ default 80 .Values.keycloak.autoscaling.targetCPUtilizationPercentage }}
 command:
   - "/opt/keycloak/bin/kc.sh"
   - "start"
@@ -132,21 +132,21 @@ livenessProbe: |
     path: '/realms/master'
     port: 'http'
     scheme: 'HTTP'
-  initialDelaySeconds: {{ default 0 .Environment.Values.keycloak.probesInitialDelaySeconds.liveness }}
+  initialDelaySeconds: {{ default 0 .Values.keycloak.probesInitialDelaySeconds.liveness }}
   timeoutSeconds: 5
 readinessProbe: |
   httpGet:
     path: '/realms/master'
     port: 'http'
     scheme: 'HTTP'
-  initialDelaySeconds: {{ default 10 .Environment.Values.keycloak.probesInitialDelaySeconds.readiness }}
+  initialDelaySeconds: {{ default 10 .Values.keycloak.probesInitialDelaySeconds.readiness }}
   timeoutSeconds: 1
 startupProbe: |
   httpGet:
     path: '/realms/master'
     port: 'http'
     scheme: 'HTTP'
-  initialDelaySeconds: {{ default 15 .Environment.Values.keycloak.probesInitialDelaySeconds.startup }}
+  initialDelaySeconds: {{ default 15 .Values.keycloak.probesInitialDelaySeconds.startup }}
   timeoutSeconds: 1
   failureThreshold: 60
   periodSeconds: 5

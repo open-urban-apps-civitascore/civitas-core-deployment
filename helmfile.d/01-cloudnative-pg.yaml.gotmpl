@@ -16,21 +16,21 @@ helmDefaults:
   waitForJobs: true
 ---
 releases:
-  - name: {{ .Environment.Values.embeddedDatabase.cluster.name }}-operator
-    namespace: "{{- if .Environment.Values.embeddedDatabase.clusterWide -}}{{ .Environment.Values.embeddedDatabase.namespace }}{{- else -}}{{ .Environment.Values.global.namespace }}{{- end -}}"
+  - name: {{ .Values.embeddedDatabase.cluster.name }}-operator
+    namespace: "{{- if .Values.embeddedDatabase.clusterWide -}}{{ .Values.embeddedDatabase.namespace }}{{- else -}}{{ .Values.global.namespace }}{{- end -}}"
     chart: cnpg/cloudnative-pg
-    version: "{{ .Environment.Values.embeddedDatabase.crdVersion }}"
+    version: "{{ .Values.embeddedDatabase.crdVersion }}"
     createNamespace: true
     condition: embeddedDatabase.enabled
     set:
       - name: config.clusterWide
-        value: {{ .Environment.Values.embeddedDatabase.clusterWide }}
-  - name: "{{ .Environment.Values.embeddedDatabase.cluster.name }}"
+        value: {{ .Values.embeddedDatabase.clusterWide }}
+  - name: "{{ .Values.embeddedDatabase.cluster.name }}"
     needs:
-      - "{{- if .Environment.Values.embeddedDatabase.clusterWide -}}{{ .Environment.Values.embeddedDatabase.namespace }}{{- else -}}{{ .Environment.Values.global.namespace }}{{- end -}}/db-cluster-operator"
-    namespace: "{{- if .Environment.Values.embeddedDatabase.clusterWide -}}{{ .Environment.Values.embeddedDatabase.namespace }}{{- else -}}{{ .Environment.Values.global.namespace }}{{- end -}}"
+      - "{{- if .Values.embeddedDatabase.clusterWide -}}{{ .Values.embeddedDatabase.namespace }}{{- else -}}{{ .Values.global.namespace }}{{- end -}}/db-cluster-operator"
+    namespace: "{{- if .Values.embeddedDatabase.clusterWide -}}{{ .Values.embeddedDatabase.namespace }}{{- else -}}{{ .Values.global.namespace }}{{- end -}}"
     chart: cnpg/cluster
-    version: "{{ .Environment.Values.embeddedDatabase.clusterVersion }}"
+    version: "{{ .Values.embeddedDatabase.clusterVersion }}"
     createNamespace: true
     condition: embeddedDatabase.enabled
     values:
