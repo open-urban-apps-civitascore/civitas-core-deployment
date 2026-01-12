@@ -38,3 +38,4 @@ exclude-patterns:
   # Exclude gitlab-ci-local build directory
   - '.*\.gitlab-ci-local/.*'
   - '.idea/'
+  - 'environments/*'

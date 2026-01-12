@@ -1,0 +1,30 @@
+---
+repositories:
+  - name: redpanda-connect
+    url: https://charts.redpanda.com
+---
+environments:
+  default:
+    values:
+      - ../environments/default/*.yaml
+      - profile: prod
+  local:
+    values:
+      - ../environments/local/*.yaml
+      - profile: dev
+---
+helmDefaults:
+  wait: true
+  waitForJobs: true
+---
+releases:
+  - name: redpanda-connect
+    namespace: '{{ .Environment.Values.redpandaConnect.namespace }}'
+    chart: redpanda-connect/connect
+    version: '{{ .Environment.Values.redpandaConnect.chartVersion }}'
+#    condition: redpandaConnect.enabled
+    createNamespace: true
+    values:
+      - ../values/redpanda-connect/redpanda-connect-base.yaml.gotmpl
+      - ../values/redpanda-connect/redpanda-connect-{{ .Values.profile | default "dev" }}.yaml
+      - ../values/environment-merger.yaml.gotmpl

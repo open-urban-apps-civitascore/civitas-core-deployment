@@ -1,0 +1,8 @@
+---
+redpandaConnect:
+  enabled: true
+  namespace: local-civitas2
+  chartVersion: '3.1.0'
+  image:
+    repository: redpandadata/connect
+    tag: 4.75.1
