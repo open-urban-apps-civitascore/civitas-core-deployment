@@ -9,7 +9,7 @@ apisix:
   apisix:
     enable: true
     admin:
-      domain: apisix.127.0.0.1.nip.io
+      domain: apisix.civitas.test
       path: /
       credentials:
         # TODO: fix secret management

@@ -9,7 +9,7 @@ embeddedDatabase:
     backupName: civitas-database-backups
     clusterName: cloudnative-pg
     database: civitas
-    endpointURL: https://minio.{{ .Environment.Values.global.namespace }}.svc.cluster.local:9000
+    endpointURL: https://minio.{{ .Values.global.namespace }}.svc.cluster.local:9000
     destinationPath: s3://civitas-database-backups/civitas
     provider: s3
     s3:
