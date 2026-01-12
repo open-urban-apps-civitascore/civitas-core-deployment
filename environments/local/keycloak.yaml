@@ -50,7 +50,7 @@ keycloak:
   ingress:
     annotations: {}
     labels: {}
-    domain: keycloak.127.0.0.1.nip.io
+    domain: keycloak.civitas.test
     relativePath: '/'
     # TODO: fix TLS
     tls:
@@ -87,7 +87,7 @@ keycloak:
       #   port: '587'
       #   from: no-reply@civitas.io
       #   user: smtp-user
-      theme: civitas-theme
+      theme: keycloak
       enable_events: true
       enable_adminEvents: true
   probesInitialDelaySeconds:

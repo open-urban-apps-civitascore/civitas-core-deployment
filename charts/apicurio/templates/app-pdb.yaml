@@ -1,0 +1,22 @@
+{{- if and .Values.registry.enabled .Values.registry.app.podDisruptionBudget.enabled -}}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "apicurio.fullname" . }}-app
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "apicurio.labels" . | nindent 4 }}
+    app.kubernetes.io/component: backend
+spec:
+  {{- if .Values.registry.app.podDisruptionBudget.minAvailable }}
+  minAvailable: {{ .Values.registry.app.podDisruptionBudget.minAvailable }}
+  {{- else if .Values.registry.app.podDisruptionBudget.maxUnavailable }}
+  maxUnavailable: {{ .Values.registry.app.podDisruptionBudget.maxUnavailable }}
+  {{- else }}
+  minAvailable: 1
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "apicurio.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: backend
+{{- end }}

@@ -18,7 +18,7 @@ modelAtlas:
     className: 'nginx'
     annotations: {}
     hosts:
-      - host: model-atlas.local
+      - host: model-atlas.civitas.test
         paths:
           - path: /
             pathType: Prefix

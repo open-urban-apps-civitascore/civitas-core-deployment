@@ -17,9 +17,9 @@ helmDefaults:
 ---
 releases:
   - name: apisix
-    namespace: '{{ .Environment.Values.apisix.namespace }}'
+    namespace: '{{ .Values.apisix.namespace }}'
     chart: apisix/apisix
-    version: '{{ .Environment.Values.apisix.chartVersion }}'
+    version: '{{ .Values.apisix.chartVersion }}'
     createNamespace: true
     condition: apisix.enabled
     values:
@@ -31,28 +31,28 @@ releases:
           - '-c'
           - |
             EXISTING_SECRET=$(kubectl get secret \
-              {{ .Environment.Values.apisix.apisix.admin.credentials.secretName }} \
-              -n {{ .Environment.Values.apisix.namespace }} --ignore-not-found)
+              {{ .Values.apisix.apisix.admin.credentials.secretName }} \
+              -n {{ .Values.apisix.namespace }} --ignore-not-found)
             if [ -z "$EXISTING_SECRET" ] || \
-              [ "{{ .Environment.Values.apisix.apisix.admin.credentials.forceRecreateSecret }}" = "true" ]; then
+              [ "{{ .Values.apisix.apisix.admin.credentials.forceRecreateSecret }}" = "true" ]; then
               ADMIN_PASSWORD=$(openssl rand -base64 16)
               VIEWER_PASSWORD=$(openssl rand -base64 16)
               kubectl create secret generic \
-                {{ .Environment.Values.apisix.apisix.admin.credentials.secretName }} \
+                {{ .Values.apisix.apisix.admin.credentials.secretName }} \
                 --from-literal={{
-                  .Environment.Values.apisix.apisix.admin.credentials.secretAdminKey
+                  .Values.apisix.apisix.admin.credentials.secretAdminKey
                 }}=$ADMIN_PASSWORD \
                 --from-literal={{
-                  .Environment.Values.apisix.apisix.admin.credentials.secretViewerKey
+                  .Values.apisix.apisix.admin.credentials.secretViewerKey
                 }}=$VIEWER_PASSWORD \
-                -n {{ .Environment.Values.apisix.namespace }} \
+                -n {{ .Values.apisix.namespace }} \
                 --dry-run=client -o yaml | kubectl apply -f -
               echo "Created/Updated secret \
-                {{ .Environment.Values.apisix.apisix.admin.credentials.secretName }} \
-                in namespace {{ .Environment.Values.apisix.namespace }}"
+                {{ .Values.apisix.apisix.admin.credentials.secretName }} \
+                in namespace {{ .Values.apisix.namespace }}"
             else
               echo "Secret \
-                {{ .Environment.Values.apisix.apisix.admin.credentials.secretName }} \
-                already exists in namespace {{ .Environment.Values.apisix.namespace }}, skipping creation."
+                {{ .Values.apisix.apisix.admin.credentials.secretName }} \
+                already exists in namespace {{ .Values.apisix.namespace }}, skipping creation."
             fi
         showlogs: false

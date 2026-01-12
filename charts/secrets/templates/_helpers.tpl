@@ -25,6 +25,14 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- end }}
 
 {{/*
+Common annotations
+*/}}
+{{- define "secrets.annotations" -}}
+meta.helm.sh/release-name: {{ .Release.Name }}
+meta.helm.sh/release-namespace: {{ .Release.Namespace }}
+{{- end }}
+
+{{/*
 Selector labels
 */}}
 {{- define "secrets.selectorLabels" -}}
