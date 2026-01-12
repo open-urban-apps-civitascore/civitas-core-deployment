@@ -1,11 +1,9 @@
 ---
 {{- $this := .Values.keycloak.app -}}
-{{- $defaults := .Values.defaults -}}
 {{- $global := .Values.global -}}
 
 fullnameOverride: ""
 nameOverride: ""
-replicas: {{ $defaults.replicas }}
 image:
 {{- with .Values.images.keycloak.app }}
   repository: {{ .repository }}
@@ -28,8 +26,6 @@ extraEnv: |
       secretKeyRef:
         name: {{ $this.admin.secret.name }}
         key: {{ $this.admin.secret.passwordKey }}
-resources:
-  {{- .Values.defaults.resources | toYaml | nindent 2  }}
 
 service:
   httpsPort: 8443
@@ -92,17 +88,7 @@ metrics:
 serviceMonitor:
   enabled: {{ $global.metrics.enabled }}
   namespace: {{ $this.namespace }}
-autoscaling:
-  enabled: {{ $defaults.autoscaling.enabled }}
-  minReplicas: {{ $defaults.autoscaling.minReplicas }}
-  maxReplicas: {{ $defaults.autoscaling.maxReplicas }}
-  metrics:
-    - type: Resource
-      resource:
-        name: cpu
-        target:
-          type: Utilization
-          averageUtilization: {{ $defaults.autoscaling.targetCPUUtilizationPercentage }}
+
 command:
   - "/opt/keycloak/bin/kc.sh"
   - "start"

@@ -73,8 +73,6 @@ recovery:
 
 
 cluster:
-  instances: {{ .Values.defaults.replicas }}
-
   imageName: ""  # Default value depends on type (postgresql/postgis/timescaledb)
 
   imageCatalogRef: {}
@@ -95,9 +93,6 @@ cluster:
   postgresGID: -1
 
   services: {}
-
-  resources:
-    {{- .Values.defaults.resources | toYaml | nindent 4  }}
 
   priorityClassName: ""
 

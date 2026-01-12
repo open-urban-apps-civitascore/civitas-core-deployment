@@ -1,18 +1,11 @@
 ---
-controller:
-  replicas: {{ .Values.defaults.replicas }}
-  resources:
-    {{- .Values.defaults.resources | toYaml | nindent 4  }}
-
-broker:
-  replicas: {{ .Values.defaults.replicas }}
-  resources:
-    {{- .Values.defaults.resources | toYaml | nindent 4  }}
+{{- $this := .Values.kafka.cluster -}}
+{{- $global := .Values.global -}}
 
 # TODO: Enable TLS and configure certs for production use
 kafka:
   listeners:
   - name: internal
-    port: {{ .Values.kafka.cluster.bootstrapPort }}
+    port: {{ $this.bootstrapPort }}
     type: internal
     tls: false

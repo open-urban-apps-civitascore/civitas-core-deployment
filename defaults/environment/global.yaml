@@ -1,6 +1,6 @@
 ---
 global:
-  domain: https://civitas.test
+  domain: civitas.test
   instanceSlug: dev
   profile: development
   createNamespaces: true

@@ -3,12 +3,10 @@ environments:
   default:
     values:
       - defaults/environment/*.yaml.gotmpl
-      - defaults/profiles/development.yaml  # TODO: make dynamic or remove
   {{- range .Values.environments }}
   {{ . }}:
     values:
       - defaults/environment/*.yaml.gotmpl
-      - defaults/profiles/development.yaml  # TODO: make dynamic or remove
       - deployment/environments/{{ . }}/*.yaml.gotmpl
   {{- end }}
 ---

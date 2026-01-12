@@ -1,15 +1,18 @@
 ---
-{{- if ne .Values.kafka.operator.namespace .Values.kafka.cluster.namespace  }}
+{{- $this := .Values.kafka.operator -}}
+{{- $global := .Values.global -}}
+
+{{- if ne $this.namespace .Values.kafka.cluster.namespace  }}
 watchNamespaces:
   - {{ .Values.kafka.cluster.namespace }}
 {{ end }}
 
 labels:
   app.kubernetes.io/name: strimzi-kafka-operator
-  app.kubernetes.io/instance: {{ .Values.global.instanceSlug }}
+  app.kubernetes.io/instance: {{ $global.instanceSlug }}
   app.kubernetes.io/managed-by: Helm
   app.kubernetes.io/component: operator
-  app.kubernetes.io/part-of: {{ .Values.global.instanceSlug }}
+  app.kubernetes.io/part-of: {{ $global.instanceSlug }}
 
 # security see: https://strimzi.io/blog/2022/09/09/configuring-security-context-in-pods-managed-by-strimzi/
 extraEnvs:

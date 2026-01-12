@@ -1,7 +1,6 @@
 ---
 {{ '{{' }}- $this := .Values.{{ componentSlug }}.{{ release }} -{{ '}}' }}
 {%- raw %}
-{{- $defaults := .Values.defaults -}}
 {{- $global := .Values.global -}}
 {%- endraw %}
 # TODO: set helm values for {{ release }} here

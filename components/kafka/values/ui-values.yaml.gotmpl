@@ -1,4 +1,7 @@
 ---
+{{- $this := .Values.kafka.ui -}}
+{{- $global := .Values.global -}}
+
 yamlApplicationConfig:
   kafka:
     clusters:
@@ -6,23 +9,14 @@ yamlApplicationConfig:
         bootstrapServers: {{ .Values.kafka.cluster.bootstrapService }}:{{ .Values.kafka.cluster.bootstrapPort }}
 
 ingress:
-  enabled: {{ .Values.global.ingress.enabled }}
+  enabled: {{ $global.ingress.enabled }}
   annotations:
-    cert-manager.io/cluster-issuer: {{ .Values.global.ingress.clusterIssuer }}
-  {{- if index .Values.kafka.ui "subdomain" }}
-  host: {{ .Values.kafka.ui.subdomain }}.{{ .Values.global.domain }}
+    cert-manager.io/cluster-issuer: {{ $global.ingress.clusterIssuer }}
+  {{- if index $this "subdomain" }}
+  host: {{ $this.subdomain }}.{{ $global.domain }}
   path: '/'
   {{- else }}
-  host: {{ .Values.global.domain }}
-  path: '{{ .Values.kafka.ui.pathPrefix }}'
+  host: {{ $global.domain }}
+  path: '{{ $this.pathPrefix }}'
   {{- end }}
-  ingressClassName: {{ .Values.global.ingress.ingressClass }}
-
-resources:
-  {{- .Values.defaults.resources | toYaml | nindent 2  }}
-
-replicaCount: {{ .Values.defaults.replicas }}
-
-podDisruptionBudget:
-  enabled: {{ .Values.defaults.podDisruptionBudget.enabled }}
-  minAvailable: {{ .Values.defaults.podDisruptionBudget.minAvailable }}
+  ingressClassName: {{ $global.ingress.ingressClass }}
