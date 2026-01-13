@@ -44,3 +44,16 @@ To update existing components to the latest template versions, use the following
 ```bash
 make update-components
 ```
+
+## Local Deployment
+
+To deploy the entire infrastructure locally using Minikube, run the following commands:
+
+```bash
+minikube start
+minikube addons enable ingress
+# in the deployment directory
+helmfile -f helmile.yaml sync -e local
+# or (when CRDs are already installed)
+helmfile -f helmile.yaml apply -e local
+```

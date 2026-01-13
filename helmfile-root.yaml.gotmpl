@@ -1,4 +1,6 @@
 ---
+# This Helmfile must be included by your custom Helmfile and should not be applied directly or edited
+# It loads values before loading components, so that components can use those values
 environments:
   default:
     values:
@@ -13,6 +15,7 @@ environments:
   {{- end }}
 ---
 helmfiles:
+  # We need to move this into a separate file, because we cannot load values and use them as variables in the same helmfile
   - path: "./helmfile-components.yaml.gotmpl"
     values:
       - {{ toYaml .Values | nindent 8 }}

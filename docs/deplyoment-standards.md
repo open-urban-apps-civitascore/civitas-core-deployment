@@ -27,20 +27,27 @@ Development environment domains:
 `*.dev4.civitas2.fw-web.space`: Not yet in use
 `*.dev5.civitas2.fw-web.space`: Not yet in use
 
-For local development, simply use minikube.
-
-```bash
-minikube start
-minikube addons enable ingress
-helmfile -f ./helmfile.d/ sync -e default
-```
-
 ## Repository Structure
 
-- **Helmfile-based**: All infrastructure deployed via Helmfile
-- **Environment configs**: Customer facing `environments/` directory for environment-specific values
-- **Shared values**: Default `values/` defined by CIVITAS team to ensure comprehensive defaults
-- **Helm charts**: Custom charts in `charts/` directory
+> Relevant folders and files in the repository:
+
+- `components/`: All files required for an individual component
+  - `<component>/charts.yaml`: version and source of Helm charts
+  - `<component>/images.yaml`: version and source of container images
+  - `<component>/civitas-component.yaml`: High level definition of the component and its individual parts
+  - `<component>/default-environment.yaml.gotmpl`: Default environment values for the component
+  - `<component>/helmfile.yaml.gotmpl`: Helmfile template definition which renders `civitas-component.yaml` and `charts.yaml` into a Helmfile
+  - `<component>/values/`: Helm values per component part
+  - `<component>/charts/`: Custom Helm charts for the component (if any)
+  - `<component>/databases.yaml.gotmpl/`: Required database definitions for the component (if any)
+- `defaults/`: Default values for helm, global settings and the collection of component default environments
+- `deployment/`: Folder where deployments can be defined (not part of this repository because they are deployment specific)
+  - `addons/`: Additional not in the core included components for the deployment
+  - `environments/`: Environment specific configuration for every environment
+  - `helmfile.yaml`: Entry Helmfile for the deployment
+- `docs/`: Documentation
+- `template-component/`: Template for new components
+- `tests/`: Test cases for components and deployments
 
 ## Code Quality
 
@@ -129,6 +136,32 @@ For development environments, scale down resources and replicas as needed. Consi
 3. Review [Checklist](.gitlab/merge_request_templates/deployment.md)
 4. Commit & Push changes
 5. Create merge request if pipeline passes
+
+## Component configurations
+
+### Database connection
+
+When the component requires a database connection to the postgres database, the following conventions must be followed:
+
+`<component>/databases.yaml.gotmpl` must define the required database(s) with the following structure:
+```yaml
+keycloak:
+  name: 'keycloak'  # Database name
+  embedded: true  # Set to true, if the database should be created by the postgres-operator
+  user: 'keycloak' # Username for the database
+  secret:
+    name: 'db-keycloak' # Name of the Kubernetes secret to store the password
+  # TODO: different namespace does not yet work. Namespace of the cluster is not known, when rendering this.
+  host: 'postgres-cluster-rw' # Hostname of the Postgres cluster service
+  port: 5432  # Port of the Postgres cluster service
+```
+
+In the component's `values/` these values can then be referenced as `{{ .Values.databases.keycloak.name }}` etc.
+
+### Secrets
+
+> TODO: Document secret management here
+> ?? We assume that secrets already exist in the cluster.
 
 ## Questions?
 

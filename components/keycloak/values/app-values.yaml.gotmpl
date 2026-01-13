@@ -77,7 +77,7 @@ database:
   database: {{ .Values.databases.keycloak.name }}
   username: {{ .Values.databases.keycloak.user }}
   existingSecret: {{ .Values.databases.keycloak.secret.name }}
-  existingSecretKey: {{ .Values.databases.keycloak.secret.key }}
+  existingSecretKey: "password"
 proxy:
   enabled: true
   mode: xforwarded
