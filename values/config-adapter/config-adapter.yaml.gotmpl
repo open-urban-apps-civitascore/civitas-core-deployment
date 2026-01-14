@@ -20,7 +20,7 @@ service:
 env:
   # Adapter configuration
   - name: ADAPTERS
-    value: {{ .Environment.Values.configAdapter.adapters | quote }}
+    value: {{ keys .Environment.Values.configAdapter.adapters | sortAlpha | join "," | quote }}
   - name: EVENTHANDLER_NAME
     value: {{ .Environment.Values.configAdapter.eventhandler.name | default "kafka" | quote }}
   
@@ -32,31 +32,31 @@ env:
   
   # Keycloak configuration
   - name: KEYCLOAK_URL
-    value: {{ .Environment.Values.configAdapter.keycloak.url | quote }}
+    value: {{ .Environment.Values.configAdapter.adapters.keycloak.url | quote }}
   - name: KEYCLOAK_REALM
-    value: {{ .Environment.Values.configAdapter.keycloak.realm | quote }}
+    value: {{ .Environment.Values.configAdapter.adapters.keycloak.realm | quote }}
   - name: KEYCLOAK_USERNAME
-    value: {{ .Environment.Values.configAdapter.keycloak.username | quote }}
+    value: {{ .Environment.Values.configAdapter.adapters.keycloak.username | quote }}
   - name: KEYCLOAK_PASSWORD
     valueFrom:
       secretKeyRef:
-        name: {{ .Environment.Values.configAdapter.keycloak.passwordSecret.name }}
-        key: {{ .Environment.Values.configAdapter.keycloak.passwordSecret.key }}
+        name: {{ .Environment.Values.configAdapter.adapters.keycloak.passwordSecret.name }}
+        key: {{ .Environment.Values.configAdapter.adapters.keycloak.passwordSecret.key }}
   - name: KEYCLOAK_CLIENT_ID
-    value: {{ .Environment.Values.configAdapter.keycloak.clientId | quote }}
+    value: {{ .Environment.Values.configAdapter.adapters.keycloak.clientId | quote }}
   - name: KEYCLOAK_TOPICS
-    value: {{ .Environment.Values.configAdapter.keycloak.topics | quote }}
+    value: {{ .Environment.Values.configAdapter.adapters.keycloak.topics | quote }}
   
   # APISIX configuration
   - name: APISIX_ADMIN_URL
-    value: {{ .Environment.Values.configAdapter.apisix.adminUrl | quote }}
+    value: {{ .Environment.Values.configAdapter.adapters.apisix.adminUrl | quote }}
   - name: APISIX_ADMIN_KEY
     valueFrom:
       secretKeyRef:
-        name: {{ .Environment.Values.configAdapter.apisix.adminKeySecret.name }}
-        key: {{ .Environment.Values.configAdapter.apisix.adminKeySecret.key }}
+        name: {{ .Environment.Values.configAdapter.adapters.apisix.adminKeySecret.name }}
+        key: {{ .Environment.Values.configAdapter.adapters.apisix.adminKeySecret.key }}
   - name: APISIX_TOPICS
-    value: {{ .Environment.Values.configAdapter.apisix.topics | quote }}
+    value: {{ .Environment.Values.configAdapter.adapters.apisix.topics | quote }}
   
   # Health check configuration
   - name: HEALTHCHECK_PORT
