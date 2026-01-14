@@ -104,7 +104,7 @@ spec:
           securityContext:
             runAsNonRoot: true
             runAsUser: 1000
-            readOnlyRootFilesystem: false # Temporary reuiqred for json server, should be set to true once json server is removed
+            readOnlyRootFilesystem: false # TODO: Temporary reuiqred for json server, should be set to true once json server is removed
             allowPrivilegeEscalation: false
           volumeMounts:
             - name: tmp
