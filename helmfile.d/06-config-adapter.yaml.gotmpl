@@ -1,0 +1,21 @@
+---
+environments:
+  default:
+    values:
+      - ../environments/default/*.yaml
+  local:
+    values:
+      - ../environments/local/*.yaml
+---
+helmDefaults:
+  wait: true
+  waitForJobs: true
+---
+releases:
+  - name: config-adapter
+    namespace: '{{ .Environment.Values.configAdapter.namespace }}'
+    chart: ../charts/config-adapter
+    createNamespace: true
+    installed: {{ .Environment.Values.configAdapter.enabled }}
+    values:
+      - ../values/config-adapter/config-adapter.yaml.gotmpl
