@@ -3,6 +3,7 @@ portal:
   enabled: true
   chartVersion: 0.1.0
   namespace: local-civitas2
+  scope: civitas
 
   # Environment-specific URLs (operators configure these per environment)
   keycloakAuthServerUrl: http://keycloak.civitas.test
@@ -35,7 +36,7 @@ portal:
     replicaCount: 1
     image:
       repository: registry.gitlab.com/civitas-connect/civitas-core/civitas-core-v2/civitas-core-platform/frontend-portal
-      tag: cf977fd
+      tag: 90e4047
     resources:
       requests:
         cpu: 100m

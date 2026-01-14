@@ -45,7 +45,7 @@ securityContext:
   allowPrivilegeEscalation: false
   capabilities:
     drop:
-    - ALL
+      - ALL
   readOnlyRootFilesystem: true
 
 # Volumes for read-only filesystem
@@ -60,4 +60,3 @@ volumeMounts:
     mountPath: /tmp
   - name: cache
     mountPath: /var/cache
-

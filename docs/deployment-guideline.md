@@ -84,6 +84,9 @@ helmfile -f ./helmfile.d/ sync -e default
 To create a new secret:
 
 ```bash
+# Make sure the namespace exists, if not:
+kubectl create namespace <NAMESPACE>
+
 kubectl create secret generic <SECRET_NAME> \
   --from-literal=<KEY_NAME>='<VALUE>' \
   -n <NAMESPACE>
@@ -95,7 +98,7 @@ kubectl create secret generic keycloak-smtp \
   --from-literal=from='noreply@example.com' \
   --from-literal=user='noreply@example.com' \
   --from-literal=password='YOUR_SMTP_PASSWORD' \
-  -n main-civitas2
+  -n <NAMESPACE>
 ```
 
 **Parameters:**

@@ -54,17 +54,24 @@ spec:
                   key: client-secret
             - name: KEYCLOAK_ISSUER
               value: "{{ .Values.keycloak.authServerUrl }}/realms/{{ .Values.keycloak.realm }}"
+            # API configuration (internal backend connection)
+            - name: API_BASE_URL
+              value:  {{ .Values.frontend.api.baseUrl | quote }}
+            - name: API_PORT
+              value:  {{ .Values.frontend.api.port | quote }}
+            - name: API_SCOPE
+              value: {{ .Values.frontend.api.scope | quote }}
             # TODO: Remove these temporary backend service URL configurations
             # These are temporary and should be removed once the frontend is updated
             # to use proper API gateway routing instead of direct backend service calls
             - name: JSON_SERVER_HOST
-              value: "http://{{ include "portal.backend.serviceName" . }}"
+              value: "http://localhost"
             - name: JSON_SERVER_PORT
-              value: "8080"
+              value: "3001"
             - name: NEXT_PUBLIC_JSON_SERVER_HOST
-              value: "http://{{ include "portal.backend.serviceName" . }}"
+              value: "http://localhost"
             - name: NEXT_PUBLIC_JSON_SERVER_PORT
-              value: "8080"
+              value: "3001"
           startupProbe:
             httpGet:
               path: /
@@ -97,7 +104,7 @@ spec:
           securityContext:
             runAsNonRoot: true
             runAsUser: 1000
-            readOnlyRootFilesystem: true
+            readOnlyRootFilesystem: false # TODO: Temporary reuiqred for json server, should be set to true once json server is removed
             allowPrivilegeEscalation: false
           volumeMounts:
             - name: tmp
