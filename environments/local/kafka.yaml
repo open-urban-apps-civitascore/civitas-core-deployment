@@ -5,6 +5,6 @@ kafka:
   operator:
     chartVersion: '0.48.0'
   ui:
-    chartVersion: '1.5.2'
+    chartVersion: '1.6.0'
     ingress:
       domain: kafka-ui.civitas.test
