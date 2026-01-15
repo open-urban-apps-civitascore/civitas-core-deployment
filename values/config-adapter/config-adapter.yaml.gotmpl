@@ -1,0 +1,95 @@
+---
+replicaCount: {{ .Environment.Values.configAdapter.replicaCount | default 1 }}
+
+image:
+  repository: {{ .Environment.Values.configAdapter.image.repository }}
+  tag: {{ .Environment.Values.configAdapter.image.tag | default "latest" }}
+  pullPolicy: {{ .Environment.Values.configAdapter.image.pullPolicy | default "Always" }}
+
+nameOverride: ""
+fullnameOverride: "config-adapter"
+
+serviceAccount:
+  create: true
+  name: "config-adapter"
+
+service:
+  type: ClusterIP
+  port: {{ .Environment.Values.configAdapter.healthcheck.port | default 8080 }}
+
+env:
+  # Adapter configuration
+  - name: ADAPTERS
+    value: {{ keys .Environment.Values.configAdapter.adapters | sortAlpha | join "," | quote }}
+  - name: EVENTHANDLER_NAME
+    value: {{ .Environment.Values.configAdapter.eventhandler.name | default "kafka" | quote }}
+  
+  # Kafka configuration
+  - name: KAFKA_BOOTSTRAP_SERVERS
+    value: {{ .Environment.Values.configAdapter.kafka.bootstrapServers | quote }}
+  - name: KAFKA_GROUP_ID
+    value: {{ .Environment.Values.configAdapter.kafka.groupId | quote }}
+  
+  # Keycloak configuration
+  - name: KEYCLOAK_URL
+    value: {{ .Environment.Values.configAdapter.adapters.keycloak.url | quote }}
+  - name: KEYCLOAK_REALM
+    value: {{ .Environment.Values.configAdapter.adapters.keycloak.realm | quote }}
+  - name: KEYCLOAK_USERNAME
+    value: {{ .Environment.Values.configAdapter.adapters.keycloak.username | quote }}
+  - name: KEYCLOAK_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        name: {{ .Environment.Values.configAdapter.adapters.keycloak.passwordSecret.name }}
+        key: {{ .Environment.Values.configAdapter.adapters.keycloak.passwordSecret.key }}
+  - name: KEYCLOAK_CLIENT_ID
+    value: {{ .Environment.Values.configAdapter.adapters.keycloak.clientId | quote }}
+  - name: KEYCLOAK_TOPICS
+    value: {{ .Environment.Values.configAdapter.adapters.keycloak.topics | quote }}
+  
+  # APISIX configuration
+  - name: APISIX_ADMIN_URL
+    value: {{ .Environment.Values.configAdapter.adapters.apisix.adminUrl | quote }}
+  - name: APISIX_ADMIN_KEY
+    valueFrom:
+      secretKeyRef:
+        name: {{ .Environment.Values.configAdapter.adapters.apisix.adminKeySecret.name }}
+        key: {{ .Environment.Values.configAdapter.adapters.apisix.adminKeySecret.key }}
+  - name: APISIX_TOPICS
+    value: {{ .Environment.Values.configAdapter.adapters.apisix.topics | quote }}
+  
+  # Health check configuration
+  - name: HEALTHCHECK_PORT
+    value: {{ .Environment.Values.configAdapter.healthcheck.port | default 8080 | quote }}
+
+resources:
+  limits:
+    cpu: {{ .Environment.Values.configAdapter.resources.limits.cpu | default "500m" }}
+    memory: {{ .Environment.Values.configAdapter.resources.limits.memory | default "512Mi" }}
+  requests:
+    cpu: {{ .Environment.Values.configAdapter.resources.requests.cpu | default "100m" }}
+    memory: {{ .Environment.Values.configAdapter.resources.requests.memory | default "256Mi" }}
+
+livenessProbe:
+  httpGet:
+    path: {{ .Environment.Values.configAdapter.probes.liveness.path | default "/health/live" }}
+    port: {{ .Environment.Values.configAdapter.healthcheck.port | default 8080 }}
+  initialDelaySeconds: {{ .Environment.Values.configAdapter.probes.liveness.initialDelaySeconds | default 30 }}
+  periodSeconds: {{ .Environment.Values.configAdapter.probes.liveness.periodSeconds | default 10 }}
+  timeoutSeconds: {{ .Environment.Values.configAdapter.probes.liveness.timeoutSeconds | default 5 }}
+  failureThreshold: {{ .Environment.Values.configAdapter.probes.liveness.failureThreshold | default 3 }}
+
+readinessProbe:
+  httpGet:
+    path: {{ .Environment.Values.configAdapter.probes.readiness.path | default "/health/ready" }}
+    port: {{ .Environment.Values.configAdapter.healthcheck.port | default 8080 }}
+  initialDelaySeconds: {{ .Environment.Values.configAdapter.probes.readiness.initialDelaySeconds | default 10 }}
+  periodSeconds: {{ .Environment.Values.configAdapter.probes.readiness.periodSeconds | default 5 }}
+  timeoutSeconds: {{ .Environment.Values.configAdapter.probes.readiness.timeoutSeconds | default 3 }}
+  failureThreshold: {{ .Environment.Values.configAdapter.probes.readiness.failureThreshold | default 3 }}
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
