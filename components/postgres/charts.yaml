@@ -2,9 +2,9 @@
 postgres:
   operator:
     repository: https://cloudnative-pg.github.io/charts
-    chart: cnpg/cloudnative-pg
+    chart: cloudnative-pg
     version: '0.26.0'
   cluster:
     repository: https://cloudnative-pg.github.io/charts
-    chart: cnpg/cluster
+    chart: cluster
     version: '0.3.1'

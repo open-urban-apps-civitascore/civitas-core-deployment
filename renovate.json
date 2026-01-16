@@ -1,0 +1,35 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:base"],
+  "enabledManagers": ["regex"],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "Helm charts from HTTP(S) repos in components/**/charts.yaml",
+      "fileMatch": ["^components/.+/charts\\.yaml$"],
+      "matchStrings": [
+        "repository:\\s*(?<registryUrl>https?://[^\\s]+)\\s*\\n\\s*chart:\\s*(?<depName>[^\\s]+)\\s*\\n\\s*version:\\s*['\\\"]?(?<currentValue>[^'\\\"\\n]+)['\\\"]?"
+      ],
+      "datasourceTemplate": "helm",
+      "depNameTemplate": "{{depName}}",
+      "registryUrlTemplate": "{{registryUrl}}"
+    },
+    {
+      "customType": "regex",
+      "description": "OCI Helm charts in components/**/charts.yaml (handled as docker tags)",
+      "fileMatch": ["^components/.+/charts\\.yaml$"],
+      "matchStrings": [
+        "chart:\\s*oci://(?<registryHost>[^/]+)/(?<imageName>[^\\s]+)\\s*\\n\\s*version:\\s*['\\\"]?(?<currentValue>[^'\\\"\\n]+)['\\\"]?"
+      ],
+      "datasourceTemplate": "docker",
+      "depNameTemplate": "{{registryHost}}/{{imageName}}"
+    }
+  ],
+  "packageRules": [
+    {
+      "matchDatasources": ["helm", "docker"],
+      "groupName": "Helm chart updates",
+      "separateMinorPatch": true
+    }
+  ]
+}
