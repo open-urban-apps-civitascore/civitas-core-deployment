@@ -12,11 +12,7 @@ ingress:
   enabled: {{ $global.ingress.enabled }}
   annotations:
     cert-manager.io/cluster-issuer: {{ $global.ingress.clusterIssuer }}
-  {{- if index $this "subdomain" }}
-  host: {{ $this.subdomain }}.{{ $global.domain }}
-  path: '/'
-  {{- else }}
-  host: {{ $global.domain }}
+  {{- $host := printf "%s.%s" (default "" $this.subdomain) $global.domain | trimPrefix "." }}
+  host: {{ $host }}
   path: '{{ $this.pathPrefix }}'
-  {{- end }}
   ingressClassName: {{ $global.ingress.ingressClass }}

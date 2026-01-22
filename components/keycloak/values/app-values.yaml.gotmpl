@@ -36,20 +36,20 @@ ingress:
   annotations:
     ingress.kubernetes.io/affinity: cookie
   rules:
-    {{- $domain := printf "%s.%s" (default "" $this.subdomain) $global.domain | trimPrefix "." }}
-    - host: {{ $domain }}
+    {{- $host := printf "%s.%s" (default "" $this.subdomain) $global.domain | trimPrefix "." }}
+    - host: {{ $host }}
       paths:
         - path: '{{ $this.pathPrefix }}'
           pathType: Prefix
   tls:
     - hosts:
-        - {{ $domain }}
-      secretName: {{ $domain }}-tls
+        - {{ $host }}
+      secretName: {{ $host }}-tls
   console:
     # TODO: separate values for console ingress?
     enabled: true
     rules:
-      - host: {{ $domain }}
+      - host: {{ $host }}
         paths:
           - path: '{{ $this.pathPrefix | trimSuffix "/" }}/admin'
             pathType: Prefix

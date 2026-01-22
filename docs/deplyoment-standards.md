@@ -137,32 +137,6 @@ For development environments, scale down resources and replicas as needed. Consi
 4. Commit & Push changes
 5. Create merge request if pipeline passes
 
-## Component configurations
-
-### Database connection
-
-When the component requires a database connection to the postgres database, the following conventions must be followed:
-
-`<component>/databases.yaml.gotmpl` must define the required database(s) with the following structure:
-```yaml
-keycloak:
-  name: 'keycloak'  # Database name
-  embedded: true  # Set to true, if the database should be created by the postgres-operator
-  user: 'keycloak' # Username for the database
-  secret:
-    name: 'db-keycloak' # Name of the Kubernetes secret to store the password
-  # TODO: different namespace does not yet work. Namespace of the cluster is not known, when rendering this.
-  host: 'postgres-cluster-rw' # Hostname of the Postgres cluster service
-  port: 5432  # Port of the Postgres cluster service
-```
-
-In the component's `values/` these values can then be referenced as `{{ .Values.databases.keycloak.name }}` etc.
-
-### Secrets
-
-> TODO: Document secret management here
-> ?? We assume that secrets already exist in the cluster.
-
 ## Questions?
 
 Refer to:
