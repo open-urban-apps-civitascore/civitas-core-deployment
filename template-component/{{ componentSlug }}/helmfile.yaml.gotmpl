@@ -1,8 +1,6 @@
 ---
 bases:
-  - "../../bases/environments.yaml"
-  - "../../bases/templates.yaml"
-  - "../../bases/helm-defaults.yaml"
+  - "../../defaults/helm-defaults.yaml"
 ---
 {{- $componentData := (readFile "./civitas-component.yaml" | fromYaml) }}
 
@@ -57,7 +55,7 @@ releases:
     {{- if index $part "hooks" }}
     hooks:
       {{- range index $part "hooks" }}
-      - {{ . }}
+      - {{ . | toYaml | nindent 8 }}
       {{- end }}
     {{- end }}
     values:
