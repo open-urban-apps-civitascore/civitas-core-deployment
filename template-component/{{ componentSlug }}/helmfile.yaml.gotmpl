@@ -59,7 +59,8 @@ releases:
       {{- end }}
     {{- end }}
     values:
-      - values/{{ $part.name }}-values.yaml.gotmpl
+      - values/{{ $part.name }}/base-values.yaml.gotmpl
+      - values/{{ $part.name }}/{{ $root.global.profile }}-values.yaml.gotmpl
       - {{- index $root $component $part.name "rawValues" | default dict | toYaml | nindent 8 }}
   {{- end }}
 

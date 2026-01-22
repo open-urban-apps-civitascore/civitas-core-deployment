@@ -1,0 +1,11 @@
+---
+{{ '{{' }}- $this := .Values.{{ componentVariableName }}.{{ release }} -{{ '}}' }}
+{%- raw %}
+{{- $global := .Values.global -}}
+{%- endraw %}
+# TODO: set helm values for {{ release }} here
+# - [ ] Resources (requests and limits)
+# - [ ] Larger Storage
+# - [ ] 2+ Replicas or HorizontalPodAutoscaler
+# - [ ] Rolling updates `maxUnavailable: 0`, `maxSurge: 25%`
+# - [ ] PodDisruptionBudget (at least `minAvailable: 1`)

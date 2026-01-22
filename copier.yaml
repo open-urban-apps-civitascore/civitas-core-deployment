@@ -12,6 +12,14 @@ componentSlug:
   default: "{{ componentName.lower().replace(' ', '-') }}"
   help: 'URL-friendly slug for the component'
 
+componentVariableName: # camelCase version of componentSlug
+  type: str
+  default: |-
+    {%- set parts = componentSlug.split('-') -%}
+    {{- parts[0] ~ (parts[1:] | map('capitalize') | join('')) -}}
+  help: 'name for the component used in variables'
+  when: false
+
 shortDescription:
   type: str
   default: ''
@@ -19,8 +27,8 @@ shortDescription:
 
 releases:
   type: str
-  default: '{{ componentSlug }}'
-  help: "Comma seperated list of releases that make up the component. Don't include componentSlug here."
+  default: '{{ componentVariableName }}'
+  help: "Comma seperated list of releases that make up the component. E.g. 'frontend,backend,database'"
 
 releasesList:
   type: yaml
