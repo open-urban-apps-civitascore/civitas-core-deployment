@@ -1,0 +1,11 @@
+---
+apicurio:
+  apicurio:
+    enabled: true
+    namespace: {{ include "civitas.namespace" (dict "global" .Values.global "suffix" "apicurio") }}
+    subdomain: apicurio
+    pathPrefix: /apis/registry/v3
+  ui:
+    enabled: true
+    subdomain: apicurio-ui
+    pathPrefix: /

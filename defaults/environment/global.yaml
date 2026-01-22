@@ -21,3 +21,4 @@ components:
   - postgres
   - kafka
   - keycloak
+  - apicurio
