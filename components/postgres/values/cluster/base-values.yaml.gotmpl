@@ -1,6 +1,16 @@
 ---
 {{- $this := .Values.postgres.cluster -}}
-{{- $global := .Values.global -}}
+{{- $global := .Values.global }}
+
+# values: https://github.com/cloudnative-pg/charts/blob/main/charts/cluster/values.yaml
+# raw: https://raw.githubusercontent.com/cloudnative-pg/charts/refs/heads/main/charts/cluster/values.yaml
+# - [x] Containers run as non-root with `readOnlyRootFilesystem` -> default in CloudNativePG
+# - [x] Health probes -> default in CloudNativePG
+# - [x] Graceful shutdown -> default in CloudNativePG
+# - [ ] Standard labels
+# - [x] ServiceAccount with least privilege where required -> default in CloudNativePG
+# - [x] Named ports -> default in CloudNativePG
+# - [x] Ingress with TLS -> not applicable
 
 nameOverride: ""
 fullnameOverride: ""
@@ -76,43 +86,27 @@ recovery:
 
 
 cluster:
-  imageName: ""  # Default value depends on type (postgresql/postgis/timescaledb)
-
+  imageName: ""  # TODO: set image  <image>:<tag>@sha256:<digestValue>
   imageCatalogRef: {}
-
   imagePullPolicy: "IfNotPresent"
-
   imagePullSecrets: [] # TODO: global image pull secrets
-
   storage:
     size: "8Gi"
     storageClass: "{{ $global.storage.storageClass.rwo | default "" }}"
-
   walStorage:
     enabled: false
-
   postgresUID: -1
-
   postgresGID: -1
-
   services: {}
-
   priorityClassName: ""
-
   primaryUpdateMethod: "switchover"
-
   primaryUpdateStrategy: "unsupervised"
-
   logLevel: "info"
-
   affinity:
     topologyKey: topology.kubernetes.io/zone
-
   certificates: {} # TODO: global certificates
-
   enableSuperuserAccess: true
   superuserSecret: ""
-
   enablePDB: true
 
   {{- if .Values.databases }}
@@ -167,9 +161,7 @@ cluster:
 
 
   initdb: {}
-
   serviceAccountTemplate: {}
-
   additionalLabels: {}
   annotations: {}
 
