@@ -55,7 +55,7 @@ releases:
     {{- if index $part "hooks" }}
     hooks:
       {{- range index $part "hooks" }}
-      - {{ . }}
+      - {{ . | toYaml | nindent 8 }}
       {{- end }}
     {{- end }}
     values:

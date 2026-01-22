@@ -1,3 +1,6 @@
 ---
+{{- $this := .Values.postgres.operator -}}
+{{- $global := .Values.global -}}
+
 config:
-  clusterWide: {{ .Values.postgres.operator.clusterWide }}
+  clusterWide: {{ $this.clusterWide }}

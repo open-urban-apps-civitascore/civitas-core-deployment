@@ -1,4 +1,7 @@
 ---
+{{- $this := .Values.postgres.cluster -}}
+{{- $global := .Values.global -}}
+
 nameOverride: ""
 fullnameOverride: ""
 namespaceOverride: ""
@@ -35,8 +38,8 @@ recovery:
     region: us-east-1
     bucket: civitas-database-backups
     path: /
-    accessKey: "{{ .Values.postgres.cluster.recovery.s3.accessKey }}"
-    secretKey: "{{ .Values.postgres.cluster.recovery.s3.secretKey }}"
+    accessKey: "{{ $this.recovery.s3.accessKey }}"
+    secretKey: "{{ $this.recovery.s3.secretKey }}"
     inheritFromIAMRole: false
   secret:
     create: true
@@ -83,7 +86,7 @@ cluster:
 
   storage:
     size: "8Gi"
-    storageClass: "{{ .Values.global.storage.storageClass.rwo | default "" }}"
+    storageClass: "{{ $global.storage.storageClass.rwo | default "" }}"
 
   walStorage:
     enabled: false
