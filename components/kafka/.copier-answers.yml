@@ -1,7 +1,7 @@
 ---
 # Changes here will be overwritten by Copier.
-_commit: 9796c60
-_src_path: https://gitlab.com/civitas-connect/civitas-core/civitas-core-v2/civitas-core-deployment.git
+_commit: 6fd161f
+_src_path: ..
 componentName: Kafka
 componentSlug: kafka
 releases: operator,cluster,ui

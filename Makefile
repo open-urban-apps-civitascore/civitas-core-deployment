@@ -6,7 +6,7 @@ validate:
 
 .PHONY: new-component
 new-component:
-	copier copy . components/
+	cd components && copier copy .. .
 
 .PHONY: update
 update:

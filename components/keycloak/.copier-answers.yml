@@ -1,7 +1,7 @@
 ---
 # Changes here will be overwritten by Copier.
 _commit: 85645bc
-_src_path: ../..
+_src_path: ..
 componentName: Keycloak
 componentSlug: keycloak
 releases: db,app,config-cli
