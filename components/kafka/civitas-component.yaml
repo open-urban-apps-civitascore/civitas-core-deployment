@@ -1,5 +1,5 @@
 ---
-component: 'kafka'
+component: kafka
 parts:
   - name: operator
     extraLabels:
