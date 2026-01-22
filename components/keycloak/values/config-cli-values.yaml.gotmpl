@@ -25,8 +25,8 @@ env:
   KEYCLOAK_USER: "{{ .Values.keycloak.app.admin.username }}"
   IMPORT_FILES_LOCATIONS: /config/*
 
-existingSecret: {{ .Values.keycloak.app.admin.secret.name }}
-existingSecretKey: {{ .Values.keycloak.app.admin.secret.passwordKey }}
+existingSecret: keycloak-admin-user
+existingSecretKey: password
 
 extraEnv:
   - name: SMTP_HOST

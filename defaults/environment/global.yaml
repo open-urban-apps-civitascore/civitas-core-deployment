@@ -17,6 +17,7 @@ global:
   metrics:
     enabled: false
 components:
+  - secrets
   - postgres
   - kafka
   - keycloak

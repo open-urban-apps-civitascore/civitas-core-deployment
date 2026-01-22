@@ -8,29 +8,6 @@ parts:
     # needs:
     # - postgres.cluster
   - name: app
-    hooks:
-      - events: ['presync', 'preapply']
-        command: 'sh'
-        args:
-          - '-c'
-          - |
-            EXISTING_SECRET=$(kubectl get secret \
-              "keycloak-admin-user" \
-              -n {{ .Values.keycloak.app.namespace }} --ignore-not-found)
-            if [ -z "$EXISTING_SECRET" ] || \
-              [ "{{ .Values.keycloak.app.admin.forceRecreateSecret }}" = "true" ]; then
-              ADMIN_PASSWORD=$(openssl rand -base64 16)
-              kubectl create secret generic \
-                {{ .Values.keycloak.app.admin.secret.name }} \
-                --from-literal={{ .Values.keycloak.app.admin.secret.passwordKey }}=$ADMIN_PASSWORD \
-                -n {{ .Values.keycloak.app.namespace }} \
-                --dry-run=client -o yaml | kubectl apply -f -
-              echo "Created/Updated secret {{ .Values.keycloak.app.admin.secret.name }} \
-                in namespace {{ .Values.keycloak.app.namespace }}"
-            else
-              echo "Secret {{ .Values.keycloak.app.admin.secret.name }} already exists \
-                in namespace {{ .Values.keycloak.app.namespace }}, skipping creation."
-            fi
     needs:
       - keycloak.db
   - name: config-cli

@@ -24,8 +24,8 @@ extraEnv: |
   - name: KC_BOOTSTRAP_ADMIN_PASSWORD
     valueFrom:
       secretKeyRef:
-        name: {{ $this.admin.secret.name }}
-        key: {{ $this.admin.secret.passwordKey }}
+        name: keycloak-admin-user
+        key: password
 
 service:
   httpsPort: 8443
