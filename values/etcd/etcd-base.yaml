@@ -1,0 +1,27 @@
+---
+etcd:
+  initialClusterToken: 'civitas-etcd-cluster'
+
+auth:
+  enabled: true
+  rbac:
+    rootPasswordSecret:
+      name: 'etcd-root-password'
+      key: 'root-password'
+    roles:
+      - name: apisix-readwrite
+        permissions:
+          - permission: readwrite
+            key: /apisix
+            prefix: true
+    users:
+      - username: apisix
+        role: apisix-readwrite
+        passwordSecret:
+          name: etcd-apisix-password
+          key: apisix-password
+
+tls:
+  enabled: false
+  peer:
+    enabled: false

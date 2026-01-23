@@ -1,0 +1,43 @@
+This chart deploys an etcd cluster on Kubernetes.
+
+Release: {{ .Release.Name }}
+Namespace: {{ .Release.Namespace }}
+Replicas: {{ .Values.replicas }}
+
+To check the status of your etcd cluster:
+  kubectl get statefulset {{ include "etcd.fullname" . }} -n {{ .Release.Namespace }}
+  kubectl get pods -l app.kubernetes.io/name={{ include "etcd.name" . }} -n {{ .Release.Namespace }}
+
+Client endpoint (internal):
+  {{ include "etcd.fullname" . }}-client.{{ .Release.Namespace }}.svc.cluster.local:{{ include "etcd.clientPort" . }}
+
+To interact with the etcd cluster using etcdctl:
+
+  1. Set up port forwarding:
+     kubectl port-forward svc/{{ include "etcd.fullname" . }}-client {{ include "etcd.clientPort" . }}:{{ include "etcd.clientPort" . }} -n {{ .Release.Namespace }}
+
+  2. In another terminal, run etcdctl commands:
+     export ETCDCTL_API=3
+     etcdctl --endpoints=http://localhost:{{ include "etcd.clientPort" . }} endpoint health
+     etcdctl --endpoints=http://localhost:{{ include "etcd.clientPort" . }} member list
+
+To test the cluster (write and read a key):
+  etcdctl --endpoints=http://localhost:{{ include "etcd.clientPort" . }} put test-key test-value
+  etcdctl --endpoints=http://localhost:{{ include "etcd.clientPort" . }} get test-key
+
+{{- if .Values.auth.enabled }}
+
+Authentication is enabled. Use the credentials from your secret to authenticate.
+{{- end }}
+
+{{- if .Values.tls.enabled }}
+
+TLS is enabled for client communication. Use appropriate certificates for secure connections.
+{{- end }}
+
+{{- if not .Values.persistence.enabled }}
+
+WARNING: Persistence is disabled. Data will be lost when pods are terminated.
+{{- end }}
+
+For more information, see the chart README.
