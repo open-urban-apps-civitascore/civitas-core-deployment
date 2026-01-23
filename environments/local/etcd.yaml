@@ -1,0 +1,4 @@
+---
+etcd:
+  enabled: true
+  namespace: local-civitas2

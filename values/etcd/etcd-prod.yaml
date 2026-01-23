@@ -1,0 +1,31 @@
+---
+# Production profile for etcd
+# Optimized for production environments with HA and performance
+
+# Three replicas for quorum and high availability
+replicas: 3
+
+# Production resource allocation
+resources:
+  requests:
+    cpu: 500m
+    memory: 512Mi
+  limits:
+    cpu: 1000m
+    memory: 1Gi
+
+# Persistent storage - production size
+persistence:
+  enabled: true
+  size: 10Gi
+  storageClass: ''
+  accessMode: ReadWriteOnce
+
+# Pod disruption budget - ensure at least 2 replicas during maintenance
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 2
+
+# Full quota for production
+etcd:
+  quotaBackendBytes: '8589934592' # 8GB for prod

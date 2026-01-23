@@ -32,8 +32,13 @@ apisix:
             - {{ default "/" .Values.apisix.apisix.admin.path }}
   prometheus:
     enabled: {{ default false .Values.global.metrics.enabled }}
-# TODO: change to external etcd, byoe or add as dependency
 etcd: 
-  enabled: true
+  enabled: false
+externalEtcd:
+  host:
+    - http://etcd-client.{{ .Environment.Values.etcd.namespace }}.svc.cluster.local:2379
+  user: "apisix"
+  existingSecret: "etcd-apisix-password"
+  secretPasswordKey: "apisix-password"
 ingress-controller:
   enabled: {{ default true .Values.apisix.ingressController.enabled }}
