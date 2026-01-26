@@ -1,9 +1,9 @@
 ---
-{{ '{{' }}- $this := .Values.{{ componentVariableName }}.{{ release }} -{{ '}}' }}
+{{ '{{' }}- $this := .Values.{{ componentVariableName }}.{{ release }} {{ '}}' }}
 {%- raw %}
-{{- $global := .Values.global -}}
+{{- $global := .Values.global }}
 {%- endraw %}
-# TODO: set helm values for {{ release }} here
+# Checklist:
 # - [ ] Containers run as non-root with `readOnlyRootFilesystem`
 # - [ ] Health probes
 # - [ ] Graceful shutdown
@@ -11,3 +11,5 @@
 # - [ ] ServiceAccount with least privilege where required
 # - [ ] Named ports
 # - [ ] Ingress with TLS
+
+# TODO: set helm values for {{ release }} here

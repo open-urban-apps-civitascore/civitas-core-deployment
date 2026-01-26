@@ -28,7 +28,7 @@ shortDescription:
 releases:
   type: str
   default: '{{ componentVariableName }}'
-  help: "Comma seperated list of releases that make up the component. E.g. 'frontend,backend,database'"
+  help: "Comma separated list of releases that make up the component. E.g. 'frontend,backend,database'"
 
 releasesList:
   type: yaml

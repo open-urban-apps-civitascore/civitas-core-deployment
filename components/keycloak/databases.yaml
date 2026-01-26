@@ -1,3 +1,4 @@
+---
 keycloak:
   name: 'keycloak'
   embedded: true
