@@ -1,0 +1,40 @@
+---
+{{- $this := .Values.etcd.etcd }}
+{{- $global := .Values.global }}
+# Checklist:
+# - [x] Containers run as non-root with `readOnlyRootFilesystem` -> default in chart
+# - [x] Health probes -> default in chart
+# - [ ] Graceful shutdown
+# - [ ] Standard labels
+# - [x] ServiceAccount with least privilege where required
+# - [x] Named ports -> default in chart
+# - [x] Ingress with TLS
+
+---
+etcd:
+  initialClusterToken: 'civitas-etcd-cluster'
+
+auth:
+  enabled: true
+  rbac:
+    rootPasswordSecret:
+      name: 'etcd-root-password'
+      key: 'root-password'
+    roles:
+      - name: apisix-readwrite
+        permissions:
+          - permission: readwrite
+            key: /apisix
+            prefix: true
+    users:
+      - username: apisix
+        role: apisix-readwrite
+        passwordSecret:
+          name: etcd-apisix-password
+          key: apisix-password
+
+tls:
+  enabled: true
+  peer:
+    enabled: false
+

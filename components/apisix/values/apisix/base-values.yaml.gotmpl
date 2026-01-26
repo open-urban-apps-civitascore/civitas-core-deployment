@@ -44,7 +44,7 @@ etcd:
 
 externalEtcd:
   host:
-    - http://etcd-client.{{ .Values.etcd.namespace }}.svc.cluster.local:2379
+    - http://etcd-client.{{ .Values.etcd.etcd.namespace }}.svc.cluster.local:2379
   user: "apisix"
   existingSecret: "etcd-apisix-password"
   secretPasswordKey: "apisix-password"

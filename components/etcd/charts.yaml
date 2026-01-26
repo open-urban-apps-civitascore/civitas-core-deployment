@@ -1,0 +1,4 @@
+---
+etcd:
+  etcd:
+    chart: charts/etcd

@@ -19,6 +19,7 @@ global:
 components:
   - secrets
   - postgres
+  - etcd
   - kafka
   - keycloak
   - apisix

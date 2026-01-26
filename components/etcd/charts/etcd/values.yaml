@@ -1,0 +1,312 @@
+---
+# Default values for etcd
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# Override the name of the chart
+nameOverride: ''
+# Override the full name of the chart
+fullnameOverride: ''
+
+# Deployment profile: 'dev' or 'prod'
+# Affects default resource allocations and replica counts
+profile: prod
+
+# Number of etcd replicas
+# For production, use odd numbers (3, 5, 7) for quorum
+# For development, 1 is acceptable
+replicas: 3
+
+image:
+  repository: quay.io/coreos/etcd
+  pullPolicy: IfNotPresent
+  # Overrides the image tag whose default is the chart appVersion
+  tag: 'v3.5.17'
+
+imagePullSecrets: []
+
+# etcd cluster configuration
+etcd:
+  # Initial cluster token for the etcd cluster
+  # Change this for each deployment to ensure cluster isolation
+  initialClusterToken: 'etcd-cluster'
+
+  # Initial cluster state: 'new' or 'existing'
+  initialClusterState: 'new'
+
+  # Auto compaction retention in hours
+  autoCompactionRetention: '1'
+
+  # Snapshot count - number of committed transactions to trigger a snapshot
+  snapshotCount: 10000
+
+  # Quota backend bytes (8GB default)
+  quotaBackendBytes: '8589934592'
+
+  # Heartbeat interval in milliseconds
+  heartbeatInterval: 100
+
+  # Election timeout in milliseconds
+  electionTimeout: 1000
+
+  # Maximum request bytes
+  maxRequestBytes: '1572864'
+
+  # Extra environment variables
+  extraEnv: []
+  #   - name: ETCD_DEBUG
+  #     value: 'true'
+
+  # Extra arguments for etcd
+  extraArgs: []
+  #   - --log-level=debug
+
+# Authentication configuration
+auth:
+  # Enable RBAC authentication
+  enabled: true
+
+  rbac:
+    # Root password for the root user
+    # Create a secret with key 'root-password' and reference it here
+    rootPasswordSecret:
+      name: 'etcd-root-password'
+      key: 'etcd-root-password'
+
+    # Custom roles to create with specific permissions
+    # Roles are created before users and can have multiple permissions
+    roles: []
+    #   - name: apisix-readwrite
+    #     permissions:
+    #       - permission: readwrite  # Options: read, write, readwrite
+    #         key: /apisix/          # Key or prefix path
+    #         prefix: true           # Optional: true for prefix matching, false for single key (default: false)
+    #   - name: app-readonly
+    #     permissions:
+    #       - permission: read
+    #         key: /
+    #         prefix: true
+    #   - name: multi-permission-role
+    #     permissions:
+    #       - permission: readwrite
+    #         key: /app1/
+    #         prefix: true
+    #       - permission: read
+    #         key: /shared/config
+    #         prefix: false         # Single key access only
+
+    # Additional users to create with their roles
+    # Each user should have a corresponding secret created
+    # Users reference custom role names defined above
+    users: []
+    #   - username: apisix
+    #     role: apisix-readwrite  # Reference to custom role name
+    #     passwordSecret:
+    #       name: etcd-apisix-password
+    #       key: apisix-password
+    #   - username: app1
+    #     role: app-readonly
+    #     passwordSecret:
+    #       name: etcd-app1-password
+    #       key: password
+
+  # Authentication initialization job configuration
+  # This job runs after StatefulSet deployment to set up RBAC users
+  initJob:
+    image:
+      repository: registry.gitlab.com/civitas-connect/civitas-core/civitas-core-v2/civitas-core-deployment/etcdctl
+      tag: '745818f'
+      pullPolicy: IfNotPresent
+
+    resources:
+      requests:
+        cpu: 100m
+        memory: 64Mi
+      limits:
+        cpu: 200m
+        memory: 128Mi
+
+    # Job retry configuration
+    backoffLimit: 5
+
+    # Maximum time for job to complete (in seconds)
+    activeDeadlineSeconds: 300
+
+# TLS configuration
+tls:
+  # Enable TLS for client communication
+  enabled: false
+
+  # Enable TLS for peer communication
+  peer:
+    enabled: false
+
+  # Existing secret containing TLS certificates
+  # Expected keys:
+  #   - ca.crt: CA certificate
+  #   - tls.crt: Server certificate
+  #   - tls.key: Server private key
+  #   - peer-ca.crt: Peer CA certificate (if peer TLS enabled)
+  #   - peer-tls.crt: Peer certificate (if peer TLS enabled)
+  #   - peer-tls.key: Peer private key (if peer TLS enabled)
+  existingSecret: ''
+
+# Persistent storage configuration
+persistence:
+  enabled: true
+
+  # Storage class name for persistent volumes
+  # If not set, the default storage class will be used
+  storageClass: ''
+
+  # Access mode for the persistent volume
+  accessMode: ReadWriteOnce
+
+  # Size of the persistent volume
+  # Production: 10Gi, Development: 1Gi
+  size: 10Gi
+
+  # Annotations for the persistent volume claim
+  annotations: {}
+
+# Service configuration
+service:
+  # Service type for client access
+  type: ClusterIP
+
+  # Client port
+  clientPort: 2379
+
+  # Peer port
+  peerPort: 2380
+
+  # Annotations for the service
+  annotations: {}
+
+  # Session affinity
+  sessionAffinity: ClientIP
+
+# Resource management
+resources:
+  requests:
+    cpu: 500m
+    memory: 512Mi
+  limits:
+    cpu: 1000m
+    memory: 1Gi
+
+# Security context for the pod
+podSecurityContext:
+  fsGroup: 1000
+  runAsNonRoot: true
+  runAsUser: 1000
+
+# Security context for containers
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  runAsUser: 1000
+
+# Pod disruption budget
+podDisruptionBudget:
+  enabled: true
+  # Minimum available pods during disruptions
+  minAvailable: 1
+
+# Affinity rules
+affinity:
+  # Pod anti-affinity to spread replicas across nodes
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchLabels:
+              app.kubernetes.io/name: etcd
+          topologyKey: kubernetes.io/hostname
+
+# Node selector
+nodeSelector: {}
+
+# Tolerations
+tolerations: []
+
+# Liveness probe configuration
+livenessProbe:
+  enabled: true
+  initialDelaySeconds: 10
+  periodSeconds: 10
+  timeoutSeconds: 5
+  successThreshold: 1
+  failureThreshold: 3
+
+# Readiness probe configuration
+readinessProbe:
+  enabled: true
+  initialDelaySeconds: 5
+  periodSeconds: 5
+  timeoutSeconds: 5
+  successThreshold: 1
+  failureThreshold: 3
+
+# Startup probe configuration
+startupProbe:
+  enabled: true
+  initialDelaySeconds: 0
+  periodSeconds: 10
+  timeoutSeconds: 5
+  successThreshold: 1
+  failureThreshold: 30
+
+# Graceful shutdown
+# Increased to allow proper cluster member removal and data flush
+terminationGracePeriodSeconds: 60
+
+# Pod annotations
+podAnnotations: {}
+
+# Pod labels
+podLabels: {}
+
+# Service account
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use
+  # If not set and create is true, a name is generated using the fullname template
+  name: ''
+
+# Priority class name
+priorityClassName: ''
+
+# Update strategy
+updateStrategy:
+  type: RollingUpdate
+  rollingUpdate:
+    partition: 0
+
+# Extra volumes
+extraVolumes: []
+#   - name: extra-volume
+#     emptyDir: {}
+
+# Extra volume mounts
+extraVolumeMounts: []
+#   - name: extra-volume
+#     mountPath: /extra
+
+# Metrics configuration (for Prometheus integration)
+metrics:
+  enabled: false
+  # Service monitor for Prometheus Operator
+  serviceMonitor:
+    enabled: false
+    interval: 30s
+    scrapeTimeout: 10s
+    labels: {}
