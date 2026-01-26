@@ -1,0 +1,8 @@
+---
+# Changes here will be overwritten by Copier.
+_commit: 387e04e
+_src_path: ..
+componentName: Portal
+componentSlug: portal
+releases: portal
+shortDescription: User Facing UI for managing the platform

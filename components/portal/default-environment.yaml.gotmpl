@@ -1,0 +1,7 @@
+---
+portal:
+  portal:
+    enabled: true
+    namespace: {{ include "civitas.namespace" (dict "global" .Values.global "suffix" "portal") }}
+    subdomain: portal
+    pathPrefix: /

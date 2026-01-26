@@ -1,0 +1,8 @@
+---
+portal:
+  backend:
+    repository: registry.gitlab.com/civitas-connect/civitas-core/civitas-core-v2/civitas-core-platform/backend-portal
+    tag: '1b12e31'
+  frontend:
+    repository: registry.gitlab.com/civitas-connect/civitas-core/civitas-core-v2/civitas-core-platform/frontend-portal
+    tag: '1b12e31'

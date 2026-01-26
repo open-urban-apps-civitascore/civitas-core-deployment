@@ -1,0 +1,77 @@
+---
+# Default values for portal chart
+# This is a YAML-formatted file.
+# Only values that might reasonably need to be overridden should be here.
+# URLs MUST be set via environment configuration, not here.
+
+nameOverride: ''
+fullnameOverride: ''
+
+# Backend configuration
+backend:
+  enabled: true
+  replicaCount: 1
+  image:
+    repository: registry.gitlab.com/civitas-connect/civitas-core/civitas-core-v2/civitas-core-platform/backend-portal
+    tag: latest
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+  env:
+    loggingLevelRoot: INFO
+
+# Frontend configuration
+frontend:
+  enabled: true
+  replicaCount: 1
+  image:
+    repository: registry.gitlab.com/civitas-connect/civitas-core/civitas-core-v2/civitas-core-platform/frontend-portal
+    tag: latest
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+# Autoscaling (optional)
+autoscaling:
+  backend:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 3
+    targetCPUUtilizationPercentage: 80
+  frontend:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 3
+    targetCPUUtilizationPercentage: 80
+
+ingress:
+  enabled: false
+  domain: ''
+  annotations: {}
+  tls:
+    enabled: false
+    secretName: ''
+
+nextAuth:
+  url: ''
+
+keycloak:
+  authServerUrl: ''
+  realm: ''
+
+database:
+  host: ''
+  port: 5432
+  name: ''
+  owner: ''
+  secret:
+    name: ''
+    passwordKey: password

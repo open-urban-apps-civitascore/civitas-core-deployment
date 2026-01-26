@@ -23,3 +23,4 @@ components:
   - keycloak
   - apicurio
   - model-atlas
+  - portal
