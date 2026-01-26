@@ -52,6 +52,20 @@ autoscaling:
     maxReplicas: 3
     targetCPUUtilizationPercentage: 80
 
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  fsGroup: 1000
+  seccompProfile:
+    type: RuntimeDefault
+
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+  readOnlyRootFilesystem: true
+
 ingress:
   enabled: false
   domain: ''
