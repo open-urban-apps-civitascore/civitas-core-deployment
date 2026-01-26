@@ -1,0 +1,4 @@
+---
+component: apisix
+parts:
+  - name: apisix

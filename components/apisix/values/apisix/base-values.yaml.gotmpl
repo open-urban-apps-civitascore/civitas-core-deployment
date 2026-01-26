@@ -1,0 +1,128 @@
+---
+{{- $this := .Values.apisix.apisix }}
+{{- $global := .Values.global }}
+# Checklist:
+# - [ ] Containers run as non-root with `readOnlyRootFilesystem`
+# - [x] Health probes -> enabled by default in chart
+# - [x] Graceful shutdown -> handled by chart
+# - [ ] Standard labels
+# - [x] ServiceAccount with least privilege where required
+# - [x] Named ports -> handled by chart
+# - [ ] Ingress with TLS -> not applicable, APISIX is the gateway itself
+
+fullnameOverride: apisix
+
+# Container images
+image:
+  repository: {{ .Values.images.apisix.apisix.gateway.repository }}
+  tag: {{ .Values.images.apisix.apisix.gateway.tag }}
+  pullPolicy: IfNotPresent
+
+serviceAccount:
+  create: true
+
+rbac:
+  create: true
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  fsGroup: 1000
+  seccompProfile:
+    type: RuntimeDefault
+
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+  readOnlyRootFilesystem: true
+
+# External etcd configuration with RBAC
+etcd:
+  enabled: false
+
+externalEtcd:
+  host:
+    - http://etcd-client.{{ .Values.etcd.namespace }}.svc.cluster.local:2379
+  user: "apisix"
+  existingSecret: "etcd-apisix-password"
+  secretPasswordKey: "apisix-password"
+
+# APISIX Gateway configuration
+apisix:
+  enableIPv6: true
+  enableHTTP2: true
+  ssl:
+    enabled: true
+    containerPort: 9443
+  router:
+    http: radixtree_host_uri
+  prometheus:
+    enabled: {{ $global.metrics.enabled }}
+  admin:
+    enabled: true
+    ingress:
+      enabled: {{ $global.ingress.enabled }}
+      annotations:
+        cert-manager.io/cluster-issuer: {{ $global.ingress.clusterIssuer }}
+      {{- $host := printf "%s.%s" (default "" $this.subdomain) $global.domain | trimPrefix "." }}
+      hosts:
+        - host: {{ $host }}
+          paths:
+            - path: '{{ $this.pathPrefix }}'
+      ingressClassName: {{ $global.ingress.ingressClass }}
+    allow:
+      ipList:
+        - 127.0.0.1/24
+        - 10.0.0.0/8
+        - 172.16.0.0/12
+        - 192.168.0.0/16
+    credentials:
+      secretName: apisix-admin-credentials
+      secretAdminKey: admin
+      secretViewerKey: viewer
+
+# Gateway service configuration
+service:
+  type: ClusterIP
+  http:
+    enabled: true
+    servicePort: 80
+    containerPort: 9080
+  tls:
+    servicePort: 443
+    containerPort: 9443
+
+# Ingress Controller
+ingress-controller:
+  enabled: true
+  image:
+    repository: {{ .Values.images.apisix.apisix.ingressController.repository }}
+    tag: {{ .Values.images.apisix.apisix.ingressController.tag }}
+  config:
+    apisix:
+      adminAPIVersion: v3
+      serviceNamespace: {{ $this.namespace }}
+      serviceName: apisix-admin
+  serviceMonitor:
+    enabled: {{ $global.metrics.enabled }}
+  deployment:
+    podSecurityContext:
+      runAsNonRoot: true
+      runAsUser: 1000
+      fsGroup: 1000
+      seccompProfile:
+        type: RuntimeDefault
+
+    securityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+          - ALL
+      readOnlyRootFilesystem: true
+
+# Metrics
+metrics:
+  serviceMonitor:
+    enabled: {{ $global.metrics.enabled }}

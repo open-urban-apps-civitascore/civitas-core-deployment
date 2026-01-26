@@ -21,6 +21,7 @@ components:
   - postgres
   - kafka
   - keycloak
+  - apisix
   - apicurio
   - model-atlas
   - portal
