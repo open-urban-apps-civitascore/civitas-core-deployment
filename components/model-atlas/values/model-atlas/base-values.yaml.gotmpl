@@ -1,0 +1,58 @@
+---
+{{- $this := .Values.modelAtlas.modelAtlas }}
+{{- $global := .Values.global }}
+
+# - [x] Containers run as non-root with `readOnlyRootFilesystem`
+# - [x] Health probes
+# - [ ] Graceful shutdown
+# - [ ] Standard labels
+# - [x] ServiceAccount with least privilege where required
+# - [x] Named ports -> default
+# - [x] Ingress with TLS
+
+image:
+  repository: {{ .Values.images.modelAtlas.app.repository }}
+  tag: {{ .Values.images.modelAtlas.app.tag }}
+  pullPolicy: IfNotPresent
+
+initContainers:
+  - name: init-tmp-dir
+    image: {{ .Values.images.modelAtlas.init.repository }}:{{ .Values.images.modelAtlas.init.tag }}
+    command: ['sh', '-c', 'mkdir -p /tmp/modelatlas && chmod 755 /tmp/modelatlas']
+    volumeMounts:
+      - name: tmp
+        mountPath: /tmp
+    securityContext:
+      runAsNonRoot: true
+      runAsUser: 1000
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+          - ALL
+      readOnlyRootFilesystem: true
+
+env:
+  - name: APICURIO_HOST
+    value: "apicurio-registry"
+  - name: APICURIO_PORT
+    value: '8080'
+
+ingress:
+  enabled: {{ $global.ingress.enabled }}
+  className: {{ $global.ingress.ingressClass }}
+  annotations:
+    cert-manager.io/cluster-issuer: {{ $global.ingress.clusterIssuer }}
+  {{- $host := printf "%s.%s" (default "" $this.subdomain) $global.domain | trimPrefix "." }}
+  hosts:
+    - host: {{ $host }}
+      paths:
+        - path: {{ $this.pathPrefix }}
+          pathType: Prefix
+  tls:
+    - secretName: model-atlas-tls
+      hosts:
+        - {{ $host }}
+
+service:
+  type: ClusterIP
+  port: 8080
