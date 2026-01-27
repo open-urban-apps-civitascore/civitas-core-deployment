@@ -9,3 +9,11 @@ kafka:
     port: {{ $this.bootstrapPort }}
     type: internal
     tls: false
+
+topics:
+  - name: "kafkasql-journal"
+    partitions: 1
+    replicas: 1
+    config:
+      retention.ms: -1
+      segment.bytes: -1
