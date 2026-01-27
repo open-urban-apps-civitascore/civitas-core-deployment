@@ -2,6 +2,25 @@
 
 Guide to work in this repository and maintain components.
 
+## Adding a new component
+
+To add a new component to the deployment, [copier](https://copier.readthedocs.io/en/stable/) is used to scaffold the necessary files.
+Ensure you have `copier` installed in your environment.
+
+To add a new component run the following command, and after you filled in the prompts, follow the instructions printed in the end.
+
+```bash
+make new-component
+```
+
+## Updating components to the latest template versions
+
+To update existing components to the latest template versions, use the following command:
+
+```bash
+make update-components
+```
+
 ## Configuring values
 
 We work with Helm charts and therefore must primarily configure the components via Helm values.

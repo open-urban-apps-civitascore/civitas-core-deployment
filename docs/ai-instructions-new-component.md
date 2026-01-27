@@ -35,7 +35,6 @@ Everything you have to do is described in the following list.
 
 1. Configure helm charts in `components/<component>/charts.yaml`
 2. Configure values for every release in `components/<component>/values`
-    - For getting helm values or versions use the helm commandline which is installed.
     - You can see patterns to use in `docs/developer-guide.md`. You must use them like this, so read them carefully and use the relevant parts for this component. parts are: Connecting to Kafka Cluster, Connecting to Database, Setting Docker Images, Generating Secrets, Exposing UIs and APIs, Connect with Keycloak, Configuring Resources, Setting other values
     - Keep the checklist comment at the top and mark them as checked. Add a comment when they don't need to be set. e.g. `-> not applicable`
     - Keep items unchecked, which are currently not supported.

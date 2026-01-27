@@ -1,0 +1,34 @@
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: require-rolling-update
+  annotations:
+    policies.kyverno.io/title: Require Rolling Update Strategy
+    policies.kyverno.io/category: Best Practices
+    policies.kyverno.io/severity: medium
+    policies.kyverno.io/minversion: 1.6.0
+    policies.kyverno.io/subject: Deployment
+    policies.kyverno.io/description: >-
+      Rolling updates should be configured to ensure zero-downtime deployments in production.
+      This policy validates that Deployments use the RollingUpdate strategy with
+      maxUnavailable: 0 and maxSurge: 25% to prevent service disruption during updates.
+spec:
+  validationFailureAction: Audit
+  background: true
+  rules:
+    - name: validate-rolling-update-strategy
+      match:
+        any:
+          - resources:
+              kinds:
+                - Deployment
+      validate:
+        message: 'Deployments must use RollingUpdate strategy with maxUnavailable: 0 and maxSurge: 25%.'
+        pattern:
+          spec:
+            strategy:
+              type: RollingUpdate
+              rollingUpdate:
+                maxUnavailable: 0
+                maxSurge: 25%

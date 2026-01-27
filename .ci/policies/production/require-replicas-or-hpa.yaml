@@ -1,0 +1,33 @@
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: require-replicas-or-hpa
+  annotations:
+    policies.kyverno.io/title: Require Replicas or HPA
+    policies.kyverno.io/category: Best Practices
+    policies.kyverno.io/severity: medium
+    policies.kyverno.io/minversion: 1.6.0
+    policies.kyverno.io/subject: Deployment
+    # only a warning, because this may be irrelevant when hpa is configured. But we may want to adjust this.
+    policies.kyverno.io/scored: 'false'
+    policies.kyverno.io/description: >-
+      Production workloads should have at least 2 replicas or be managed by a
+      HorizontalPodAutoscaler for high availability. This policy validates that
+      Deployments have at least 2 replicas. StatefulSets and DaemonSets are excluded
+      as they may legitimately run with a single replica.
+spec:
+  validationFailureAction: Audit
+  background: true
+  rules:
+    - name: validate-replicas
+      match:
+        any:
+          - resources:
+              kinds:
+                - Deployment
+      validate:
+        message: 'Deployments must have at least 2 replicas for high availability.'
+        pattern:
+          spec:
+            replicas: '>=2'
