@@ -47,13 +47,20 @@ ingress:
         - {{ $host }}
       secretName: {{ $host }}-tls
   console:
-    # TODO: separate values for console ingress?
     enabled: true
+    ingressClassName: {{ $global.ingress.ingressClass }}
+    annotations:
+      ingress.kubernetes.io/affinity: cookie
+      cert-manager.io/cluster-issuer: {{ $global.ingress.clusterIssuer }}
     rules:
       - host: {{ $host }}
         paths:
           - path: '{{ $this.pathPrefix | trimSuffix "/" }}/admin'
             pathType: Prefix
+    tls:
+      - hosts:
+          - {{ $host }}
+        secretName: {{ $host }}-tls
 route:
   enabled: false
 dbchecker:

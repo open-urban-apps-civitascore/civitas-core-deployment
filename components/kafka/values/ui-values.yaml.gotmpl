@@ -16,3 +16,6 @@ ingress:
   host: {{ $host }}
   path: '{{ $this.pathPrefix }}'
   ingressClassName: {{ $global.ingress.ingressClass }}
+  tls:
+    enabled: true
+    secretName: {{ $host }}-tls

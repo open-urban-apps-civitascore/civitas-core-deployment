@@ -102,13 +102,18 @@ apisix:
     ingress:
       enabled: {{ $global.ingress.enabled }}
       annotations:
+        kubernetes.io/ingress.class: {{ $global.ingress.ingressClass }}
         cert-manager.io/cluster-issuer: {{ $global.ingress.clusterIssuer }}
       {{- $host := printf "%s.%s" (default "" $this.subdomain) $global.domain | trimPrefix "." }}
       hosts:
         - host: {{ $host }}
           paths:
             - '{{ $this.pathPrefix }}'
-      ingressClassName: {{ $global.ingress.ingressClass }}
+      className: {{ $global.ingress.ingressClass }}
+      tls:
+        - hosts:
+            - {{ $host }}
+          secretName: {{ $host }}-tls
     credentials:
       secretName: apisix-admin-credentials
       secretAdminKey: admin
