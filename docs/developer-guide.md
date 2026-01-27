@@ -87,7 +87,7 @@ image:
 
 ### Generating Secrets
 
-For generating and using secrets in a component, create a file in `components/<component>/secrets.yaml.gotmpl` with content like this:
+For generating and using secrets in a component, create a file in `components/<component>/secrets.yaml` with content like this:
 
 ```yaml
 ---

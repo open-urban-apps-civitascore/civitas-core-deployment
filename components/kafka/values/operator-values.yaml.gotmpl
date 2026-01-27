@@ -1,6 +1,6 @@
 ---
-{{- $this := .Values.kafka.operator -}}
-{{- $global := .Values.global -}}
+{{- $this := .Values.kafka.operator }}
+{{- $global := .Values.global }}
 
 {{- if ne $this.namespace .Values.kafka.cluster.namespace  }}
 watchNamespaces:

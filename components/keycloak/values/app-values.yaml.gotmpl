@@ -1,6 +1,6 @@
 ---
-{{- $this := .Values.keycloak.app -}}
-{{- $global := .Values.global -}}
+{{- $this := .Values.keycloak.app }}
+{{- $global := .Values.global }}
 
 fullnameOverride: ""
 nameOverride: ""
@@ -35,6 +35,7 @@ ingress:
   servicePort: http
   annotations:
     ingress.kubernetes.io/affinity: cookie
+    cert-manager.io/cluster-issuer: {{ $global.ingress.clusterIssuer }}
   rules:
     {{- $host := printf "%s.%s" (default "" $this.subdomain) $global.domain | trimPrefix "." }}
     - host: {{ $host }}
