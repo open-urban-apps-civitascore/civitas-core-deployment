@@ -1,0 +1,5 @@
+---
+redpandaConnect:
+  broker:
+    enabled: true
+    namespace: {{ include "civitas.namespace" (dict "global" .Values.global "suffix" "redpanda-connect") }}

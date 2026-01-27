@@ -25,4 +25,5 @@ components:
   - apisix
   - apicurio
   - model-atlas
+  - redpanda-connect
   - portal

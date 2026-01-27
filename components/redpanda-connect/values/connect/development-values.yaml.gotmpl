@@ -1,0 +1,19 @@
+---
+{{- $this := .Values.redpandaConnect.broker }}
+{{- $global := .Values.global }}
+# Checklist:
+# - [x] Minimal Resources
+# - [x] Minimal storage
+# - [ ] 1 Replica
+
+resources:
+  requests:
+    cpu: '200m'
+    memory: '512Mi'
+  limits:
+    cpu: '1'
+    memory: '1Gi'
+
+autoscaling:
+  enabled: false
+
