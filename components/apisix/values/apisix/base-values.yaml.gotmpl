@@ -44,20 +44,57 @@ etcd:
 
 externalEtcd:
   host:
-    - http://etcd-client.{{ .Values.etcd.etcd.namespace }}.svc.cluster.local:2379
+    - http://etcd-etcd-client.{{ .Values.etcd.etcd.namespace }}.svc.cluster.local:2379
   user: "apisix"
   existingSecret: "etcd-apisix-password"
   secretPasswordKey: "apisix-password"
 
+# Config to ensure functionality with read-only filesystem
+# Ensures that /usr/local/apisix/conf and /tmp are writable, while also preserving
+# the default configuration by copying it in an init container.
+{{- $writableVolumes := dict
+  "conf" "/usr/local/apisix/conf"
+  "tmp" "/tmp"
+  "body-tmp" "/usr/local/apisix/client_body_temp"
+  "proxy-tmp" "/usr/local/apisix/proxy_temp"
+  "fastcgi-tmp" "/usr/local/apisix/fastcgi_temp"
+  "uwsgi-tmp" "/usr/local/apisix/uwsgi_temp"
+  "scgi-tmp" "/usr/local/apisix/scgi_temp"
+  "logs" "/usr/local/apisix/logs"
+}}
+
+extraVolumes:
+{{- range $name, $path := $writableVolumes }}
+  - name: apisix-{{ $name }}-writable
+    emptyDir: { }
+{{- end }}
+
+extraVolumeMounts:
+{{- range $name, $path := $writableVolumes }}
+  - name: apisix-{{ $name }}-writable
+    mountPath: {{ $path }}
+{{- end }}
+
+extraInitContainers:
+  - name: copy-apisix-conf
+    image: {{ .Values.images.apisix.apisix.gateway.repository }}:{{ .Values.images.apisix.apisix.gateway.tag }}
+    imagePullPolicy: IfNotPresent
+    command: ["/bin/sh", "-c"]
+    args:
+      - cp -r /usr/local/apisix/conf/* /mnt/apisix-conf/ ;
+    volumeMounts:
+      - name: apisix-conf-writable
+        mountPath: /mnt/apisix-conf
+    securityContext:
+      runAsNonRoot: true
+      runAsUser: 1000
+      capabilities:
+        drop:
+          - ALL
+      readOnlyRootFilesystem: true
+
 # APISIX Gateway configuration
 apisix:
-  enableIPv6: true
-  enableHTTP2: true
-  ssl:
-    enabled: true
-    containerPort: 9443
-  router:
-    http: radixtree_host_uri
   prometheus:
     enabled: {{ $global.metrics.enabled }}
   admin:
@@ -70,29 +107,12 @@ apisix:
       hosts:
         - host: {{ $host }}
           paths:
-            - path: '{{ $this.pathPrefix }}'
+            - '{{ $this.pathPrefix }}'
       ingressClassName: {{ $global.ingress.ingressClass }}
-    allow:
-      ipList:
-        - 127.0.0.1/24
-        - 10.0.0.0/8
-        - 172.16.0.0/12
-        - 192.168.0.0/16
     credentials:
       secretName: apisix-admin-credentials
       secretAdminKey: admin
       secretViewerKey: viewer
-
-# Gateway service configuration
-service:
-  type: ClusterIP
-  http:
-    enabled: true
-    servicePort: 80
-    containerPort: 9080
-  tls:
-    servicePort: 443
-    containerPort: 9443
 
 # Ingress Controller
 ingress-controller:
@@ -100,11 +120,6 @@ ingress-controller:
   image:
     repository: {{ .Values.images.apisix.apisix.ingressController.repository }}
     tag: {{ .Values.images.apisix.apisix.ingressController.tag }}
-  config:
-    apisix:
-      adminAPIVersion: v3
-      serviceNamespace: {{ $this.namespace }}
-      serviceName: apisix-admin
   serviceMonitor:
     enabled: {{ $global.metrics.enabled }}
   deployment:
