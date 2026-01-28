@@ -33,6 +33,11 @@ To deploy the entire infrastructure locally using Minikube, run the following co
 ```bash
 minikube start
 minikube addons enable ingress
+
+# copy the default deployment and adjust it if needed
+# the deployment directory is in .gitignore and can be its own git repo
+cp -r default/deployment deployment
+cd deployment
 # in the deployment directory
 helmfile -f helmile.yaml sync -e local
 # or (when CRDs are already installed)
