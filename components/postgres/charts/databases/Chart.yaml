@@ -1,6 +1,6 @@
 ---
 apiVersion: v2
-name: database
+name: databases
 description: A Helm chart for Kubernetes
 icon: https://gitlab.com/uploads/-/system/group/avatar/112374021/CIVITASCORE_Icon__3_.png?width=48
 

@@ -12,102 +12,18 @@
 # - [x] Named ports -> default in CloudNativePG
 # - [x] Ingress with TLS -> not applicable
 
-nameOverride: ""
-fullnameOverride: ""
-namespaceOverride: ""
-
-type: postgresql
+type: postgis
 
 version:
   postgresql: "16"
   timescaledb: "2.15"
   postgis: "3.4"
 
-mode: standalone
-
-recovery:
-  method: object_store
-
-  pitrTarget:
-    time: ""
-
-  backupName: "civitas-database-backups"  # Name of the backup to recover from. Required if method is `backup`.
-
-  clusterName: "cloudnative-pg"
-  database: "civitas"
-  owner: ""
-  endpointURL: "https://minio:9000"  # TODO: global s3 config
-  endpointCA:
-    create: false
-    name: ""
-    key: ""
-    value: ""
-  destinationPath: "s3://civitas-database-backups/civitas"
-  provider: s3
-  s3:
-    region: us-east-1
-    bucket: civitas-database-backups
-    path: /
-    accessKey: "{{ $this.recovery.s3.accessKey }}"
-    secretKey: "{{ $this.recovery.s3.secretKey }}"
-    inheritFromIAMRole: false
-  secret:
-    create: true
-    name: ""
-
-  import:
-    type: "microservice"
-    databases: []
-    roles: []
-    postImportApplicationSQL: []
-    schemaOnly: false
-    pgDumpExtraOptions: []
-    pgRestoreExtraOptions: []
-    source:
-      host: ""
-      port: 5432
-      username: ""
-      database: ""
-      sslMode: "verify-full"
-      passwordSecret:
-        create: false
-        name: ""
-        key: "password"
-        value: ""
-      sslKeySecret:
-        name: ""
-        key: ""
-      sslCertSecret:
-        name: ""
-        key: ""
-      sslRootCertSecret:
-        name: ""
-        key: ""
-
-
 cluster:
   imageName: ""  # TODO: set image  <image>:<tag>@sha256:<digestValue>
-  imageCatalogRef: {}
-  imagePullPolicy: "IfNotPresent"
-  imagePullSecrets: [] # TODO: global image pull secrets
   storage:
     size: "8Gi"
     storageClass: "{{ $global.storage.storageClass.rwo | default "" }}"
-  walStorage:
-    enabled: false
-  postgresUID: -1
-  postgresGID: -1
-  services: {}
-  priorityClassName: ""
-  primaryUpdateMethod: "switchover"
-  primaryUpdateStrategy: "unsupervised"
-  logLevel: "info"
-  affinity:
-    topologyKey: topology.kubernetes.io/zone
-  certificates: {} # TODO: global certificates
-  enableSuperuserAccess: true
-  superuserSecret: ""
-  enablePDB: true
 
   {{- if .Values.databases }}
   roles:
@@ -125,20 +41,6 @@ cluster:
   roles: []
   {{- end }}
 
-  # TODO: global monitoring settings
-  monitoring:
-    enabled: false
-    podMonitor:
-      enabled: true
-      relabelings: []
-      metricRelabelings: []
-    prometheusRule:
-      enabled: true
-      excludeRules: []
-    disableDefaultQueries: false
-    customQueries: []
-    customQueriesSecret: []
-
   postgresql:
     parameters: {}
     synchronous: {}
@@ -155,22 +57,3 @@ cluster:
       - hostnossl all           all       10.0.0.0/8    pam
       - hostssl   all           +zalandos all           pam
       - hostssl   all           all       all           md5
-    pg_ident: []
-    shared_preload_libraries: []
-    ldap: {}
-
-
-  initdb: {}
-  serviceAccountTemplate: {}
-  additionalLabels: {}
-  annotations: {}
-
-
-backups:
-  enabled: false  # TODO: is backup our responsibility?
-
-imageCatalog:
-  create: true
-  images: []
-
-poolers: []

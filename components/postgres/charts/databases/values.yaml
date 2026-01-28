@@ -1,0 +1,8 @@
+---
+cluster:
+  name: postgres-cluster
+databases:
+  []
+  # apicurio:
+  #   name: 'apicurio'
+  #   user: 'apicurio'

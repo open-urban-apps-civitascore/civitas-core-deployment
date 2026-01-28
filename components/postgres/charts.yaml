@@ -8,3 +8,5 @@ postgres:
     repository: https://cloudnative-pg.github.io/charts
     chart: cnpg/cluster
     version: '0.3.1'
+  databases:
+    chart: charts/databases

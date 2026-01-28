@@ -60,6 +60,7 @@ keycloak:
   secret:
     name: 'db-keycloak'
     key: 'password'
+    generate: true  # indicates that this value should be generated
   # TODO: different namespace does not yet work. Namespace of the cluster is not known, when rendering this.
   host: 'postgres-cluster-rw' # set to external hostname, if an external database is used
   port: 5432

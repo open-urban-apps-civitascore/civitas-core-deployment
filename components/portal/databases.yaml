@@ -6,5 +6,6 @@ portal:
   secret:
     name: 'db-portal'
     key: 'password'
+    generate: true
   host: 'postgres-cluster-rw'
   port: 5432

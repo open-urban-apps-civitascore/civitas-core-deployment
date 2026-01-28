@@ -1,15 +1,7 @@
 ---
 component: keycloak
 parts:
-  - name: db
-    # needs across components is not yet supported.
-    # Problem is because of the helmfile layering is, that the other components releases are not in the same scope.
-    # So we must ensure through ordering of the helmfiles execution that the needed component is installed first.
-    # needs:
-    # - postgres.cluster
   - name: app
-    needs:
-      - keycloak.db
   - name: config-cli
     needs:
       - keycloak.app
