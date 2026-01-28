@@ -58,8 +58,8 @@ env:
 
   # APISIX configuration
   {{- $apisixHost := printf "%s.%s" (default "" .Values.apisix.apisix.subdomain) $global.domain | trimPrefix "." }}
-  {{- $apisixPath := .Values.apisix.apisix.pathPrefix -}}
-  {{- $apisixUrl := printf "https://%s%s" $apisixHost $apisixPath -}}
+  {{- $apisixPath := .Values.apisix.apisix.pathPrefix }}
+  {{- $apisixUrl := printf "https://%s%s" $apisixHost $apisixPath }}
   - name: APISIX_ADMIN_URL
     value: {{ $apisixUrl | quote }}
   - name: APISIX_ADMIN_KEY
