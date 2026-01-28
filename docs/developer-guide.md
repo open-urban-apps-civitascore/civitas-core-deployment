@@ -26,6 +26,21 @@ make update-components
 We work with Helm charts and therefore must primarily configure the components via Helm values.
 These values are set `components/<component>/values/<part>-values.yaml.gotmpl` files.
 
+### Using Defaults
+
+Some value settings are used in multiple components and have default values defined.
+These defaults can be found in the `defaults/environments/.yaml.gotmpl` files.
+For example for security there is `security.yaml.gotmpl` with `securityDefaults` object.
+You can access these defaults in your component values files like this:
+
+```yaml
+securityContext:
+  {{ .Values.securityDefaults.securityContext | toYaml | nindent 2 }}
+
+podSecurityContext:
+  {{ .Values.securityDefaults.podSecurityContext | toYaml | nindent 2 }}
+```
+
 ### Connecting to Kafka Cluster
 
 ```yaml

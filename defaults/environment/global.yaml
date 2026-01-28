@@ -27,3 +27,4 @@ components:
   - model-atlas
   - redpanda-connect
   - portal
+  - config-adapters
