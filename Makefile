@@ -21,3 +21,7 @@ update-components:
 			( cd components && copier update --skip-answered --vcs-ref 8969ae22 -a "$$name/.copier-answers.yml" ) || echo "copier update failed for $$name"; \
 		fi; \
 	done;
+
+.PHONY: verify-policies
+verify-policies:
+	.ci/policies/verify-kyverno-policies.sh
