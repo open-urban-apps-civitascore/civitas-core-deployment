@@ -1,5 +1,1 @@
-{{ $global := . }}
-{{- range .Values.components }}
-{{- $component := . }}
-{{- tpl (readFile (printf "../../components/%s/default-environment.yaml.gotmpl" $component)) $global | fromYaml | toYaml | nindent 0 }}
-{{- end }}
+{{ include "civitas.configFiles" (dict "components" .Values.components "file" "default-environment.yaml.gotmpl" "global" .) }}
