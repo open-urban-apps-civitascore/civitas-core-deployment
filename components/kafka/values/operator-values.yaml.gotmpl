@@ -1,3 +1,4 @@
+<<<<<<<< HEAD:components/kafka/values/operator-values.yaml.gotmpl
 ---
 {{- $this := .Values.kafka.operator }}
 {{- $global := .Values.global }}
@@ -10,6 +11,12 @@ watchNamespaces:
 labels:
   app.kubernetes.io/name: strimzi-kafka-operator
   app.kubernetes.io/instance: {{ $global.instanceSlug }}
+========
+watchNamespaces: [] # own namespace is always watched and must not be set. TODO: once we know how to handle namespaces, we can set this again.
+labels:
+  app.kubernetes.io/name: strimzi-kafka-operator
+  app.kubernetes.io/instance: {{ .Values.global.namespace }}
+>>>>>>>> origin/main:defaults/deployment/environments/local/kafka-operator.yaml.gotmpl
   app.kubernetes.io/managed-by: Helm
   app.kubernetes.io/component: operator
   app.kubernetes.io/part-of: {{ $global.instanceSlug }}
