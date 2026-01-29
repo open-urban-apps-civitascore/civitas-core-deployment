@@ -81,6 +81,9 @@ keycloak:
   authServerUrl: ''
   realm: ''
 
+kafka:
+  bootstrapServers: ''
+
 database:
   host: ''
   port: 5432

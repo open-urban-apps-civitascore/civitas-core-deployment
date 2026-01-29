@@ -31,6 +31,9 @@ keycloak:
   authServerUrl: {{ $keycloakUrl }}
   realm: {{ $realmName }}
 
+kafka:
+  bootstrapServers: "{{ .Values.kafka.cluster.bootstrapService }}:{{ .Values.kafka.cluster.bootstrapPort }}"
+
 {{- $host := printf "%s.%s" (default "" $this.subdomain) $global.domain | trimPrefix "." }}
 
 nextAuth:
