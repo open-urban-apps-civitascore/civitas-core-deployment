@@ -19,7 +19,7 @@ validate:
 
 # Deploy locally using minikube and local environment
 deploy-local:
-	$(MAKE) deploy-minikube namespace=local-civitas2
+	$(MAKE) deploy-minikube namespace=dev
 	helmfile -f ./deployment/helmfile.yaml sync -e local --kube-context minikube
 
 # Deploy locally using minikube and default environment
@@ -41,6 +41,13 @@ deploy-minikube:
 	minikube start --cpus=4 --memory=8192
 	minikube addons enable metrics-server
 	minikube addons enable ingress
+
+	helm install \
+		cert-manager oci://quay.io/jetstack/charts/cert-manager \
+		--version v1.19.2 \
+		--namespace cert-manager \
+		--create-namespace \
+		--set crds.enabled=true
 
 	kubectl create namespace $(namespace)
 
