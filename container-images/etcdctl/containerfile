@@ -1,5 +1,5 @@
 # Start with the official Alpine image
-FROM alpine:3.23.2
+FROM alpine:3.23.3
 
 # Set environment variables
 # https://docs.renovatebot.com/modules/datasource/github-releases/
