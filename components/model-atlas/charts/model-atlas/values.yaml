@@ -104,7 +104,7 @@ startupProbe:
   httpGet:
     path: /atlas/rest/default/schema/hello
     port: http
-  initialDelaySeconds: 10
+  initialDelaySeconds: 100
   periodSeconds: 10
   timeoutSeconds: 3
   failureThreshold: 30
