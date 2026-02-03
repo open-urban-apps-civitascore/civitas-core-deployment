@@ -1,0 +1,18 @@
+---
+{{- $this := .Values.redpandaConnect.connect }}
+{{- $global := .Values.global }}
+# Checklist:
+# - [x] Containers run as non-root with `readOnlyRootFilesystem`
+# - [x] Health probes -> default in chart
+# - [ ] Graceful shutdown
+# - [ ] Standard labels
+# - [ ] ServiceAccount with least privilege where required
+# - [ ] Named ports
+# - [ ] Ingress with TLS
+
+# TODO: set helm values for broker here
+securityContext:
+  {{ .Values.securityDefaults.securityContext | toYaml | nindent 2 }}
+
+podSecurityContext:
+  {{ .Values.securityDefaults.podSecurityContext | toYaml | nindent 2 }}

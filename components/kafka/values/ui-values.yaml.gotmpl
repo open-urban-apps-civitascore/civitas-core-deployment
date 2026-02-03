@@ -1,0 +1,21 @@
+---
+{{- $this := .Values.kafka.ui }}
+{{- $global := .Values.global }}
+
+yamlApplicationConfig:
+  kafka:
+    clusters:
+      - name: kafka-cluster
+        bootstrapServers: {{ .Values.kafka.cluster.bootstrapService }}:{{ .Values.kafka.cluster.bootstrapPort }}
+
+ingress:
+  enabled: {{ $global.ingress.enabled }}
+  annotations:
+    cert-manager.io/cluster-issuer: {{ $global.ingress.clusterIssuer }}
+  {{- $host := printf "%s.%s" (default "" $this.subdomain) $global.domain | trimPrefix "." }}
+  host: {{ $host }}
+  path: '{{ $this.pathPrefix }}'
+  ingressClassName: {{ $global.ingress.ingressClass }}
+  tls:
+    enabled: true
+    secretName: {{ $host }}-tls

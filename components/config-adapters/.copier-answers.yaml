@@ -1,0 +1,8 @@
+---
+# Changes here will be overwritten by Copier.
+_commit: 6bd164b
+_src_path: ..
+componentName: Config Adapters
+componentSlug: config-adapters
+releases: adapters
+shortDescription: Adapters for configuring platform components

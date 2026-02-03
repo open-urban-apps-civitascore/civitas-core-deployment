@@ -1,0 +1,30 @@
+---
+global:
+  domain: civitas.test
+  instanceSlug: dev
+  profile: development
+  createNamespaces: true
+  singleNamespace: true
+  ingress:
+    enabled: true
+    clusterIssuer: 'selfsigned-ca'
+    ingressClass: 'nginx'
+  storage:
+    storageClass:
+      rwo: ''
+      rwx: ''
+      loc: ''
+  metrics:
+    enabled: false
+components:
+  - secrets
+  - postgres
+  - etcd
+  - kafka
+  - keycloak
+  - apisix
+  - apicurio
+  - model-atlas
+  - redpanda-connect
+  - portal
+  - config-adapters

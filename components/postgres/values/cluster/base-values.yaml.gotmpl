@@ -1,0 +1,59 @@
+---
+{{- $this := .Values.postgres.cluster -}}
+{{- $global := .Values.global }}
+
+# values: https://github.com/cloudnative-pg/charts/blob/main/charts/cluster/values.yaml
+# raw: https://raw.githubusercontent.com/cloudnative-pg/charts/refs/heads/main/charts/cluster/values.yaml
+# - [x] Containers run as non-root with `readOnlyRootFilesystem` -> default in CloudNativePG
+# - [x] Health probes -> default in CloudNativePG
+# - [x] Graceful shutdown -> default in CloudNativePG
+# - [ ] Standard labels
+# - [x] ServiceAccount with least privilege where required -> default in CloudNativePG
+# - [x] Named ports -> default in CloudNativePG
+# - [x] Ingress with TLS -> not applicable
+
+type: postgis
+
+version:
+  postgresql: "16"
+  timescaledb: "2.15"
+  postgis: "3.4"
+
+cluster:
+  imageName: ""  # TODO: set image  <image>:<tag>@sha256:<digestValue>
+  storage:
+    size: "8Gi"
+    storageClass: "{{ $global.storage.storageClass.rwo | default "" }}"
+
+  {{- if .Values.databases }}
+  roles:
+    {{- range $key, $db := .Values.databases }}
+    {{- if eq $db.embedded true }}
+    - name: "{{ $db.user }}"
+      ensure: present
+      login: true
+      superuser: false
+      passwordSecret:
+        name: "{{ $db.secret.name }}"
+    {{- end }}
+    {{- end }}
+  {{- else }}
+  roles: []
+  {{- end }}
+
+  postgresql:
+    parameters: {}
+    synchronous: {}
+    # TODO: Fix pg_hba according to real needs
+    pg_hba:
+      - local     all           all                     trust
+      - hostnossl quantumleap   all       all           md5
+      - hostssl   all           +zalandos 127.0.0.1/32  pam
+      - host      all           all       127.0.0.1/32  md5
+      - hostssl   all           +zalandos ::1/128       pam
+      - host      all           all       ::1/128       md5
+      - hostssl   replication   standby   all           md5
+      - hostnossl all           all       10.0.0.0/8    md5
+      - hostnossl all           all       10.0.0.0/8    pam
+      - hostssl   all           +zalandos all           pam
+      - hostssl   all           all       all           md5

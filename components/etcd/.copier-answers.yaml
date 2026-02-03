@@ -1,0 +1,8 @@
+---
+# Changes here will be overwritten by Copier.
+_commit: 83a61f8
+_src_path: ..
+componentName: Etcd
+componentSlug: etcd
+releases: etcd
+shortDescription: external etcd storage

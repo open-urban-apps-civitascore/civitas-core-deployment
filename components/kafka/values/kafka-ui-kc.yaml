@@ -1,0 +1,15 @@
+---
+auth:
+  type: OAUTH2
+  oauth2:
+    client:
+      keycloak:
+        clientId:
+        clientSecret: yyy
+        scope: openid
+        issuer-uri: https://<keycloak_instance>/auth/realms/<realm>
+        user-name-attribute: preferred_username
+        client-name: keycloak
+        provider: keycloak
+        custom-params:
+          type: oauth

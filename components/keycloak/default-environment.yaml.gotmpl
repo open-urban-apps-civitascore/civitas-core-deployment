@@ -1,0 +1,20 @@
+---
+keycloak:
+  db:
+    enabled: true
+    namespace: {{ include "civitas.namespace" (dict "global" .Values.global "suffix" "keycloak") }}
+  app:
+    enabled: true
+    namespace: {{ include "civitas.namespace" (dict "global" .Values.global "suffix" "keycloak") }}
+    subdomain: idm
+    pathPrefix: /
+    admin:
+      forceRecreateSecret: true
+      username: admin
+      secret:
+        name: "keycloak-admin-user"
+        passwordKey: "password"
+  config-cli:
+    enabled: true
+    namespace: {{ include "civitas.namespace" (dict "global" .Values.global "suffix" "keycloak") }}
+

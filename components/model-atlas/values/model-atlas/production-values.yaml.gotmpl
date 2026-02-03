@@ -1,0 +1,35 @@
+---
+{{- $this := .Values.modelAtlas.modelAtlas }}
+{{- $global := .Values.global }}
+
+# - [x] Resources (requests and limits)
+# - [x] Larger Storage -> not applicable
+# - [x] 2+ Replicas or HorizontalPodAutoscaler
+# - [x] Rolling updates `maxUnavailable: 0`, `maxSurge: 25%`
+# - [x] PodDisruptionBudget (at least `minAvailable: 1`)
+
+replicaCount: 2
+
+resources:
+  limits:
+    cpu: 1000m
+    memory: 512Mi
+  requests:
+    cpu: 200m
+    memory: 256Mi
+
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 80
+  targetMemoryUtilizationPercentage: 80
+
+rollingUpdate:
+  maxUnavailable: 0
+  maxSurge: 25%
+
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+  # maxUnavailable: 1

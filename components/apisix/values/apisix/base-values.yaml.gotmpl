@@ -1,0 +1,148 @@
+---
+{{- $this := .Values.apisix.apisix }}
+{{- $global := .Values.global }}
+# Checklist:
+# - [ ] Containers run as non-root with `readOnlyRootFilesystem`
+# - [x] Health probes -> enabled by default in chart
+# - [x] Graceful shutdown -> handled by chart
+# - [ ] Standard labels
+# - [x] ServiceAccount with least privilege where required
+# - [x] Named ports -> handled by chart
+# - [ ] Ingress with TLS -> not applicable, APISIX is the gateway itself
+
+fullnameOverride: apisix
+
+# Container images
+image:
+  repository: {{ .Values.images.apisix.apisix.gateway.repository }}
+  tag: {{ .Values.images.apisix.apisix.gateway.tag }}
+  pullPolicy: IfNotPresent
+
+serviceAccount:
+  create: true
+
+rbac:
+  create: true
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  fsGroup: 1000
+  seccompProfile:
+    type: RuntimeDefault
+
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+  readOnlyRootFilesystem: true
+
+# External etcd configuration with RBAC
+etcd:
+  enabled: false
+
+externalEtcd:
+  host:
+    - http://etcd-etcd-client.{{ .Values.etcd.etcd.namespace }}.svc.cluster.local:2379
+  user: "apisix"
+  existingSecret: "etcd-apisix-password"
+  secretPasswordKey: "apisix-password"
+
+# Config to ensure functionality with read-only filesystem
+# Ensures that /usr/local/apisix/conf and /tmp are writable, while also preserving
+# the default configuration by copying it in an init container.
+{{- $writableVolumes := dict
+  "conf" "/usr/local/apisix/conf"
+  "tmp" "/tmp"
+  "body-tmp" "/usr/local/apisix/client_body_temp"
+  "proxy-tmp" "/usr/local/apisix/proxy_temp"
+  "fastcgi-tmp" "/usr/local/apisix/fastcgi_temp"
+  "uwsgi-tmp" "/usr/local/apisix/uwsgi_temp"
+  "scgi-tmp" "/usr/local/apisix/scgi_temp"
+  "logs" "/usr/local/apisix/logs"
+}}
+
+extraVolumes:
+{{- range $name, $path := $writableVolumes }}
+  - name: apisix-{{ $name }}-writable
+    emptyDir: { }
+{{- end }}
+
+extraVolumeMounts:
+{{- range $name, $path := $writableVolumes }}
+  - name: apisix-{{ $name }}-writable
+    mountPath: {{ $path }}
+{{- end }}
+
+extraInitContainers:
+  - name: copy-apisix-conf
+    image: {{ .Values.images.apisix.apisix.gateway.repository }}:{{ .Values.images.apisix.apisix.gateway.tag }}
+    imagePullPolicy: IfNotPresent
+    command: ["/bin/sh", "-c"]
+    args:
+      - cp -r /usr/local/apisix/conf/* /mnt/apisix-conf/ ;
+    volumeMounts:
+      - name: apisix-conf-writable
+        mountPath: /mnt/apisix-conf
+    securityContext:
+      runAsNonRoot: true
+      runAsUser: 1000
+      capabilities:
+        drop:
+          - ALL
+      readOnlyRootFilesystem: true
+
+# APISIX Gateway configuration
+apisix:
+  prometheus:
+    enabled: {{ $global.metrics.enabled }}
+  admin:
+    enabled: true
+    ingress:
+      enabled: {{ $global.ingress.enabled }}
+      annotations:
+        kubernetes.io/ingress.class: {{ $global.ingress.ingressClass }}
+        cert-manager.io/cluster-issuer: {{ $global.ingress.clusterIssuer }}
+      {{- $host := printf "%s.%s" (default "" $this.subdomain) $global.domain | trimPrefix "." }}
+      hosts:
+        - host: {{ $host }}
+          paths:
+            - '{{ $this.pathPrefix }}'
+      className: {{ $global.ingress.ingressClass }}
+      tls:
+        - hosts:
+            - {{ $host }}
+          secretName: {{ $host }}-tls
+    credentials:
+      secretName: apisix-admin-credentials
+      secretAdminKey: admin
+      secretViewerKey: viewer
+
+# Ingress Controller
+ingress-controller:
+  enabled: true
+  image:
+    repository: {{ .Values.images.apisix.apisix.ingressController.repository }}
+    tag: {{ .Values.images.apisix.apisix.ingressController.tag }}
+  serviceMonitor:
+    enabled: {{ $global.metrics.enabled }}
+  deployment:
+    podSecurityContext:
+      runAsNonRoot: true
+      runAsUser: 1000
+      fsGroup: 1000
+      seccompProfile:
+        type: RuntimeDefault
+
+    securityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+          - ALL
+      readOnlyRootFilesystem: true
+
+# Metrics
+metrics:
+  serviceMonitor:
+    enabled: {{ $global.metrics.enabled }}

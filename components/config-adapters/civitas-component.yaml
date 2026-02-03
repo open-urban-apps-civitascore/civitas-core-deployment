@@ -1,0 +1,4 @@
+---
+component: configAdapters
+parts:
+  - name: adapters

@@ -23,8 +23,11 @@ duplicate-files:
   allow-duplicates: false
 exclude-patterns:
   - '__pycache__'
+  - '\.venv'
+  - 'uv\.lock'
   - "\\.git/"
-  - '.idea/'
+  - "\\.idea/"
+  - '_helpers\.tpl$' # ignore Helm helper templates
   # Allow .yaml.gotmpl because it's better than -yaml.gotmpl
   - ".*\\.yaml\\.gotmpl$"
   - ".*\\.yml\\.gotmpl$"
@@ -33,9 +36,10 @@ exclude-patterns:
   - 'charts/.*/templates/NOTES.txt'
   - 'charts/.*/templates/_helpers.tpl'
   - 'charts/.*/.helmignore' # ignore duplicate warning
+  - 'deployment/'
   # GitLab merge_request_templates directory uses underscores by convention
   - '.*\.gitlab/merge_request_templates.*'
   # Exclude gitlab-ci-local build directory
   - '.*\.gitlab-ci-local/.*'
-  - '.idea/'
-  - 'environments/*'
+  # Exclude template with jinja2 syntax
+  - '.*template-component/.*'

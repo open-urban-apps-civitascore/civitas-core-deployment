@@ -1,0 +1,16 @@
+---
+{{- $this := .Values.modelAtlas.modelAtlas }}
+{{- $global := .Values.global }}
+# - [x] Minimal Resources
+# - [x] Minimal storage -> not applicable
+# - [x] 1 Replica
+
+replicaCount: 1
+
+resources:
+  limits:
+    cpu: 750m
+    memory: 512Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi

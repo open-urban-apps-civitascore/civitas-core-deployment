@@ -1,0 +1,16 @@
+---
+{{- $this := .Values.postgres.operator -}}
+{{- $global := .Values.global }}
+
+# values: https://github.com/cloudnative-pg/charts/blob/main/charts/cloudnative-pg/values.yaml
+# raw: https://raw.githubusercontent.com/cloudnative-pg/charts/refs/heads/main/charts/cloudnative-pg/values.yaml
+# - [ ] Containers run as non-root with `readOnlyRootFilesystem`
+# - [ ] Health probes
+# - [ ] Graceful shutdown
+# - [ ] Standard labels
+# - [ ] ServiceAccount with least privilege where required
+# - [ ] Named ports
+# - [ ] Ingress with TLS
+
+config:
+  clusterWide: {{ $this.clusterWide }}

@@ -1,0 +1,75 @@
+---
+{{- $this := .Values.configAdapters.adapters }}
+{{- $global := .Values.global }}
+# Checklist:
+# - [x] Containers run as non-root with `readOnlyRootFilesystem`
+# - [x] Health probes -> default in chart
+# - [ ] Graceful shutdown
+# - [ ] Standard labels
+# - [ ] ServiceAccount with least privilege where required # TODO: use SA for keycloak access
+# - [x] Named ports -> default in chart
+# - [x] Ingress with TLS -> not applicable
+
+securityContext:
+  {{ .Values.securityDefaults.securityContext | toYaml | nindent 2 }}
+
+podSecurityContext:
+  {{ .Values.securityDefaults.podSecurityContext | toYaml | nindent 2 }}
+
+fullnameOverride: "config-adapter"
+
+image:
+  repository: {{ .Values.images.configAdapters.adapters.repository }}
+  tag: {{ .Values.images.configAdapters.adapters.tag }}
+
+env:
+  # Adapter configuration
+  - name: ADAPTERS
+    value: "apisix,keycloak"
+  - name: EVENTHANDLER_NAME
+    value: "kafka"
+
+  # Kafka configuration
+  - name: KAFKA_BOOTSTRAP_SERVERS
+    value: "{{ .Values.kafka.cluster.bootstrapService }}:{{ .Values.kafka.cluster.bootstrapPort }}"
+  - name: KAFKA_GROUP_ID
+    value: config-adapter-group
+
+  # Keycloak configuration
+  {{- $keycloakHost := printf "%s.%s" (default "" .Values.keycloak.app.subdomain) $global.domain | trimPrefix "." }}
+  {{- $keycloakPath := .Values.keycloak.app.pathPrefix -}}
+  {{- $keycloakUrl := printf "https://%s%s" $keycloakHost $keycloakPath -}}
+  {{- $realmName := $global.instanceSlug }}
+  - name: KEYCLOAK_URL
+    value: {{ $keycloakUrl | quote }}
+  - name: KEYCLOAK_REALM
+    value: {{ $realmName | quote }}
+  - name: KEYCLOAK_USERNAME
+    value: "admin"  # TODO: custom service account
+  - name: KEYCLOAK_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        name: "keycloak-admin-user"
+        key: "password"
+  - name: KEYCLOAK_CLIENT_ID
+    value: "admin-cli"
+  - name: KEYCLOAK_TOPICS
+    value: "core.civitas.idm.user.created,core.civitas.idm.user.updated,core.civitas.idm.realm.created"
+
+  # APISIX configuration
+  {{- $apisixHost := printf "%s.%s" (default "" .Values.apisix.apisix.subdomain) $global.domain | trimPrefix "." }}
+  {{- $apisixPath := .Values.apisix.apisix.pathPrefix }}
+  {{- $apisixUrl := printf "https://%s%s" $apisixHost $apisixPath }}
+  - name: APISIX_ADMIN_URL
+    value: {{ $apisixUrl | quote }}
+  - name: APISIX_ADMIN_KEY
+    valueFrom:
+      secretKeyRef:
+        name: "apisix-admin-credentials"
+        key: "admin"
+  - name: APISIX_TOPICS
+    value: "core.civitas.api.backend.created,core.civitas.api.backend.updated,core.civitas.api.backend.deleted"
+
+  # Health check configuration
+  - name: HEALTHCHECK_PORT
+    value: "8080"

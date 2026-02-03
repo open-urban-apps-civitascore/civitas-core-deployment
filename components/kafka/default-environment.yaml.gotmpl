@@ -1,0 +1,15 @@
+---
+kafka:
+  operator:
+    enabled: true
+    namespace: {{ include "civitas.namespace" (dict "global" .Values.global "suffix" "kafka") }}
+  cluster:
+    enabled: true
+    namespace: {{ include "civitas.namespace" (dict "global" .Values.global "suffix" "kafka") }}
+    bootstrapService: kafka-cluster-kafka-bootstrap # must stay the same and is only used for other components to connect
+    bootstrapPort: 9092
+  ui:
+    enabled: true
+    namespace: {{ include "civitas.namespace" (dict "global" .Values.global "suffix" "kafka") }}
+    subdomain: kafka-ui
+    pathPrefix: /

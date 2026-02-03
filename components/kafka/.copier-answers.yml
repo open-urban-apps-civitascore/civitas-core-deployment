@@ -1,0 +1,8 @@
+---
+# Changes here will be overwritten by Copier.
+_commit: 8969ae2
+_src_path: ..
+componentName: Kafka
+componentSlug: kafka
+releases: operator,cluster,ui
+shortDescription: Asynchronous central message broker for interservice communication

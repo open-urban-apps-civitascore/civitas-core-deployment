@@ -1,0 +1,27 @@
+---
+{{- $this := .Values.apisix.apisix }}
+{{- $global := .Values.global }}
+# Checklist:
+# - [x] Minimal Resources
+# - [x] Minimal storage -> not applicable, uses external etcd
+# - [x] 1 Replica
+
+replicaCount: 1
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+ingress-controller:
+  replicaCount: 1
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi

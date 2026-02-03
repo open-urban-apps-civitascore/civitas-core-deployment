@@ -1,0 +1,9 @@
+---
+# Changes here will be overwritten by Copier.
+_commit: ccc09bf
+_src_path: ..
+componentName: Redpanda Connect
+componentSlug: redpanda-connect
+releases: connect
+shortDescription: Data streaming service for building scalable, high-performance data
+  pipelines in the platform

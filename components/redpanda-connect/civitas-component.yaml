@@ -1,0 +1,4 @@
+---
+component: redpandaConnect
+parts:
+  - name: connect

@@ -1,0 +1,8 @@
+---
+modelAtlas:
+  app:
+    repository: eclipsefennec/model.atlas
+    tag: 'snapshot'
+  init:
+    repository: busybox
+    tag: '1.37'

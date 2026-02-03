@@ -1,0 +1,100 @@
+{{- if .Values.backend.enabled }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "portal.fullname" . }}-backend
+  labels:
+    {{- include "portal.backend.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.backend.enabled }}
+  replicas: {{ .Values.backend.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "portal.backend.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "portal.backend.selectorLabels" . | nindent 8 }}
+    spec:
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: backend
+          image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag }}"
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          env:
+            # Database configuration
+            - name: SPRING_DATASOURCE_URL
+              value: "jdbc:postgresql://{{ .Values.database.host }}:{{ .Values.database.port }}/{{ .Values.database.name }}"
+            - name: SPRING_DATASOURCE_USERNAME
+              value: {{ .Values.database.owner }}
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.database.secret.name }}
+                  key: {{ .Values.database.secret.passwordKey }}
+            # Keycloak configuration
+            - name: KEYCLOAK_AUTHSERVERURL
+              value: {{ .Values.keycloak.authServerUrl }}
+            - name: KEYCLOAK_REALM
+              value: {{ .Values.keycloak.realm }}
+            - name: KEYCLOAK_ISSUER_URI
+              value: {{ .Values.keycloak.authServerUrl }}
+            - name: KEYCLOAK_TARGET_REALM
+              value: {{ .Values.keycloak.realm }}
+            # Spring Boot configuration
+            - name: SPRING_PROFILES_ACTIVE
+              value: postgres
+            - name: LOGGING_LEVEL_ROOT
+              value: {{ .Values.backend.env.loggingLevelRoot }}
+            - name: SERVER_PORT
+              value: "8080"
+            - name: MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE
+              value: health,info,metrics
+            # Kafka configuration
+            - name: KAFKA_BOOTSTRAP_SERVERS
+              value: {{ .Values.kafka.bootstrapServers | quote }}
+          startupProbe:
+            httpGet:
+              path: /v2/actuator/health
+              port: http
+              scheme: HTTP
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 30
+          livenessProbe:
+            httpGet:
+              path: /v2/actuator/health/liveness
+              port: http
+              scheme: HTTP
+            initialDelaySeconds: 0
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /v2/actuator/health/readiness
+              port: http
+              scheme: HTTP
+            initialDelaySeconds: 0
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          resources:
+            {{- toYaml .Values.backend.resources | nindent 12 }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir: {}
+{{- end }}

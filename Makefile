@@ -19,21 +19,21 @@ validate:
 
 # Deploy locally using minikube and local environment
 deploy-local:
-	$(MAKE) deploy-minikube namespace=local-civitas2
-	helmfile -f ./helmfile.d/ sync -e local --kube-context minikube
+	$(MAKE) deploy-minikube namespace=dev
+	helmfile -f ./deployment/helmfile.yaml sync -e local --kube-context minikube
 
 # Deploy locally using minikube and default environment
 deploy-default:
 	$(MAKE) deploy-minikube namespace=main-civitas2
-	helmfile -f ./helmfile.d/ sync -e default --kube-context minikube
+	helmfile -f ./deployment/helmfile.yaml sync -e default --kube-context minikube
 
 # Update local
 sync-local:
-	helmfile -f ./helmfile.d/ sync -e local --kube-context minikube
+	helmfile -f ./deployment/helmfile.yaml sync -e local --kube-context minikube
 
 # Update default
 sync-default:
-	helmfile -f ./helmfile.d/ sync -e default --kube-context minikube
+	helmfile -f ./deployment/helmfile.yaml sync -e default --kube-context minikube
 
 # Deploy minikube
 deploy-minikube:
@@ -41,6 +41,13 @@ deploy-minikube:
 	minikube start --cpus=4 --memory=8192
 	minikube addons enable metrics-server
 	minikube addons enable ingress
+
+	helm install \
+		cert-manager oci://quay.io/jetstack/charts/cert-manager \
+		--version v1.19.2 \
+		--namespace cert-manager \
+		--create-namespace \
+		--set crds.enabled=true
 
 	kubectl create namespace $(namespace)
 
@@ -73,3 +80,25 @@ add-hosts-macos:
 	done
 	@echo "" | sudo tee -a /etc/hosts > /dev/null
 	@echo "Done."
+
+.PHONY: new-component
+new-component:
+	cd components && copier copy .. .
+
+.PHONY: update
+update:
+	copier update --skip-answered -a test/.copier-answers.yaml components
+
+.PHONY: update-components
+update-components:
+	@for d in components/*; do \
+		if [ -d "$$d" ]; then \
+			name=$$(basename "$$d"); \
+			echo "Updating $$name..."; \
+			( cd components && copier update --skip-answered --vcs-ref 8969ae22 -a "$$name/.copier-answers.yml" ) || echo "copier update failed for $$name"; \
+		fi; \
+	done;
+
+.PHONY: verify-policies
+verify-policies:
+	.ci/policies/verify-kyverno-policies.sh

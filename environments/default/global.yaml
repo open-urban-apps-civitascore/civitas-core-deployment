@@ -1,6 +1,0 @@
----
-global:
-  namespaced: true
-  namespace: main-civitas2
-  metrics:
-    enabled: false

@@ -1,0 +1,5 @@
+---
+configAdapters:
+  adapters:
+    repository: 'registry.gitlab.com/civitas-connect/civitas-core/civitas-core-v2/civitas-core-platform/config-adapter'
+    tag: '0.0.0-813-g2ed2b4c'
