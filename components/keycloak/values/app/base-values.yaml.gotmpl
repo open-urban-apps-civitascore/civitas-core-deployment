@@ -1,17 +1,27 @@
 ---
 {{- $this := .Values.keycloak.app }}
 {{- $global := .Values.global }}
+# Checklist:
+# - [x] Containers run as non-root with `readOnlyRootFilesystem`
+# - [x] Health probes -> default in base chart
+# - [ ] Graceful shutdown
+# - [ ] Standard labels
+# - [ ] ServiceAccount with least privilege where required
+# - [ ] Named ports
+# - [x] Ingress with TLS
 
-fullnameOverride: ""
-nameOverride: ""
+securityContext:
+  {{ .Values.securityDefaults.securityContext | toYaml | nindent 2 }}
+
+podSecurityContext:
+  {{ .Values.securityDefaults.podSecurityContext | toYaml | nindent 2 }}
+
 image:
 {{- with .Values.images.keycloak.app }}
   repository: {{ .repository }}
   tag: {{ .tag }}
 {{- end }}
   pullPolicy: IfNotPresent
-updateStrategy: "RollingUpdate"
-restartPolicy: Always
 extraEnv: |
   - name: KC_HOSTNAME_STRICT
     value: "false"
@@ -27,8 +37,6 @@ extraEnv: |
         name: keycloak-admin-user
         key: password
 
-service:
-  httpsPort: 8443
 ingress:
   enabled: {{ $global.ingress.enabled }}
   ingressClassName: {{ $global.ingress.ingressClass }}
@@ -61,8 +69,6 @@ ingress:
       - hosts:
           - {{ $host }}
         secretName: {{ $host }}-tls
-route:
-  enabled: false
 dbchecker:
   enabled: true
   image:
@@ -78,6 +84,12 @@ dbchecker:
     limits:
       cpu: "20m"
       memory: "32Mi"
+  securityContext:
+    allowPrivilegeEscalation: false
+    runAsUser: 1000
+    runAsGroup: 1000
+    runAsNonRoot: true
+
 database:
   vendor: postgres
   hostname: {{ .Values.databases.keycloak.host }}
@@ -128,3 +140,4 @@ startupProbe: |
   periodSeconds: 5
 health:
   enabled: true
+

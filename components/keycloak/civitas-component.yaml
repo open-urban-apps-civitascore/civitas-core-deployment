@@ -2,6 +2,6 @@
 component: keycloak
 parts:
   - name: app
-  - name: config-cli
+  - name: config
     needs:
       - keycloak.app
