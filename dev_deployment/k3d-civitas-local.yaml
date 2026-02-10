@@ -1,0 +1,36 @@
+apiVersion: k3d.io/v1alpha5
+kind: Simple
+metadata:
+  name: civitas-local
+servers: 1  # Number of server nodes (control plane)
+agents: 2   # Number of agent nodes (worker nodes)
+kubeAPI:
+  host: "localhost"
+ports:
+  - port: 80:80
+    nodeFilters:
+      - loadbalancer
+  - port: 443:443
+    nodeFilters:
+      - loadbalancer
+  - port: 1883:1883
+    nodeFilters:
+      - loadbalancer
+  - port: 9876:9876
+    nodeFilters:
+      - loadbalancer
+  - port: 6379:6379
+    nodeFilters:
+      - loadbalancer
+options:
+  k3d: # k3d runtime settings
+    wait: true
+    timeout: "60s"
+  k3s:
+    extraArgs:
+      - arg: "--disable=traefik"
+        nodeFilters:
+          - server:*
+  kubeconfig:
+    updateDefaultKubeconfig: true  # Updates the default kubeconfig file
+    switchCurrentContext: true     # Switches kubectl context to this cluster by default
