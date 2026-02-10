@@ -2,7 +2,7 @@
 {{- $this := .Values.keycloak.app }}
 {{- $global := .Values.global }}
 # Checklist:
-# - [x] Containers run as non-root with `readOnlyRootFilesystem`
+# - [ ] Containers run as non-root with `readOnlyRootFilesystem` -> TODO: readOnlyRootFilesystem not working
 # - [x] Health probes -> default in base chart
 # - [ ] Graceful shutdown
 # - [ ] Standard labels
@@ -10,11 +10,12 @@
 # - [ ] Named ports
 # - [x] Ingress with TLS
 
-securityContext:
-  {{ .Values.securityDefaults.securityContext | toYaml | nindent 2 }}
+# TODO: enable when readOnlyRootFilesystem works
+{{/*securityContext:*/}}
+{{/*  {{ .Values.securityDefaults.securityContext | toYaml | nindent 2 }}*/}}
 
-podSecurityContext:
-  {{ .Values.securityDefaults.podSecurityContext | toYaml | nindent 2 }}
+{{/*podSecurityContext:*/}}
+{{/*  {{ .Values.securityDefaults.podSecurityContext | toYaml | nindent 2 }}*/}}
 
 image:
 {{- with .Values.images.keycloak.app }}

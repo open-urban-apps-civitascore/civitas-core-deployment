@@ -1,0 +1,3 @@
+---
+keycloakClients:
+  {{ include "civitas.configFiles" (dict "components" .Values.components "file" "keycloak-clients.yaml") }}

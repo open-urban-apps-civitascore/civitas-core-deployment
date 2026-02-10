@@ -38,6 +38,8 @@ env:
   KEYCLOAK_URL: http://keycloak-app-keycloakx-http.{{ .Values.keycloak.app.namespace }}.svc.cluster.local:80{{ .Values.keycloak.app.pathPrefix | trimSuffix "/" }}
   KEYCLOAK_USER: "{{ .Values.keycloak.app.admin.username }}"
   IMPORT_FILES_LOCATIONS: /config/*
+  IMPORT_VARSUBSTITUTION_ENABLED: "true"
+  IMPORT_VARSUBSTITUTION_NESTED: "false"
 
 existingSecret: keycloak-admin-user
 existingSecretKey: password
@@ -68,6 +70,14 @@ extraEnv:
       secretKeyRef:
         name: keycloak-smtp
         key: password
+  {{- range $clientId, $client := .Values.keycloakClients }}
+  - name: CLIENT_SECRET_{{ $clientId | upper | replace "-" "_" }}
+    valueFrom:
+      secretKeyRef:
+        name: {{ printf "keycloak-client-%s" $clientId }}
+        key: client-secret
+  {{- end }}
+
 config:
   {{ $global.instanceSlug }}:
     inline:
@@ -274,3 +284,33 @@ config:
         clientSessionMaxLifespan: "0"
         clientOfflineSessionIdleTimeout: "0"
       userManagedAccessAllowed: false
+      clients:
+        {{- range $clientId, $client := .Values.keycloakClients }}
+        {{- $subdomain := $client.subdomain | default $clientId }}
+        {{- $redirectPath := $client.redirectPath | default "/*" }}
+        {{- $clientDefaults := dict
+          "clientId" $clientId
+          "name" ($client.name | default $clientId)
+          "description" (index $client "description" | default "")
+          "enabled" true
+          "protocol" "openid-connect"
+          "publicClient" false
+          "secret" (printf "$(CLIENT_SECRET_%s)" ($clientId | upper | replace "-" "_"))
+          "rootUrl" (printf "https://%s.%s" $subdomain $global.domain)
+          "baseUrl" (printf "https://%s.%s" $subdomain $global.domain)
+          "bearerOnly" false
+          "standardFlowEnabled" true
+          "implicitFlowEnabled" false
+          "directAccessGrantsEnabled" true
+          "serviceAccountsEnabled" false
+          "authorizationServicesEnabled" false
+          "redirectUris" (list (printf "https://%s.%s%s" $subdomain $global.domain $redirectPath))
+          "webOrigins" (list (printf "https://%s.%s" $subdomain $global.domain))
+          "defaultClientScopes" (list "email" "profile" "roles" "web-origins")
+          "optionalClientScopes" (list "address" "phone" "offline_access" "microprofile-jwt")
+          "attributes" (dict "post.logout.redirect.uris" "+" "pkce.code.challenge.method" "S256")
+        }}
+        {{- $rawValues := index $client "rawValues" | default dict }}
+        {{- $finalClient := mergeOverwrite $clientDefaults ($rawValues | default dict) }}
+        - {{ $finalClient | toYaml | nindent 10 }}
+        {{- end }}

@@ -1,0 +1,5 @@
+---
+apicurio-registry:
+  name: Apicurio Registry
+  subdomain: apicurio
+  redirectPath: /auth/callback # TODO: Verify if this is the correct path for Apicurio Registry's Keycloak client
