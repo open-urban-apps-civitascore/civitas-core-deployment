@@ -112,6 +112,7 @@ serviceMonitor:
 command:
   - "/opt/keycloak/bin/kc.sh"
   - "start"
+  - "--optimized"
 http:
   relativePath: '{{ $this.pathPrefix }}'
 
@@ -144,7 +145,7 @@ health:
 # Config for readOnlyRootFilesystem
 # see: https://github.com/keycloak/keycloak/issues/11286
 extraInitContainers: |
-  - name: prepare-keycloak-directories
+  - name: build-keycloak
     image: {{ .Values.images.keycloak.app.repository }}:{{ .Values.images.keycloak.app.tag }}
     imagePullPolicy: IfNotPresent
     securityContext:
@@ -154,36 +155,20 @@ extraInitContainers: |
       - -c
     args:
       - |
-        mkdir -p /app/{lib/quarkus,data,providers,themes}
-        cp -r --preserve=mode,timestamps /opt/keycloak/lib/quarkus /app/lib
-        cp -r --preserve=mode,timestamps /opt/keycloak/providers /app
-        cp -r --preserve=mode,timestamps /opt/keycloak/themes /app
-        cp -r --preserve=mode,timestamps /opt/keycloak/data /app
+        cp -R /opt/keycloak/* /app/
+        /app/bin/kc.sh build --db=postgres --health-enabled=true --metrics-enabled=true --http-relative-path={{ $this.pathPrefix }}
     volumeMounts:
       - name: workspace
         mountPath: /app
-        subPath: app
 
 extraVolumeMounts: |
   - name: workspace
+    mountPath: /opt/keycloak
+  - name: tmp
     mountPath: /tmp
-    subPath: tmp
-  - name: workspace
-    mountPath: /opt/keycloak/conf
-    subPath: app/conf
-  - name: workspace
-    mountPath: /opt/keycloak/lib/quarkus
-    subPath: app/lib/quarkus
-  - name: workspace
-    mountPath: /opt/keycloak/data
-    subPath: app/data
-  - name: workspace
-    mountPath: /opt/keycloak/providers
-    subPath: app/providers
-  - name: workspace
-    mountPath: /opt/keycloak/themes
-    subPath: app/themes
 
 extraVolumes: |
   - name: workspace
+    emptyDir: {}
+  - name: tmp
     emptyDir: {}
