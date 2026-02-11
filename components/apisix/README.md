@@ -8,7 +8,6 @@ APISIX is a dynamic, real-time, high-performance API gateway. It provides rich t
 
 This component deploys:
 - **APISIX Gateway**: The core API gateway handling traffic routing and management
-- **APISIX Ingress Controller**: Kubernetes-native ingress controller for managing APISIX routes via Kubernetes resources
 
 ## Requirements
 
@@ -48,4 +47,4 @@ helmfile apply -i --selector component=apisix
 
 - The built-in etcd is disabled; you must provide an external etcd cluster
 - RBAC authentication is required for etcd access
-- The ingress controller integrates with APISIX to manage routes via Kubernetes CRDs
+- The apisix ingress controller is disabled
