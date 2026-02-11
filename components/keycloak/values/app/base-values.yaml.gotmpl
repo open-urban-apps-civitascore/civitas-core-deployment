@@ -2,7 +2,7 @@
 {{- $this := .Values.keycloak.app }}
 {{- $global := .Values.global }}
 # Checklist:
-# - [ ] Containers run as non-root with `readOnlyRootFilesystem` -> TODO: readOnlyRootFilesystem not working
+# - [x] Containers run as non-root with `readOnlyRootFilesystem`
 # - [x] Health probes -> default in base chart
 # - [ ] Graceful shutdown
 # - [ ] Standard labels
@@ -10,12 +10,11 @@
 # - [ ] Named ports
 # - [x] Ingress with TLS
 
-# TODO: enable when readOnlyRootFilesystem works
-{{/*securityContext:*/}}
-{{/*  {{ .Values.securityDefaults.securityContext | toYaml | nindent 2 }}*/}}
+securityContext:
+  {{ .Values.securityDefaults.securityContext | toYaml | nindent 2 }}
 
-{{/*podSecurityContext:*/}}
-{{/*  {{ .Values.securityDefaults.podSecurityContext | toYaml | nindent 2 }}*/}}
+podSecurityContext:
+  {{ .Values.securityDefaults.podSecurityContext | toYaml | nindent 2 }}
 
 image:
 {{- with .Values.images.keycloak.app }}
@@ -142,3 +141,49 @@ startupProbe: |
 health:
   enabled: true
 
+# Config for readOnlyRootFilesystem
+# see: https://github.com/keycloak/keycloak/issues/11286
+extraInitContainers: |
+  - name: prepare-keycloak-directories
+    image: {{ .Values.images.keycloak.app.repository }}:{{ .Values.images.keycloak.app.tag }}
+    imagePullPolicy: IfNotPresent
+    securityContext:
+      {{ .Values.securityDefaults.securityContext | toYaml | nindent 6 }}
+    command:
+      - sh
+      - -c
+    args:
+      - |
+        mkdir -p /app/{lib/quarkus,data,providers,themes}
+        cp -r --preserve=mode,timestamps /opt/keycloak/lib/quarkus /app/lib
+        cp -r --preserve=mode,timestamps /opt/keycloak/providers /app
+        cp -r --preserve=mode,timestamps /opt/keycloak/themes /app
+        cp -r --preserve=mode,timestamps /opt/keycloak/data /app
+    volumeMounts:
+      - name: workspace
+        mountPath: /app
+        subPath: app
+
+extraVolumeMounts: |
+  - name: workspace
+    mountPath: /tmp
+    subPath: tmp
+  - name: workspace
+    mountPath: /opt/keycloak/conf
+    subPath: app/conf
+  - name: workspace
+    mountPath: /opt/keycloak/lib/quarkus
+    subPath: app/lib/quarkus
+  - name: workspace
+    mountPath: /opt/keycloak/data
+    subPath: app/data
+  - name: workspace
+    mountPath: /opt/keycloak/providers
+    subPath: app/providers
+  - name: workspace
+    mountPath: /opt/keycloak/themes
+    subPath: app/themes
+
+extraVolumes: |
+  - name: workspace
+    emptyDir: {}
