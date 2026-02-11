@@ -13,6 +13,19 @@ help:
 		/^# / { desc = substr($$0, 3) } \
 		/^[a-zA-Z_-]+:/ && desc { printf "  \033[36m%-15s\033[0m %s\n", $$1, desc; desc = "" }' $(MAKEFILE_LIST)
 
+# deploy k3d cluster
+deploy-k3d:
+	./dev_deployment/startup.sh -k
+
+# deploy linkerd (nor production ready, only for local deployment!)
+linkerd:
+	linkerd check --pre
+	kubectl apply --server-side -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.4.0/standard-install.yaml
+	linkerd install --crds | kubectl apply -f -
+	linkerd install --set proxy.nativeSidecar=true | kubectl apply -f -
+	linkerd check
+
+
 # Run pre-commit on all files
 validate:
 	pre-commit run --all-files;

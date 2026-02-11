@@ -1,0 +1,54 @@
+---
+bases:
+  - "../../defaults/helm-defaults.yaml"
+---
+{{- $componentData := (readFile "./civitas-component.yaml" | fromYaml) }}
+
+{{- $root := .Values }}
+{{- $component := $componentData.component }}
+
+
+{{- $managedNamespaces := dict }}
+{{- range $component := ($root.components | default list) }}
+  {{- if ne $component "namespaces" }}
+    {{- $componentValues := index $root $component | default dict }}
+    {{- range $partName, $partValues := $componentValues }}
+      {{- if and (kindIs "map" $partValues) (hasKey $partValues "namespace") (or (not (hasKey $partValues "enabled")) (index $partValues "enabled")) }}
+        {{- $namespace := index $partValues "namespace" }}
+        {{- if $namespace }}
+          {{- $_ := set $managedNamespaces $namespace true }}
+        {{- end }}
+      {{- end }}
+    {{- end }}
+  {{- end }}
+{{- end }}
+{{- $namespaceNames := keys $managedNamespaces | sortAlpha }}
+{{- $linkerdEnabled := and ($root.global.serviceMesh.enable | default false) (eq ($root.global.serviceMesh.type | default "") "linkerd") }}
+{{- $createNamespaces := $root.global.createNamespaces | default false }}
+{{- $patchNamespaces := and ($root.global.serviceMesh.enable | default false) ($root.global.serviceMesh.patchNamespaces | default false) }}
+
+hooks:
+  - events: ["prepare"]
+    showlogs: true
+    command: sh
+    args:
+      - -ec
+      - |
+        set -eu
+        {{- if gt (len $namespaceNames) 0 }}
+        {{- range $ns := $namespaceNames }}
+        {{- if $createNamespaces }}
+        kubectl get namespace {{ $ns | quote }} >/dev/null 2>&1 || kubectl create namespace {{ $ns | quote }}
+        {{- end }}
+        {{- if $patchNamespaces }}
+        {{- if $linkerdEnabled }}
+        kubectl annotate namespace {{ $ns | quote }} linkerd.io/inject=enabled --overwrite
+        {{- end }}
+        {{- end }}
+        {{- end }}
+        {{- else }}
+        echo "No namespaces configured."
+        {{- end }}
+
+commonLabels:
+  component: {{ $component }}

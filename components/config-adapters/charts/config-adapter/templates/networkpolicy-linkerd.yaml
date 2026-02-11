@@ -1,0 +1,38 @@
+{{- if and (.Values.customServiceMesh.enable | default false) (eq (.Values.customServiceMesh.type | default "") "linkerd") }}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: config-adapter-allow-linkerd
+spec:
+  policyTypes:
+    - Ingress
+    - Egress
+  egress:
+    - ports:
+        - port: 4143
+          protocol: TCP
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: linkerd
+      ports:
+        - protocol: TCP
+          port: 8080  # identity
+        - protocol: TCP
+          port: 8086  # destination
+        - protocol: TCP
+          port: 8090  # policy (falls genutzt/aktiv)
+  ingress:
+    - ports:
+        - port: 4143
+          protocol: TCP
+        - port: 4190
+          protocol: TCP
+        - port: 4191
+          protocol: TCP
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/instance: config-adapters-adapters
+      app.kubernetes.io/name: config-adapter
+{{- end }}
