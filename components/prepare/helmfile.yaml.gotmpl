@@ -28,7 +28,7 @@ bases:
 {{- $patchNamespaces := and ($root.global.serviceMesh.enable | default false) ($root.global.serviceMesh.patchNamespaces | default false) }}
 
 hooks:
-  - events: ["prepare"]
+  - events: ["presync"]
     showlogs: true
     command: sh
     args:
