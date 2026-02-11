@@ -39,4 +39,3 @@ if [ -f ca.conf ]; then
 else
   echo "Warning: ca.conf not found. Skipping CRL generation."
 fi
-

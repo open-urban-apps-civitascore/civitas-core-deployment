@@ -1,3 +1,4 @@
+---
 apiVersion: v1
 kind: Secret
 metadata:
@@ -7,9 +8,7 @@ type: Opaque
 data:
   tls.crt: ${CA_CERT}
   tls.key: ${CA_KEY}
-
 ---
-
 apiVersion: cert-manager.io/v1
 kind: ClusterIssuer
 metadata:
@@ -19,12 +18,10 @@ spec:
   ca:
     secretName: ca-secret
     crlDistributionPoints:
-    - "http://portal.cert-manager.svc.cluster.local/certs/civitas.crl.pem"
-    - "http://${DOMAIN}/certs/civitas.crl.pem"
-    - "http://kernblick.de/pki/civitas.crl.pem"
-
+      - 'http://portal.cert-manager.svc.cluster.local/certs/civitas.crl.pem'
+      - 'http://${DOMAIN}/certs/civitas.crl.pem'
+      - 'http://kernblick.de/pki/civitas.crl.pem'
 ---
-
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
@@ -36,5 +33,4 @@ spec:
     name: selfsigned-ca
     kind: ClusterIssuer
   dnsNames:
-    - "*.${DOMAIN}"
-
+    - '*.${DOMAIN}'

@@ -15,7 +15,7 @@ help:
 
 # deploy k3d cluster
 deploy-k3d:
-	./dev_deployment/startup.sh -k
+	./dev-deployment/startup.sh -k
 
 # deploy linkerd (nor production ready, only for local deployment!)
 linkerd:

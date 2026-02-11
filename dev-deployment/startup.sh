@@ -2,7 +2,7 @@
 
 #
 # This work is licensed under [EU PL 1.2]
-# (https://gitlab.com/civitas-connect/civitas-core/civitas-core/-/blob/main/LICENSE) 
+# (https://gitlab.com/civitas-connect/civitas-core/civitas-core/-/blob/main/LICENSE)
 # by Civitas Connect e. V., Hafenweg 7, 48155 Münster, Germany, and [other authors]
 # (https://gitlab.com/civitas-connect/civitas-core/civitas-core/-/blob/main/AUTHORS-ATTRIBUTION.md).
 #
@@ -173,7 +173,7 @@ done
 : ${DRIVER:=docker}
 : ${KUBECONFIG:=$HOME/.kube/config}
 
-DEFAULT_CONTEXT=$(kubectl config current-context 2>/dev/null || echo "") 
+DEFAULT_CONTEXT=$(kubectl config current-context 2>/dev/null || echo "")
 : ${KUBECONTEXT:=${DEFAULT_CONTEXT:-minikube}}
 
 : ${HTTP_PROXY:""}
@@ -339,7 +339,7 @@ else
 fi
 
 echo
-echo_green "Alternatively, you may add the DNS names to your ${BLUE}hosts${GREEN} file (easy method). Please read the documentation for more details." 
+echo_green "Alternatively, you may add the DNS names to your ${BLUE}hosts${GREEN} file (easy method). Please read the documentation for more details."
 # Check for portainer argument
 for arg in "$@"; do
   if [[ "$arg" == "portainer" || "$arg" == "-p" ]]; then

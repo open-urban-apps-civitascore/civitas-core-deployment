@@ -99,4 +99,4 @@ updateStrategy: {}
 # Custom Service Mesh configuration
 customServiceMesh:
   enable: false
-  type: ""
+  type: ''

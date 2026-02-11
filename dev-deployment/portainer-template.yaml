@@ -14,27 +14,27 @@ metadata:
   labels:
     app.kubernetes.io/name: portainer
     app.kubernetes.io/instance: portainer
-    app.kubernetes.io/version: "ce-latest-ee-2.19.5"
+    app.kubernetes.io/version: 'ce-latest-ee-2.19.5'
 ---
 # Source: portainer/templates/pvc.yaml
-kind: "PersistentVolumeClaim"
-apiVersion: "v1"
+kind: 'PersistentVolumeClaim'
+apiVersion: 'v1'
 metadata:
   name: portainer
   namespace: portainer
   annotations:
-    volume.alpha.kubernetes.io/storage-class: "generic"
+    volume.alpha.kubernetes.io/storage-class: 'generic'
   labels:
     io.portainer.kubernetes.application.stack: portainer
     app.kubernetes.io/name: portainer
     app.kubernetes.io/instance: portainer
-    app.kubernetes.io/version: "ce-latest-ee-2.19.5"
+    app.kubernetes.io/version: 'ce-latest-ee-2.19.5'
 spec:
   accessModes:
-    - "ReadWriteOnce"
+    - 'ReadWriteOnce'
   resources:
     requests:
-      storage: "10Gi"
+      storage: '10Gi'
 ---
 # Source: portainer/templates/rbac.yaml
 apiVersion: rbac.authorization.k8s.io/v1
@@ -45,7 +45,7 @@ metadata:
   labels:
     app.kubernetes.io/name: portainer
     app.kubernetes.io/instance: portainer
-    app.kubernetes.io/version: "ce-latest-ee-2.19.5"
+    app.kubernetes.io/version: 'ce-latest-ee-2.19.5'
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
@@ -65,7 +65,7 @@ metadata:
     io.portainer.kubernetes.application.stack: portainer
     app.kubernetes.io/name: portainer
     app.kubernetes.io/instance: portainer
-    app.kubernetes.io/version: "ce-latest-ee-2.19.5"
+    app.kubernetes.io/version: 'ce-latest-ee-2.19.5'
 spec:
   type: ClusterIP
   ports:
@@ -98,11 +98,11 @@ metadata:
     io.portainer.kubernetes.application.stack: portainer
     app.kubernetes.io/name: portainer
     app.kubernetes.io/instance: portainer
-    app.kubernetes.io/version: "ce-latest-ee-2.19.5"
+    app.kubernetes.io/version: 'ce-latest-ee-2.19.5'
 spec:
   replicas: 1
   strategy:
-    type: "Recreate"
+    type: 'Recreate'
   selector:
     matchLabels:
       app.kubernetes.io/name: portainer
@@ -113,16 +113,15 @@ spec:
         app.kubernetes.io/name: portainer
         app.kubernetes.io/instance: portainer
     spec:
-      nodeSelector:
-        {}
+      nodeSelector: {}
       serviceAccountName: portainer-sa-clusteradmin
       volumes:
-        - name: "data"
+        - name: 'data'
           persistentVolumeClaim:
             claimName: portainer
       containers:
         - name: portainer
-          image: "portainer/portainer-ce:2.19.5"
+          image: 'portainer/portainer-ce:2.19.5'
           imagePullPolicy: Always
           args:
             - '--tunnel-port=30776'
@@ -149,11 +148,9 @@ spec:
               path: /
               port: 9443
               scheme: HTTPS
-          resources:
-            {}
+          resources: {}
 
 ---
-
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -162,22 +159,22 @@ metadata:
   labels:
     name: portainer
   annotations:
-    cert-manager.io/cluster-issuer: "selfsigned-ca"
-    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    cert-manager.io/cluster-issuer: 'selfsigned-ca'
+    nginx.ingress.kubernetes.io/ssl-redirect: 'false'
 spec:
   ingressClassName: nginx
   tls:
     - hosts:
-      - portainer.$DOMAIN
+        - portainer.$DOMAIN
       secretName: portainer.$DOMAIN
   rules:
-  - host: portainer.$DOMAIN
-    http:
-      paths:
-      - pathType: Prefix
-        path: "/"
-        backend:
-          service:
-            name: portainer
-            port:
-              number: 9000
+    - host: portainer.$DOMAIN
+      http:
+        paths:
+          - pathType: Prefix
+            path: '/'
+            backend:
+              service:
+                name: portainer
+                port:
+                  number: 9000

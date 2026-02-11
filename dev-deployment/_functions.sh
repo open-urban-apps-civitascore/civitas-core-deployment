@@ -106,12 +106,12 @@ format_time() {
     fi
 }
 
-# Checks if all given commands are available on the system. 
+# Checks if all given commands are available on the system.
 #
 # Arguments:
 #   $@ - One or more command names to check for availability.
-# 
-# Example: 
+#
+# Example:
 #   requirementsMet curl wget
 requirementsMet() {
     local unmet=() # save all unmet requirements, so they are all checked
