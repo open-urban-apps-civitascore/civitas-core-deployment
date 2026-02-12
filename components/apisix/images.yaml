@@ -4,6 +4,3 @@ apisix:
     gateway:
       repository: apache/apisix
       tag: '3.14.1-ubuntu'
-    ingressController:
-      repository: apache/apisix-ingress-controller
-      tag: '1.9.0'
