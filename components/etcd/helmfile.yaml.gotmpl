@@ -36,7 +36,7 @@ releases:
       {{ $key }}: {{ $value }}
       {{- end }}
     namespace: {{ index $root $component $part.name "namespace" }}
-    chart: {{ index $root.charts $component $part.name "chart" }}
+    chart: cc2-{{ index $root.charts $component $part.name "chart" }}
     {{- if index $root.charts $component $part.name "version" }}
     version: {{ index $root.charts $component $part.name "version" }}
     {{- end }}
