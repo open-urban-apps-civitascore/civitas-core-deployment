@@ -29,6 +29,7 @@ releases:
   {{- range $parts }}
   {{- $part := . }}
   {{- $releaseName := printf "%s-%s" ($component | kebabcase) $part.name }}
+  {{- $repoUrl := index $root.charts $component $part.name "repository" | default "" }}
   - name: {{ $releaseName }}
     labels:
       release: {{ $releaseName }}
@@ -36,7 +37,11 @@ releases:
       {{ $key }}: {{ $value }}
       {{- end }}
     namespace: {{ index $root $component $part.name "namespace" }}
+    {{- if ne $repoUrl "" }}
     chart: cc2-{{ index $root.charts $component $part.name "chart" }}
+    {{- else }}
+    chart: {{ index $root.charts $component $part.name "chart" }}
+    {{- end }}
     {{- if index $root.charts $component $part.name "version" }}
     version: {{ index $root.charts $component $part.name "version" }}
     {{- end }}
