@@ -19,7 +19,7 @@ repositories:
     {{- $repoName := index $chartParts 0 }}
     {{- if not (hasKey $alreadyAdded $repoName) }}
       {{- $_ := set $alreadyAdded $repoName true }}
-  - name: {{ $repoName }}
+  - name: cc2-{{ $repoName }}
     url: {{ $repoUrl }}
     {{- end }}
   {{- end }}
