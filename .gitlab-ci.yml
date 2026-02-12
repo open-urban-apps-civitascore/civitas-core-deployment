@@ -3,10 +3,11 @@
   rules:
     - changes:
         - container-images/$IMAGE/**/*
-        - .gitlab-ci.yml
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
   parallel:
     matrix:
       - IMAGE: etcdctl
+      - IMAGE: opa
 
 stages:
   - .pre
@@ -53,6 +54,7 @@ pre-commit:
     - mv helmfile /usr/local/bin/
     - chmod +x /usr/local/bin/helmfile
   script:
+    - cp -r defaults/deployment deployment
     - pre-commit run --all-files
 
 deploy:
@@ -134,6 +136,7 @@ scan-container-image:
   stage: container-qa
   needs:
     - job: build-container-image
+      optional: true
     - job: setup-version
       artifacts: true
   variables:
@@ -162,6 +165,7 @@ deploy-container-image:
   stage: deploy
   needs:
     - job: scan-container-image
+      optional: true
     - job: setup-version
       artifacts: true
   services:
@@ -183,6 +187,7 @@ sbom-container-image:
   stage: report
   needs:
     - job: deploy-container-image
+      optional: true
     - job: setup-version
       artifacts: true
   services:
