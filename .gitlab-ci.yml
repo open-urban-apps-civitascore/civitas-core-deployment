@@ -53,6 +53,7 @@ pre-commit:
     - mv helmfile /usr/local/bin/
     - chmod +x /usr/local/bin/helmfile
   script:
+    - cp -rf defaults/deployment ./deployment
     - pre-commit run --all-files
 
 deploy:
