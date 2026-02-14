@@ -5,6 +5,10 @@ global:
   profile: development
   createNamespaces: true
   singleNamespace: true
+  serviceMesh:
+    enable: true
+    type: linkerd
+    patchNamespaces: true
   ingress:
     enabled: true
     clusterIssuer: 'selfsigned-ca'
@@ -17,6 +21,7 @@ global:
   metrics:
     enabled: false
 components:
+  - prepare
   - secrets
   - postgres
   - etcd
