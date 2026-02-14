@@ -19,7 +19,7 @@ repositories:
     {{- $repoName := index $chartParts 0 }}
     {{- if not (hasKey $alreadyAdded $repoName) }}
       {{- $_ := set $alreadyAdded $repoName true }}
-  - name: {{ $repoName }}
+  - name: cc2-{{ $repoName }}
     url: {{ $repoUrl }}
     {{- end }}
   {{- end }}
@@ -29,6 +29,7 @@ releases:
   {{- range $parts }}
   {{- $part := . }}
   {{- $releaseName := printf "%s-%s" $componentData.componentSlug $part.slug }}
+  {{- $repoUrl := index $root.charts $component $part.name "repository" | default "" }}
   - name: {{ $releaseName }}
     labels:
       release: {{ $releaseName }}
@@ -36,7 +37,11 @@ releases:
       {{ $key }}: {{ $value }}
       {{- end }}
     namespace: {{ index $root $component $part.name "namespace" }}
+    {{- if ne $repoUrl "" }}
+    chart: cc2-{{ index $root.charts $component $part.name "chart" }}
+    {{- else }}
     chart: {{ index $root.charts $component $part.name "chart" }}
+    {{- end }}
     {{- if index $root.charts $component $part.name "version" }}
     version: {{ index $root.charts $component $part.name "version" }}
     {{- end }}

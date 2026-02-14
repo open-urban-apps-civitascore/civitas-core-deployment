@@ -2,4 +2,4 @@
 helmDefaults:
   wait: true
   waitForJobs: true
-  timeout: 120
+  timeout: 300

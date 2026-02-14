@@ -2,6 +2,11 @@
 {{- $this := .Values.kafka.cluster }}
 {{- $global := .Values.global }}
 
+# Service Mesh configuration (passed from global values)
+customServiceMesh:
+  enable: {{ $global.serviceMesh.enable | default false }}
+  type: {{ $global.serviceMesh.type | default "" | quote }}
+
 # TODO: Enable TLS and configure certs for production use
 kafka:
   listeners:
