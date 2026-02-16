@@ -23,4 +23,8 @@ spec:
           podSelector:
             matchLabels:
               app.kubernetes.io/name: keycloak-config-cli
+        {{/* todo: allow from all pods in ingress-nginx namespace */}}
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: ingress-nginx
 {{- end }}

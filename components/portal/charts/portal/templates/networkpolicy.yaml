@@ -17,6 +17,10 @@ spec:
           podSelector:
             matchLabels:
               app.kubernetes.io/name: apisix
+        {{/* todo: allow from all pods in ingress-nginx namespace */}}
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: ingress-nginx
 ---
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -36,4 +40,12 @@ spec:
           podSelector:
             matchLabels:
               app.kubernetes.io/name: apisix
+        - namespaceSelector: {}
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: portal
+        {{/* todo: allow from all pods in ingress-nginx namespace */}}
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: ingress-nginx
 {{- end }}
