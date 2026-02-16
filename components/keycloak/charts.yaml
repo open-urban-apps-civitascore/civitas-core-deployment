@@ -8,3 +8,5 @@ keycloak:
     repository: https://jkroepke.github.io/helm-charts/
     chart: keycloak-config-cli/keycloak-config-cli
     version: '1.3.3'
+  networkpolicy:
+    chart: charts/keycloak-networkpolicy

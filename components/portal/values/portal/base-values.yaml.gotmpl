@@ -56,3 +56,6 @@ database:
   secret:
     name: {{ .Values.databases.portal.secret.name }}
     passwordKey: password
+
+networkPolicy:
+  enabled: true
