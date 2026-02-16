@@ -33,3 +33,5 @@ components:
   - redpanda-connect
   - portal
   - config-adapters
+  - opa
+  - authz-repo

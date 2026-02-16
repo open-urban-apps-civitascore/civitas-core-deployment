@@ -1,0 +1,4 @@
+---
+component: authzRepo
+parts:
+  - name: networkpolicy

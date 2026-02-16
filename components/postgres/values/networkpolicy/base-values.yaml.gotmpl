@@ -1,0 +1,12 @@
+---
+networkPolicy:
+  enabled: true
+  podSelector:
+    cnpg.io/cluster: postgres-cluster
+  ingressFrom:
+    - app.kubernetes.io/name: cloudnative-pg
+    - app.kubernetes.io/name: portal
+      app.kubernetes.io/component: backend
+    - app.kubernetes.io/instance: keycloak-app
+    - app.kubernetes.io/name: authz-repo
+    # - app.kubernetes.io/name: frost        # not yet deployed

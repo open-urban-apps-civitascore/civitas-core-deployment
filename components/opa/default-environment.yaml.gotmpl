@@ -1,0 +1,5 @@
+---
+opa:
+  networkpolicy:
+    enabled: true
+    namespace: {{ include "civitas.namespace" (dict "global" .Values.global "suffix" "opa") }}
