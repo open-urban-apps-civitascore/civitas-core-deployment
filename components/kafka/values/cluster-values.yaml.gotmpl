@@ -18,10 +18,11 @@ kafka:
 topics:
   - name: "kafkasql-journal"
     partitions: 1
-    replicas: 1
+    replicas: 2
     config:
-      retention.ms: -1
-      segment.bytes: -1
+      retention.ms: "-1"
+      retention.bytes: "-1"
+      cleanup.policy: delete
 
 networkPolicy:
   enabled: true

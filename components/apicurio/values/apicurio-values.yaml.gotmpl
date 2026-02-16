@@ -30,17 +30,7 @@ registry:
       type: ClusterIP
       port: 8080
     ingress:
-      enabled: {{ $global.ingress.enabled }}
-      ingressClassName: {{ $global.ingress.ingressClass }}
-      annotations:
-        cert-manager.io/cluster-issuer: {{ $global.ingress.clusterIssuer }}
-      {{- $host := printf "%s.%s" (default "" $this.subdomain) $global.domain | trimPrefix "." }}
-      host: {{ $host }}
-      path: "{{ $this.pathPrefix }}"
-      tls:
-        - hosts:
-            - {{ $host }}
-          secretName: {{ $host }}-tls
+      enabled: false
     auth:
       enabled: false
 

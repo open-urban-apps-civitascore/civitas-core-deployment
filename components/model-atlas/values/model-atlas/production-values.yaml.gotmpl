@@ -8,7 +8,7 @@
 # - [x] Rolling updates `maxUnavailable: 0`, `maxSurge: 25%`
 # - [x] PodDisruptionBudget (at least `minAvailable: 1`)
 
-replicaCount: 2
+replicaCount: 1 # TODO: change this to 2 or more later on
 
 resources:
   limits:
@@ -18,18 +18,18 @@ resources:
     cpu: 200m
     memory: 256Mi
 
-autoscaling:
-  enabled: true
-  minReplicas: 2
-  maxReplicas: 5
-  targetCPUUtilizationPercentage: 80
-  targetMemoryUtilizationPercentage: 80
+{{/*autoscaling:*/}}
+{{/*  enabled: true*/}}
+{{/*  minReplicas: 2*/}}
+{{/*  maxReplicas: 5*/}}
+{{/*  targetCPUUtilizationPercentage: 80*/}}
+{{/*  targetMemoryUtilizationPercentage: 80*/}}
 
-rollingUpdate:
-  maxUnavailable: 0
-  maxSurge: 25%
+{{/*rollingUpdate:*/}}
+{{/*  maxUnavailable: 0*/}}
+{{/*  maxSurge: 25%*/}}
 
-podDisruptionBudget:
-  enabled: true
-  minAvailable: 1
-  # maxUnavailable: 1
+{{/*podDisruptionBudget:*/}}
+{{/*  enabled: true*/}}
+{{/*  minAvailable: 1*/}}
+{{/*  # maxUnavailable: 1*/}}

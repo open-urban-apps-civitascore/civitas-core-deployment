@@ -33,25 +33,12 @@ initContainers:
 
 env:
   - name: APICURIO_HOST
-    value: "apicurio-registry"
+    value: "apicurio-apicurio-app"
   - name: APICURIO_PORT
     value: '8080'
 
 ingress:
-  enabled: {{ $global.ingress.enabled }}
-  className: {{ $global.ingress.ingressClass }}
-  annotations:
-    cert-manager.io/cluster-issuer: {{ $global.ingress.clusterIssuer }}
-  {{- $host := printf "%s.%s" (default "" $this.subdomain) $global.domain | trimPrefix "." }}
-  hosts:
-    - host: {{ $host }}
-      paths:
-        - path: {{ $this.pathPrefix }}
-          pathType: Prefix
-  tls:
-    - secretName: model-atlas-tls
-      hosts:
-        - {{ $host }}
+  enabled: false
 
 service:
   type: ClusterIP

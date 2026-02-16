@@ -84,7 +84,7 @@ resources:
 
 livenessProbe:
   httpGet:
-    path: /atlas/rest/default/schema/hello
+    path: /atlas/system/health?tags=liveness
     port: http
   initialDelaySeconds: 30
   periodSeconds: 10
@@ -93,18 +93,18 @@ livenessProbe:
 
 readinessProbe:
   httpGet:
-    path: /atlas/rest/default/schema/hello
+    path: /atlas/system/health?tags=readiness
     port: http
-  initialDelaySeconds: 20
+  initialDelaySeconds: 10
   periodSeconds: 5
   timeoutSeconds: 3
   failureThreshold: 3
 
 startupProbe:
   httpGet:
-    path: /atlas/rest/default/schema/hello
+    path: /atlas/system/health?tags=liveness
     port: http
-  initialDelaySeconds: 100
+  initialDelaySeconds: 30
   periodSeconds: 10
   timeoutSeconds: 3
   failureThreshold: 30
@@ -142,19 +142,19 @@ initContainers:
 volumes:
   - name: tmp
     emptyDir: {}
-  - name: modelatlas
-    emptyDir: {}
   - name: log
+    emptyDir: {}
+  - name: runtime
     emptyDir: {}
 
 # Additional volumeMounts on the output Deployment definition.
 volumeMounts:
   - name: tmp
     mountPath: /tmp
-  - name: modelatlas
-    mountPath: /modelatlas
   - name: log
     mountPath: /opt/modelatlas/log
+  - name: runtime
+    mountPath: /opt/modelatlas/runtime
 
 nodeSelector: {}
 
