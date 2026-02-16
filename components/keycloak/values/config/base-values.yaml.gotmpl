@@ -10,11 +10,11 @@
 # - [ ] Named ports
 # - [ ] Ingress with TLS
 
-containerSecurityContext:
-  {{ .Values.securityDefaults.securityContext | toYaml | nindent 2 }}
+{{/*containerSecurityContext:*/}}
+{{/*  {{ .Values.securityDefaults.securityContext | toYaml | nindent 2 }}*/}}
 
-securityContext:
-  {{ .Values.securityDefaults.podSecurityContext | toYaml | nindent 2 }}
+{{/*securityContext:*/}}
+{{/*  {{ .Values.securityDefaults.podSecurityContext | toYaml | nindent 2 }}*/}}
 
 image:
   {{- with .Values.images.keycloak.configCli }}
