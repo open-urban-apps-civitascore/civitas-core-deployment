@@ -1,0 +1,20 @@
+{{- if .Values.networkPolicy.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "apicurio.fullname" . }}
+  labels:
+    {{- include "apicurio.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "apicurio.selectorLabels" . | nindent 6 }}
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector: {}
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: model-atlas
+{{- end }}

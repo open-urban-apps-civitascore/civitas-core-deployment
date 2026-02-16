@@ -10,3 +10,6 @@ parts:
   - name: databases
     needs:
       - postgres.cluster
+  - name: networkpolicy
+    needs:
+      - postgres.cluster

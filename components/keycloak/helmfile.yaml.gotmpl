@@ -28,7 +28,7 @@ repositories:
 releases:
   {{- range $parts }}
   {{- $part := . }}
-  {{- $releaseName := printf "%s-%s" $component $part.name }}
+  {{- $releaseName := printf "%s-%s" ($component | kebabcase) $part.name }}
   {{- $repoUrl := index $root.charts $component $part.name "repository" | default "" }}
   - name: {{ $releaseName }}
     labels:
@@ -54,7 +54,7 @@ releases:
         {{- $items := splitList "." . -}}
         {{- $depComponent := index $items 0 -}}
         {{- $depPart := index $items 1 -}}
-      - {{ index $root $depComponent $depPart "namespace" }}/{{ printf "%s-%s" $depComponent $depPart }}
+      - {{ index $root $depComponent $depPart "namespace" }}/{{ printf "%s-%s" ($depComponent | kebabcase) $depPart }}
       {{- end }}
     {{- end }}
     {{- if index $part "hooks" }}
@@ -64,7 +64,8 @@ releases:
       {{- end }}
     {{- end }}
     values:
-      - values/{{ $part.name }}-values.yaml.gotmpl
+      - values/{{ $part.name | kebabcase }}/base-values.yaml.gotmpl
+      - values/{{ $part.name | kebabcase }}/{{ $root.global.profile }}-values.yaml.gotmpl
       - {{- index $root $component $part.name "rawValues" | default dict | toYaml | nindent 8 }}
   {{- end }}
 

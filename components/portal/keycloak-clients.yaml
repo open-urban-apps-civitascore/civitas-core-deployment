@@ -1,0 +1,6 @@
+---
+portal-frontend:
+  name: Portal Frontend
+  description: CIVITAS Portal Frontend Application
+  subdomain: portal
+  redirectPath: /api/auth/callback/keycloak

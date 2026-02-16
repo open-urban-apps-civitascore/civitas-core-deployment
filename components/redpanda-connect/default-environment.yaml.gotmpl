@@ -3,3 +3,6 @@ redpandaConnect:
   connect:
     enabled: true
     namespace: {{ include "civitas.namespace" (dict "global" .Values.global "suffix" "redpanda-connect") }}
+  networkpolicy:
+    enabled: true
+    namespace: {{ include "civitas.namespace" (dict "global" .Values.global "suffix" "redpanda-connect") }}
