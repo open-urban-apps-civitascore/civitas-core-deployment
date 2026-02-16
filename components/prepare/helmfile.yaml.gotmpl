@@ -28,21 +28,28 @@ bases:
 {{- $patchNamespaces := and ($root.global.serviceMesh.enable | default false) ($root.global.serviceMesh.patchNamespaces | default false) }}
 
 hooks:
-  - events: ["presync"]
+  - events: ["prepare"]
     showlogs: true
     command: sh
     args:
       - -ec
       - |
         set -eu
+        cmd="{{`{{ .HelmfileCommand }}`}}"
+        if [ "$cmd" != "sync" ] && [ "$cmd" != "apply" ]; then
+          echo "Skipping prepare hook for helmfile command: $cmd"
+          exit 0
+        fi
         {{- if gt (len $namespaceNames) 0 }}
         {{- range $ns := $namespaceNames }}
         {{- if $createNamespaces }}
         kubectl get namespace {{ $ns | quote }} >/dev/null 2>&1 || kubectl create namespace {{ $ns | quote }}
+        echo "Ensured namespace {{ $ns | quote }} exists."
         {{- end }}
         {{- if $patchNamespaces }}
         {{- if $linkerdEnabled }}
         kubectl annotate namespace {{ $ns | quote }} linkerd.io/inject=enabled --overwrite
+        echo "Patched namespace {{ $ns | quote }} for Linkerd injection."
         {{- end }}
         {{- end }}
         {{- end }}
