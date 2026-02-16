@@ -51,6 +51,21 @@ metadata:
 
 spec:
   kafka:
+    template:
+      pod:
+        metadata:
+          annotations:
+            config.linkerd.io/skip-outbound-ports: "8443,9090,9091"
+            config.linkerd.io/skip-inbound-ports: "8443,9090,9091"
+            config.linkerd.io/opaque-ports: "9092"
+      bootstrapService:
+        metadata:
+          annotations:
+            config.linkerd.io/opaque-ports: "9092"
+      brokersService:
+        metadata:
+          annotations:
+            config.linkerd.io/opaque-ports: "9092"
     version: {{ .Values.kafkaVersion }}
     metadataVersion: 4.1-IV1
     listeners:
@@ -62,3 +77,8 @@ spec:
   entityOperator:
     topicOperator: {}
     userOperator: {}
+    template:
+      pod:
+        metadata:
+          annotations:
+            config.linkerd.io/skip-outbound-ports: "9091"

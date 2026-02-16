@@ -121,26 +121,7 @@ apisix:
 
 # Ingress Controller
 ingress-controller:
-  enabled: true
-  image:
-    repository: {{ .Values.images.apisix.apisix.ingressController.repository }}
-    tag: {{ .Values.images.apisix.apisix.ingressController.tag }}
-  serviceMonitor:
-    enabled: {{ $global.metrics.enabled }}
-  deployment:
-    podSecurityContext:
-      runAsNonRoot: true
-      runAsUser: 1000
-      fsGroup: 1000
-      seccompProfile:
-        type: RuntimeDefault
-
-    securityContext:
-      allowPrivilegeEscalation: false
-      capabilities:
-        drop:
-          - ALL
-      readOnlyRootFilesystem: true
+  enabled: false
 
 # Metrics
 metrics:

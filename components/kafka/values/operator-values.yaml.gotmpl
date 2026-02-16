@@ -7,6 +7,10 @@ watchNamespaces:
   - {{ .Values.kafka.cluster.namespace }}
 {{ end }}
 
+
+annotations:
+  config.linkerd.io/skip-outbound-ports: "8443,9090,9091"
+
 labels:
   app.kubernetes.io/name: strimzi-kafka-operator
   app.kubernetes.io/instance: {{ $global.instanceSlug }}

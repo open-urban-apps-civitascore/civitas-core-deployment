@@ -10,6 +10,11 @@
 # - [x] Named ports -> default in chart
 # - [x] Ingress with TLS -> not applicable
 
+# Service Mesh configuration (passed from global values)
+customServiceMesh:
+  enable: {{ $global.serviceMesh.enable | default false }}
+  type: {{ $global.serviceMesh.type | default "" | quote }}
+
 securityContext:
   {{ .Values.securityDefaults.securityContext | toYaml | nindent 2 }}
 

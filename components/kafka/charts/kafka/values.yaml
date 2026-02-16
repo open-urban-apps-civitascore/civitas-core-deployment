@@ -84,3 +84,8 @@ topics: []
 #             patternType: literal
 #           operation: Read
 users: []
+
+# Custom Service Mesh configuration
+customServiceMesh:
+  enable: false
+  type: ''
