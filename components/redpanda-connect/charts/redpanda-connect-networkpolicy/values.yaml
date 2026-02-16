@@ -1,0 +1,5 @@
+---
+networkPolicy:
+  enabled: false
+  podSelector:
+    app.kubernetes.io/instance: redpanda-connect-connect

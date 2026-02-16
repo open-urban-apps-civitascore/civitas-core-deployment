@@ -92,3 +92,6 @@ database:
   secret:
     name: ''
     passwordKey: password
+
+networkPolicy:
+  enabled: false

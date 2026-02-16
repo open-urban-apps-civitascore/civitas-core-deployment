@@ -161,3 +161,6 @@ nodeSelector: {}
 tolerations: []
 
 affinity: {}
+
+networkPolicy:
+  enabled: false
