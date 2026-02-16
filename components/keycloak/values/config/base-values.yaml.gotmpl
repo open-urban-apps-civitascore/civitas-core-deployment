@@ -1,6 +1,20 @@
 ---
-{{- $this := .Values.keycloak.app -}}
+{{- $this := .Values.keycloak.config }}
 {{- $global := .Values.global }}
+# Checklist:
+# - [ ] Containers run as non-root with `readOnlyRootFilesystem` -> does not work yet with config-cli
+# - [x] Health probes -> not applicable for jobs
+# - [ ] Graceful shutdown
+# - [ ] Standard labels
+# - [ ] ServiceAccount with least privilege where required
+# - [ ] Named ports
+# - [ ] Ingress with TLS
+
+{{/*containerSecurityContext:*/}}
+{{/*  {{ .Values.securityDefaults.securityContext | toYaml | nindent 2 }}*/}}
+
+{{/*securityContext:*/}}
+{{/*  {{ .Values.securityDefaults.podSecurityContext | toYaml | nindent 2 }}*/}}
 
 image:
   {{- with .Values.images.keycloak.configCli }}
@@ -12,10 +26,10 @@ job:
   resources:
     # resources are hardcoded since config-cli is a job which won't need more resources, even when the platform scales up
     limits:
-      cpu: "1000m"
-      memory: "1024Mi"
+      cpu: "100m"
+      memory: "512Mi"
     requests:
-      cpu:  "1000m"
+      cpu:  "400m"
       memory: "1024Mi"
 
 env:
@@ -24,6 +38,8 @@ env:
   KEYCLOAK_URL: http://keycloak-app-keycloakx-http.{{ .Values.keycloak.app.namespace }}.svc.cluster.local:80{{ .Values.keycloak.app.pathPrefix | trimSuffix "/" }}
   KEYCLOAK_USER: "{{ .Values.keycloak.app.admin.username }}"
   IMPORT_FILES_LOCATIONS: /config/*
+  IMPORT_VARSUBSTITUTION_ENABLED: "true"
+  IMPORT_VARSUBSTITUTION_NESTED: "false"
 
 existingSecret: keycloak-admin-user
 existingSecretKey: password
@@ -54,6 +70,14 @@ extraEnv:
       secretKeyRef:
         name: keycloak-smtp
         key: password
+  {{- range $clientId, $client := .Values.keycloakClients }}
+  - name: CLIENT_SECRET_{{ $clientId | upper | replace "-" "_" }}
+    valueFrom:
+      secretKeyRef:
+        name: {{ printf "keycloak-client-%s" $clientId }}
+        key: client-secret
+  {{- end }}
+
 config:
   {{ $global.instanceSlug }}:
     inline:
@@ -260,3 +284,33 @@ config:
         clientSessionMaxLifespan: "0"
         clientOfflineSessionIdleTimeout: "0"
       userManagedAccessAllowed: false
+      clients:
+        {{- range $clientId, $client := .Values.keycloakClients }}
+        {{- $subdomain := $client.subdomain | default $clientId }}
+        {{- $redirectPath := $client.redirectPath | default "/*" }}
+        {{- $clientDefaults := dict
+          "clientId" $clientId
+          "name" ($client.name | default $clientId)
+          "description" (index $client "description" | default "")
+          "enabled" true
+          "protocol" "openid-connect"
+          "publicClient" false
+          "secret" (printf "$(CLIENT_SECRET_%s)" ($clientId | upper | replace "-" "_"))
+          "rootUrl" (printf "https://%s.%s" $subdomain $global.domain)
+          "baseUrl" (printf "https://%s.%s" $subdomain $global.domain)
+          "bearerOnly" false
+          "standardFlowEnabled" true
+          "implicitFlowEnabled" false
+          "directAccessGrantsEnabled" true
+          "serviceAccountsEnabled" false
+          "authorizationServicesEnabled" false
+          "redirectUris" (list (printf "https://%s.%s%s" $subdomain $global.domain $redirectPath))
+          "webOrigins" (list (printf "https://%s.%s" $subdomain $global.domain))
+          "defaultClientScopes" (list "email" "profile" "roles" "web-origins")
+          "optionalClientScopes" (list "address" "phone" "offline_access" "microprofile-jwt")
+          "attributes" (dict "post.logout.redirect.uris" "+" "pkce.code.challenge.method" "S256")
+        }}
+        {{- $rawValues := index $client "rawValues" | default dict }}
+        {{- $finalClient := mergeOverwrite $clientDefaults ($rawValues | default dict) }}
+        - {{ $finalClient | toYaml | nindent 10 }}
+        {{- end }}

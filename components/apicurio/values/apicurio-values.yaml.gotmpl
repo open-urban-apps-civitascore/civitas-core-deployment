@@ -42,16 +42,7 @@ registry:
             - {{ $host }}
           secretName: {{ $host }}-tls
     auth:
-      {{- $keycloakHost := printf "%s.%s" (default "" .Values.keycloak.app.subdomain) $global.domain | trimPrefix "." -}}
-      {{- $keycloakPath := .Values.keycloak.app.pathPrefix -}}
-      {{- $keycloakUrl := printf "https://%s%s" $keycloakHost $keycloakPath -}}
-      {{- $realmName := $global.instanceSlug }}
-      enabled: true
-      authServerUrl: "{{ $keycloakUrl }}realms/{{ $realmName }}"
-      appClientId: "apicurioRegistry"
-      uiClientId: "apicurioUI"
-      redirectUri: "{{ $keycloakUrl }}auth/callback"
-      logoutUrl: "{{ $keycloakUrl}}realms/{{ $realmName }}/protocol/openid-connect/logout?redirect_uri=https://{{ $host }}"
+      enabled: false
 
     startupProbe:
       failureThreshold: 30
