@@ -7,6 +7,6 @@ keycloak:
     # TODO: see https://github.com/adorsys/keycloak-config-cli/issues/1287#issuecomment-3338550468
     repository: https://jkroepke.github.io/helm-charts/
     chart: keycloak-config-cli/keycloak-config-cli
-    version: '1.3.3'
+    version: '1.3.6'
   networkpolicy:
     chart: charts/keycloak-networkpolicy
