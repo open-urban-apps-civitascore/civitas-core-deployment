@@ -1,0 +1,24 @@
+---
+{{- $this := .Values.frost.frost }}
+{{- $global := .Values.global }}
+# Checklist:
+# - [x] Resources (requests and limits)
+# - [ ] Larger Storage -> not applicable
+# - [x] 2+ Replicas or HorizontalPodAutoscaler
+# - [ ] Rolling updates `maxUnavailable: 0`, `maxSurge: 25%` -> not supported
+# - [ ] PodDisruptionBudget (at least `minAvailable: 1`) -> not supported
+
+frost:
+
+  http:
+    replicas: 2
+    resources:
+      requests:
+        cpu: 400m
+        memory: 1Gi
+      limits:
+        cpu: 800m
+        memory: 2Gi
+
+  # Bus does not provide replica or resources configuration
+  # bus:

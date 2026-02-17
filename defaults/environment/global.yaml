@@ -29,6 +29,7 @@ components:
   - keycloak
   - apisix
   - apicurio
+  - frost
   - model-atlas
   - redpanda-connect
   - portal

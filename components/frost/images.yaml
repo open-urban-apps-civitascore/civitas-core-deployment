@@ -1,0 +1,8 @@
+---
+frost:
+  http:
+    repository: fraunhoferiosb/frost-server-http
+    tag: 2.6.0
+  bus:
+    repository: eclipse-mosquitto
+    tag: 1.4.12

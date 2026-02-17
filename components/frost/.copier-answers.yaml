@@ -1,0 +1,8 @@
+---
+# Changes here will be overwritten by Copier.
+_commit: 41ff21b
+_src_path: ..
+componentName: Frost
+componentSlug: frost
+releases: frost
+shortDescription: A Complete Server implementation of the OGC SensorThings API

@@ -13,4 +13,7 @@ spec:
     name: {{ $root.Values.cluster.name }}
   name: {{ $config.name }}
   owner: {{ $config.user }}
+  {{- if index $config "extensions" }}
+  extensions: {{- toYaml $config.extensions | nindent 4 }}
+  {{- end }}
 {{- end }}
