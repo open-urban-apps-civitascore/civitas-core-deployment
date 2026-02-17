@@ -23,4 +23,8 @@ spec:
           podSelector:
             matchLabels:
               app.kubernetes.io/name: keycloak-config-cli
+    {{/* todo: remove this when keycloak is behind apisix */}}
+    - ports:
+        - protocol: TCP
+          port: 8080
 {{- end }}
