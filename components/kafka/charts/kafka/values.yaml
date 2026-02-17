@@ -23,7 +23,7 @@ broker:
       memory: '2Gi'
     limits:
       cpu: '2'
-      memory: '4Gi'
+      memory: '8Gi'
 
 kafka:
   # Listener presets; adjust as needed
