@@ -11,5 +11,6 @@ databases:
   {{ $component }}:
     name: "{{ $config.name }}"
     user: "{{ $config.user }}"
+    extensions: {{ index $config "extensions" | toYaml | nindent 6 }}
   {{- end }}
 {{- end }}

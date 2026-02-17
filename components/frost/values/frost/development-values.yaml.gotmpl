@@ -1,0 +1,22 @@
+---
+{{- $this := .Values.frost.frost }}
+{{- $global := .Values.global }}
+# Checklist:
+# - [x] Minimal Resources
+# - [ ] Minimal storage -> not applicable
+# - [x] 1 Replica
+
+frost:
+
+  http:
+    replicas: 1
+    resources:
+      requests:
+        cpu: 200m
+        memory: 512Mi
+      limits:
+        cpu: 500m
+        memory: 1Gi
+
+  # Bus does not provide replica or resources configuration
+  # bus:

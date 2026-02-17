@@ -1,0 +1,17 @@
+---
+frost:
+  name: 'frost'
+  embedded: true
+  user: 'frost'
+  secret:
+    name: 'db-frost'
+    key: 'password'
+    generate: true
+  # TODO: different namespace does not yet work. Namespace of the cluster is not known, when rendering this.
+  host: 'postgres-cluster-rw'
+  port: 5432
+  extensions:
+    - name: postgis
+    - name: postgis_topology
+    - name: fuzzystrmatch
+    - name: postgis_tiger_geocoder

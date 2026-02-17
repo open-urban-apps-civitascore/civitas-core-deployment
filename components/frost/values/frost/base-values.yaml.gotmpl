@@ -1,0 +1,185 @@
+---
+{{- $this := .Values.frost.frost }}
+{{- $global := .Values.global }}
+# Checklist:
+# - [ ] Containers run as non-root with `readOnlyRootFilesystem` -> not supported
+# - [x] Health probes
+# - [x] Graceful shutdown
+# - [x] Standard labels
+# - [ ] ServiceAccount with least privilege where required -> not supported
+# - [x] Named ports
+# - [ ] Ingress with TLS -> not (yet) applicable
+
+frost:
+  metrics:
+    enable: {{ .Values.global.metrics.enabled }}
+    createRole: true
+    createRoleBinding: true
+  plugins:
+    providedPlugins:
+    plugins:
+    actuation:
+      enable: false
+      idType:
+        actuator:
+          task: null
+          taskingCapability: null
+    coreModel:
+      enable: true
+      editableDsProperties: false
+      idType:
+        default: LONG
+    multiDatastream:
+      multiDatastream: null
+      enable: true
+    modelLoader:
+      enable: true
+      modelPath:
+      modelFiles:
+      liquibasePath:
+      liquibaseFiles:
+      securityPath:
+      securityFiles:
+    dataArray:
+      enable: true
+    csv:
+      enable: true
+    geojson:
+      enable: true
+    batchProcessing:
+      enable: true
+    odata:
+      enable: true
+    openApi:
+      enable: true
+    projects:
+      enable: true
+      enableDefaultRules: true
+      updateFeatureWithLocation: true
+
+  auth:
+    provider: "de.fraunhofer.iosb.ilt.frostserver.auth.basic.BasicAuthProvider"
+    authenticateOnly: true
+    allowAnonymousRead: true
+    #role:
+    #  read:
+    #  create:
+    #  update:
+    #  delete:
+    #  admin:
+    realmName: {{ .Values.frost.frost.realmName | default "civitas" }}
+    plainTextPassword: 'false'
+    db:
+      autoUpdate: "true"
+      maximumConnection: 100
+      maximumIdleConnection: 10
+      minimumIdleConnection: 5
+
+  logging:
+    default: "WARN"
+    parser: "WARN"
+    queries: "WARN"
+    requests: "WARN"
+    service: "WARN"
+    settings: "WARN"
+    moquette: "WARN"
+    liquibase: "WARN"
+    jooq: "WARN"
+
+  ##########################################
+  # FROST-Server HTTP module configuration #
+  ##########################################
+  http:
+    enabled: true
+    {{- with .Values.images.frost.http }}
+    image:
+      registry: docker.io
+      repository: {{ .repository }}
+      tag: {{ .tag }}
+    {{- end }}
+    ingress:
+      enabled: false
+
+    securityContext:
+      runAsUser: 1001
+      runAsGroup: 1001
+      runAsNonRoot: true
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: false
+      seccompProfile:
+        type: RuntimeDefault
+      capabilities:
+        drop: ["ALL"]
+
+    extraEnv: |  
+      - name: auth_registerUserLocally
+        value: "true"        
+      - name: auth_userRoleDecoderClass
+        value: "de.fraunhofer.iosb.ilt.frostserver.plugin.projects.ProjectRoleDecoder"      
+      - name: persistence_idGenerationMode_Role
+        value: "ClientGeneratedOnly"
+      - name: persistence_idGenerationMode_User
+        value: "ClientGeneratedOnly"
+      - name: plugins_modelLoader_idType_Role
+        value: "STRING"
+      - name: plugins_modelLoader_idType_User
+        value: "STRING"
+      - name: plugins_projects_enable
+        value: "true"
+
+    serviceHost: {{ .Values.frost.frost.subdomain }}.{{ $global.domain }}
+    serviceProtocol: https
+    servicePort: 443
+    defaultCount: false
+    defaultTop: 100
+    maxTop: 1000
+    maxDataSize: 25000000
+    useAbsoluteNavigationLinks: false
+
+    cors:
+      enable: true
+      allowed:
+        headers: Origin, Accept, X-Requested-With, Content-Type, Access-Control-Request-Method, Access-Control-Request-Headers, Authorization
+        methods: GET, HEAD, OPTIONS
+        origins: '*'
+      exposed:
+        headers: Location
+      preflight:
+        maxage: 1800
+      request:
+        decorate: true
+      support:
+        credentials: false
+
+    db:
+      autoUpdate: true
+      maximumConnection: 10
+      maximumIdleConnection: 10
+      minimumIdleConnection: 10
+
+  mqtt:
+    enabled: false
+    ingress:
+      enabled: false
+
+  db:
+    enableIntegratedDb: false
+    dbExternalConnectionString: "jdbc:postgresql://{{ .Values.databases.frost.host }}:{{ default 5432 .Values.databases.frost.port }}/{{ default "frost" .Values.databases.frost.name }}"
+    database: "{{ default "frost" .Values.databases.frost.name }}"
+    # TODO: Restructure .Values.databases objects to support users in secrets, e.g. .Values.databases.frost.secret.usernameKey and .Values.databases.frost.secret.passwordKey
+    existingSecret: {{ .Values.databases.frost.secret.name }}
+    secretUsernameKey: username
+    secretPasswordKey: {{ .Values.databases.frost.secret.key }}
+    #username: {{ default "frost" .Values.databases.frost.user }}
+
+  backup:
+    enabled: false
+
+  bus:
+    {{- with .Values.images.frost.bus }}
+    image:
+        registry: docker.io
+        repository: {{ .repository }}
+        tag: {{ .tag }}
+    {{- end }}
+    implementationClass: "de.fraunhofer.iosb.ilt.sta.messagebus.MqttMessageBus"

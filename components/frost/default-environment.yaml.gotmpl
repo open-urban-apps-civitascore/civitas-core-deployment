@@ -1,0 +1,7 @@
+---
+frost:
+  frost:
+    enabled: true
+    namespace: {{ include "civitas.namespace" (dict "global" .Values.global "suffix" "frost") }}
+    subdomain: frost
+    realmName: civitas
