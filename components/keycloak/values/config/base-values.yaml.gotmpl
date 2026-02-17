@@ -84,12 +84,14 @@ config:
       id: {{ $global.instanceSlug }}
       realm: "{{ $global.instanceSlug }}"
       notBefore: 0
-      defaultSignatureAlgorithm: RS256
+      # TR-03187 AR-11: Use ES256 for token signatures
+      defaultSignatureAlgorithm: ES256
       revokeRefreshToken: false
       refreshTokenMaxReuse: 0
       accessTokenLifespan: 300
       accessTokenLifespanForImplicitFlow: 900
-      ssoSessionIdleTimeout: 1800
+      # TR-03187 AR-6/W-8: 60min idle timeout
+      ssoSessionIdleTimeout: 3600
       ssoSessionMaxLifespan: 36000
       ssoSessionIdleTimeoutRememberMe: 0
       ssoSessionMaxLifespanRememberMe: 0
@@ -105,31 +107,38 @@ config:
       accessCodeLifespanLogin: 1800
       actionTokenGeneratedByAdminLifespan: 43200
       actionTokenGeneratedByUserLifespan: 300
+      # TR-03187 AR-11: Keycloak 26 defaults to Argon2id for password hashing — no config override needed
+      # TR-03187 AUT-9: Keycloak 26 account console requires password re-entry for sensitive profile changes (incl. email) by default
+      # TR-03187 AR-13: Certificate chain validation handled by Linkerd mTLS at infrastructure level — no realm config needed
       enabled: true
       sslRequired: external
       registrationAllowed: false
       registrationEmailAsUsername: true
-      rememberMe: true
+      rememberMe: false
       verifyEmail: true
       loginWithEmailAllowed: true
       duplicateEmailsAllowed: false
       resetPasswordAllowed: true
       editUsernameAllowed: true
-      bruteForceProtected: false
+      # TR-03187: Brute force protection enabled, lockout after 10 attempts
+      bruteForceProtected: true
       permanentLockout: false
       maxFailureWaitSeconds: 900
       minimumQuickLoginWaitSeconds: 60
       waitIncrementSeconds: 60
       quickLoginCheckMilliSeconds: 1000
       maxDeltaTimeSeconds: 43200
-      failureFactor: 30
+      failureFactor: 10
       defaultRoles:
         - offline_access
         - uma_authorization
+      # TR-03187 AUT-7: Password policy — min 12 chars, upper, lower, digit
+      passwordPolicy: "length(12) and upperCase(1) and lowerCase(1) and digits(1)"
       requiredCredentials:
         - password
       otpPolicyType: totp
-      otpPolicyAlgorithm: HmacSHA1
+      # TR-03187 AR-11: Use SHA256 for OTP
+      otpPolicyAlgorithm: HmacSHA256
       otpPolicyInitialCounter: 0
       otpPolicyDigits: 6
       otpPolicyLookAheadWindow: 1
@@ -272,7 +281,8 @@ config:
         - de
         - en
       defaultLocale: en
-      browserFlow: browser
+      # TR-03187 AUT-2: Custom browser flow with conditional 2FA
+      browserFlow: custom browser
       registrationFlow: registration
       directGrantFlow: direct grant
       resetCredentialsFlow: reset credentials
@@ -314,3 +324,72 @@ config:
         {{- $finalClient := mergeOverwrite $clientDefaults ($rawValues | default dict) }}
         - {{ $finalClient | toYaml | nindent 10 }}
         {{- end }}
+      # TR-03187 AUT-2: Custom browser flow with optional MFA (conditional on user config)
+      # If a user has TOTP or WebAuthn configured, they are prompted. Otherwise login proceeds without MFA.
+      authenticationFlows:
+        - alias: "custom browser"
+          description: "Custom browser flow with conditional 2FA per TR-03187"
+          providerId: "basic-flow"
+          topLevel: true
+          builtIn: false
+          authenticationExecutions:
+            - authenticator: "auth-cookie"
+              authenticatorFlow: false
+              requirement: "ALTERNATIVE"
+              priority: 10
+              userSetupAllowed: false
+              autheticatorFlow: false
+            - authenticator: "identity-provider-redirector"
+              authenticatorFlow: false
+              requirement: "ALTERNATIVE"
+              priority: 20
+              userSetupAllowed: false
+              autheticatorFlow: false
+            - authenticatorFlow: true
+              requirement: "ALTERNATIVE"
+              priority: 30
+              flowAlias: "custom browser forms"
+              userSetupAllowed: false
+              autheticatorFlow: true
+        - alias: "custom browser forms"
+          description: "Username/password + conditional 2FA"
+          providerId: "basic-flow"
+          topLevel: false
+          builtIn: false
+          authenticationExecutions:
+            - authenticator: "auth-username-password-form"
+              authenticatorFlow: false
+              requirement: "REQUIRED"
+              priority: 10
+              userSetupAllowed: false
+              autheticatorFlow: false
+            - authenticatorFlow: true
+              requirement: "CONDITIONAL"
+              priority: 20
+              flowAlias: "custom browser 2fa"
+              userSetupAllowed: false
+              autheticatorFlow: true
+        - alias: "custom browser 2fa"
+          description: "Conditional 2FA — prompts only if user has TOTP or WebAuthn configured"
+          providerId: "basic-flow"
+          topLevel: false
+          builtIn: false
+          authenticationExecutions:
+            - authenticator: "conditional-user-configured"
+              authenticatorFlow: false
+              requirement: "REQUIRED"
+              priority: 10
+              userSetupAllowed: false
+              autheticatorFlow: false
+            - authenticator: "auth-otp-form"
+              authenticatorFlow: false
+              requirement: "ALTERNATIVE"
+              priority: 20
+              userSetupAllowed: false
+              autheticatorFlow: false
+            - authenticator: "webauthn-authenticator"
+              authenticatorFlow: false
+              requirement: "ALTERNATIVE"
+              priority: 30
+              userSetupAllowed: false
+              autheticatorFlow: false
