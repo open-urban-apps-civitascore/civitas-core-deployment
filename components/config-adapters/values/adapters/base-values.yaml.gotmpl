@@ -59,7 +59,7 @@ env:
   - name: KEYCLOAK_CLIENT_ID
     value: "admin-cli"
   - name: KEYCLOAK_TOPICS
-    value: "core.civitas.idm.user.created,core.civitas.idm.user.updated,core.civitas.idm.realm.created"
+    value: "de.civitascore.idm.user.created,de.civitascore.idm.user.updated,de.civitascore.idm.realm.created"
 
   # APISIX configuration
   {{- $apisixHost := printf "%s.%s" (default "" .Values.apisix.apisix.subdomain) $global.domain | trimPrefix "." }}
@@ -73,7 +73,7 @@ env:
         name: "apisix-admin-credentials"
         key: "admin"
   - name: APISIX_TOPICS
-    value: "core.civitas.api.backend.created,core.civitas.api.backend.updated,core.civitas.api.backend.deleted"
+    value: "de.civitascore.api.backend.created,de.civitascore.api.backend.updated,de.civitascore.api.backend.deleted"
 
   # Health check configuration
   - name: HEALTHCHECK_PORT
