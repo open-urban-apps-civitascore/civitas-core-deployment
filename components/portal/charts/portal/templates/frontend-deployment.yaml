@@ -29,12 +29,18 @@ spec:
               containerPort: 3000
               protocol: TCP
           env:
-            # Port configuration
+            # Base configuration
             - name: PORT
               value: "3000"
+            - name: NEXT_SERVER_URL
+              value: {{ .Values.server.url }}
+            - name: LOG_LEVEL
+              value: warn
+            - name: API_BASE_URL
+              value: "http://{{ include "portal.backend.serviceName" . }}"
+            - name: API_PORT
+              value: "8080"
             # NextAuth configuration
-            - name: NEXTAUTH_URL
-              value: {{ .Values.nextAuth.url }}
             - name: AUTH_TRUST_HOST
               value: "true"
             - name: NODE_TLS_REJECT_UNAUTHORIZED
@@ -54,17 +60,14 @@ spec:
                   key: client-secret
             - name: KEYCLOAK_ISSUER
               value: "{{ .Values.keycloak.authServerUrl }}/realms/{{ .Values.keycloak.realm }}"
+            # JSON Server configuration (temporary, to be removed)
             # TODO: Remove these temporary backend service URL configurations
             # These are temporary and should be removed once the frontend is updated
             # to use proper API gateway routing instead of direct backend service calls
             - name: JSON_SERVER_HOST
-              value: "http://{{ include "portal.backend.serviceName" . }}"
+              value: "http://localhost"
             - name: JSON_SERVER_PORT
-              value: "8080"
-            - name: NEXT_PUBLIC_JSON_SERVER_HOST
-              value: "http://{{ include "portal.backend.serviceName" . }}"
-            - name: NEXT_PUBLIC_JSON_SERVER_PORT
-              value: "8080"
+              value: "3001"
           startupProbe:
             httpGet:
               path: /

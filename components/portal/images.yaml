@@ -5,4 +5,4 @@ portal:
     tag: '0.0.0-996-g79443eee'
   frontend:
     repository: registry.gitlab.com/civitas-connect/civitas-core/civitas-core-v2/civitas-core-platform/frontend-portal
-    tag: '0.0.0-996-g79443eee'
+    tag: '0.0.0-1137-gaa4d7ff7'
