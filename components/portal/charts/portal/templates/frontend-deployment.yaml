@@ -34,6 +34,8 @@ spec:
               value: "3000"
             - name: NEXT_SERVER_URL
               value: {{ .Values.server.url }}
+            - name: NEXTAUTH_URL
+              value: {{ .Values.server.url }}
             - name: LOG_LEVEL
               value: warn
             - name: API_BASE_URL
