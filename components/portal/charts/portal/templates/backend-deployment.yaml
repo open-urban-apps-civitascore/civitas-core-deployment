@@ -6,6 +6,19 @@ metadata:
   name: {{ include "portal.fullname" . }}-backend
   labels:
     {{- include "portal.backend.labels" . | nindent 4 }}
+  # TODO: Remove annotations!!!
+  annotations:
+      # Policy: "force" means always update, perfect for :latest tag
+    keel.sh/policy: force
+    
+    # Trigger: "poll" means Keel will check the registry periodically
+    keel.sh/trigger: poll
+    
+    # Optional: How often to check (default is 1 minute)
+    keel.sh/pollSchedule: "@every 5m"
+
+    # Match tag: only update when the same tag (e.g. "develop") gets a new digest
+    keel.sh/match-tag: "true"
 spec:
   {{- if not .Values.autoscaling.backend.enabled }}
   replicas: {{ .Values.backend.replicaCount }}
@@ -23,7 +36,7 @@ spec:
       containers:
         - name: backend
           image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag }}"
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           ports:
             - name: http
               containerPort: 8080
