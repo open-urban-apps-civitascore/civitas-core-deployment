@@ -7,28 +7,60 @@ metadata:
     policies.kyverno.io/title: Require Rolling Update Strategy
     policies.kyverno.io/category: Best Practices
     policies.kyverno.io/severity: medium
-    policies.kyverno.io/minversion: 1.6.0
-    policies.kyverno.io/subject: Deployment
+    policies.kyverno.io/minversion: 1.8.0
+    policies.kyverno.io/subject: Deployment,StatefulSet
+    policies.kyverno.io/scored: 'true'
     policies.kyverno.io/description: >-
-      Rolling updates should be configured to ensure zero-downtime deployments in production.
-      This policy validates that Deployments use the RollingUpdate strategy with
-      maxUnavailable: 0 and maxSurge: 25% to prevent service disruption during updates.
+      Zero-downtime deployments require a RollingUpdate strategy with `maxUnavailable: 0`
+      so no pods are taken down before new ones are ready. A non-zero `maxSurge` (for
+      Deployments) ensures new pods can be scheduled above the desired count during the
+      rollout. This policy validates that Deployments and StatefulSets use the
+      RollingUpdate strategy, that `maxUnavailable` is 0, and that `maxSurge` is
+      explicitly set for Deployments. Both integer and percentage-string values are
+      accepted for `maxSurge` (e.g. `1` or `"25%"`).
 spec:
   validationFailureAction: Audit
   background: true
   rules:
-    - name: validate-rolling-update-strategy
+    - name: require-rolling-update-deployment
       match:
         any:
           - resources:
               kinds:
                 - Deployment
       validate:
-        message: 'Deployments must use RollingUpdate strategy with maxUnavailable: 0 and maxSurge: 25%.'
-        pattern:
-          spec:
-            strategy:
-              type: RollingUpdate
-              rollingUpdate:
-                maxUnavailable: 0
-                maxSurge: 25%
+        message: >-
+          Deployments must use RollingUpdate strategy with maxUnavailable: 0 and a
+          non-zero maxSurge (e.g. 1 or 25%) to ensure zero-downtime rollouts.
+        deny:
+          conditions:
+            any:
+              - key: "{{ request.object.spec.strategy.type || 'RollingUpdate' }}"
+                operator: NotEquals
+                value: RollingUpdate
+              - key: '{{ request.object.spec.strategy.rollingUpdate.maxUnavailable || 1 }}'
+                operator: NotEquals
+                value: 0
+              - key: "{{ request.object.spec.strategy.rollingUpdate.maxSurge || '' }}"
+                operator: Equals
+                value: ''
+
+    - name: require-rolling-update-statefulset
+      match:
+        any:
+          - resources:
+              kinds:
+                - StatefulSet
+      validate:
+        message: >-
+          StatefulSets must use RollingUpdate strategy with maxUnavailable: 0
+          to ensure zero-downtime rollouts.
+        deny:
+          conditions:
+            any:
+              - key: "{{ request.object.spec.updateStrategy.type || 'RollingUpdate' }}"
+                operator: NotEquals
+                value: RollingUpdate
+              - key: '{{ request.object.spec.updateStrategy.rollingUpdate.maxUnavailable || 1 }}'
+                operator: NotEquals
+                value: 0

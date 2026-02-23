@@ -2,32 +2,36 @@
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
 metadata:
-  name: require-replicas-or-hpa
+  name: require-minimum-replicas
   annotations:
-    policies.kyverno.io/title: Require Replicas or HPA
+    policies.kyverno.io/title: Require Minimum 2 Replicas
     policies.kyverno.io/category: Best Practices
     policies.kyverno.io/severity: medium
-    policies.kyverno.io/minversion: 1.6.0
+    policies.kyverno.io/minversion: 1.8.0
     policies.kyverno.io/subject: Deployment
-    # only a warning, because this may be irrelevant when hpa is configured. But we may want to adjust this.
     policies.kyverno.io/scored: 'false'
     policies.kyverno.io/description: >-
-      Production workloads should have at least 2 replicas or be managed by a
-      HorizontalPodAutoscaler for high availability. This policy validates that
-      Deployments have at least 2 replicas. StatefulSets and DaemonSets are excluded
-      as they may legitimately run with a single replica.
+      Production Deployments should run at least 2 replicas to tolerate a single pod
+      failure or rolling update without a service interruption. This policy validates
+      that `spec.replicas` is set to 2 or more. It is marked as unscored (warning only)
+      because a Deployment managed by a HorizontalPodAutoscaler may legitimately declare
+      fewer static replicas; in that case the HPA controls the actual running count.
+      StatefulSets and DaemonSets are excluded: DaemonSets run one pod per node by
+      design, and StatefulSet replica counts depend on the specific workload requirements.
 spec:
   validationFailureAction: Audit
   background: true
   rules:
-    - name: validate-replicas
+    - name: require-minimum-replicas
       match:
         any:
           - resources:
               kinds:
                 - Deployment
       validate:
-        message: 'Deployments must have at least 2 replicas for high availability.'
+        message: >-
+          Deployments must have at least 2 replicas for high availability. If this
+          Deployment is managed by an HPA, this warning can be ignored.
         pattern:
           spec:
             replicas: '>=2'
