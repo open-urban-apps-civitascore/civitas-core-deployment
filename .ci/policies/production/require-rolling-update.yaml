@@ -32,18 +32,13 @@ spec:
         message: >-
           Deployments must use RollingUpdate strategy with maxUnavailable: 0 and a
           non-zero maxSurge (e.g. 1 or 25%) to ensure zero-downtime rollouts.
-        deny:
-          conditions:
-            any:
-              - key: "{{ request.object.spec.strategy.type || 'RollingUpdate' }}"
-                operator: NotEquals
-                value: RollingUpdate
-              - key: '{{ request.object.spec.strategy.rollingUpdate.maxUnavailable || 1 }}'
-                operator: NotEquals
-                value: 0
-              - key: "{{ request.object.spec.strategy.rollingUpdate.maxSurge || '' }}"
-                operator: Equals
-                value: ''
+        pattern:
+          spec:
+            strategy:
+              type: RollingUpdate
+              rollingUpdate:
+                maxUnavailable: 0
+                maxSurge: '?*'
 
     - name: require-rolling-update-statefulset
       match:
@@ -55,12 +50,9 @@ spec:
         message: >-
           StatefulSets must use RollingUpdate strategy with maxUnavailable: 0
           to ensure zero-downtime rollouts.
-        deny:
-          conditions:
-            any:
-              - key: "{{ request.object.spec.updateStrategy.type || 'RollingUpdate' }}"
-                operator: NotEquals
-                value: RollingUpdate
-              - key: '{{ request.object.spec.updateStrategy.rollingUpdate.maxUnavailable || 1 }}'
-                operator: NotEquals
-                value: 0
+        pattern:
+          spec:
+            updateStrategy:
+              type: RollingUpdate
+              rollingUpdate:
+                maxUnavailable: 0
