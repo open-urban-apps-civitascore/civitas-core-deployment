@@ -4,7 +4,7 @@ metadata:
   name: {{ include "config-adapter.fullname" . }}
   labels:
     {{- include "config-adapter.labels" . | nindent 4 }}
-  # TODO: Remove annotations!!!
+  # TODO: Remove annotations once renovate is setup!!!
   annotations:
       # Policy: "force" means always update, perfect for :latest tag
     keel.sh/policy: force

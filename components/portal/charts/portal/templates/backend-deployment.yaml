@@ -6,7 +6,7 @@ metadata:
   name: {{ include "portal.fullname" . }}-backend
   labels:
     {{- include "portal.backend.labels" . | nindent 4 }}
-  # TODO: Remove annotations!!!
+  # TODO: Remove annotations once renovate is setup!!!
   annotations:
       # Policy: "force" means always update, perfect for :latest tag
     keel.sh/policy: force
