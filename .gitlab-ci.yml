@@ -208,3 +208,41 @@ sbom-container-image:
     expire_in: 1 month
     paths:
       - target/$IMAGE-image.cdx.json
+
+scan-kyverno-policies:
+  stage: lint
+  image: debian:bookworm-slim
+  before_script:
+    # Install system dependencies
+    - apt-get update && apt-get install -y git bash curl wget ca-certificates
+
+    # Install Helm
+    - wget -qO- https://get.helm.sh/helm-v3.19.0-linux-amd64.tar.gz | tar xz
+    - mv linux-amd64/helm /usr/local/bin/
+    - rm -rf linux-amd64
+    - helm version
+
+    # Install Helmfile
+    - wget -qO- https://github.com/helmfile/helmfile/releases/download/v1.1.9/helmfile_1.1.9_linux_amd64.tar.gz | tar xz
+    - mv helmfile /usr/local/bin/
+    - chmod +x /usr/local/bin/helmfile
+    - helmfile version
+
+    # Install Kyverno CLI
+    - KYVERNO_VERSION=$(curl -sSL https://api.github.com/repos/kyverno/kyverno/releases/latest | grep '"tag_name"' | sed -E 's/.*"([^"]+)".*/\1/')
+    - wget -qO- https://github.com/kyverno/kyverno/releases/download/${KYVERNO_VERSION}/kyverno-cli_${KYVERNO_VERSION}_linux_x86_64.tar.gz | tar xz
+    - mv kyverno /usr/local/bin/
+    - kyverno version
+
+    # Install yq for YAML processing
+    - wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/local/bin/yq
+    - chmod +x /usr/local/bin/yq
+    - yq --version
+  script:
+    - cp -r defaults/deployment deployment
+    - helmfile template -f deployment/helmfile.yaml -e local 2>/dev/null | kyverno apply .ci/policies/base .ci/policies/production -p --resource - | .ci/policies/report_to_junit.sh > kyverno-policy-scan.xml
+  artifacts:
+    when: always
+    expire_in: 1 week
+    reports:
+      junit: kyverno-policy-scan.xml
