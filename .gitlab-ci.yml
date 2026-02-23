@@ -57,7 +57,7 @@ pre-commit:
     - cp -r defaults/deployment deployment
     - pre-commit run --all-files
 
-deploy:
+.deploy-base:
   stage: deploy
   image: debian:bookworm-slim
   before_script:
@@ -82,6 +82,9 @@ deploy:
     - chmod +x /usr/local/bin/helmfile
     - helmfile version
 
+    # Copy example deployments to deployments directory
+    - cp -r .ci/example-deployments ./deployments
+
     # Setup kubeconfig
     - mkdir -p ~/.kube
     - echo "$KUBECONFIG_CONTENT" | base64 -d > ~/.kube/config
@@ -91,11 +94,30 @@ deploy:
     # Verify connectivity
     - kubectl cluster-info
     - kubectl get nodes
+
+deploy-staging:
+  extends: .deploy-base
+  variables:
+    KUBECONFIG_CONTENT: $KUBECONFIG_CONTENT_STAGING
   script:
-    - helmfile -f ./helmfile.d/ sync -e default
+    - helmfile -f ./deployments/ sync -e staging
+  only:
+    - staging
+  when: manual
+  environment:
+    name: staging
+
+deploy-production:
+  extends: .deploy-base
+  variables:
+    KUBECONFIG_CONTENT: $KUBECONFIG_CONTENT_PRODUCTION
+  script:
+    - helmfile -f ./deployments/ sync -e production
   only:
     - main
   when: manual
+  environment:
+    name: production
 
 build-container-image:
   extends: .container-images
