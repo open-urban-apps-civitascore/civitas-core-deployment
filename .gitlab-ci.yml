@@ -235,7 +235,11 @@ scan-kyverno-policies:
     - kyverno version
   script:
     - cp -r defaults/deployment deployment
-    - (helmfile template -f deployment/helmfile.yaml -e production 2>/dev/null | kyverno apply .ci/policies/base .ci/policies/production -p --resource - || true) | python3 .ci/policies/report_to_junit.py > kyverno-policy-scan.xml
+    - |
+      helmfile template -f deployment/helmfile.yaml -e production 2>/dev/null \
+        | kyverno apply .ci/policies/base .ci/policies/production -p --resource - \
+        | python3 .ci/policies/report_to_junit.py > kyverno-policy-scan.xml
+      exit ${PIPESTATUS[1]}
   artifacts:
     when: always
     expire_in: 1 week
