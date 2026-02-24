@@ -4,9 +4,9 @@ Convert a kyverno ClusterReport (openreports.io/v1alpha1) to JUnit XML.
 
 Structure:
   <testsuites>
-    <testsuite name="{policy}">                             -- one per policy
+    <testsuite name="{policy}">                          -- one per policy
       <testcase classname="{policy}.{rule}"
-                name="{namespace}/{kind}/{name}">           -- one per (rule, resource)
+                name="{name} ({kind})">                  -- one per (rule, resource)
         <failure>  on fail
         <error>    on warn
         (empty)    on pass
@@ -38,12 +38,9 @@ def base_rule(rule: str) -> str:
 
 def resource_id(resource: dict) -> str:
     """Human-readable resource identifier used as testcase name."""
-    ns = resource.get("namespace", "")
     kind = resource.get("kind", "")
     name = resource.get("name", "")
-    if ns:
-        return f"{ns}/{kind}/{name}"
-    return f"{kind}/{name}"
+    return f"{name} ({kind})"
 
 
 def merge_status(existing: str, incoming: str) -> str:
