@@ -3,6 +3,18 @@ cluster:
   name: postgres-cluster
 databases:
   []
+  # Example database configuration:
   # apicurio:
   #   name: 'apicurio'
   #   user: 'apicurio'
+  #   additionalRoles:
+  #     - name: 'apicurio-readonly'
+  #       type: 'readonly'  # Can be 'readonly' or 'readwrite'
+  #       credentialsSecret:
+  #         name: 'apicurio-readonly-credentials'
+  #         passwordKey: 'password'  # Optional, defaults to 'password'
+  #     - name: 'apicurio-analytics'
+  #       type: 'readwrite'
+  #       credentialsSecret:
+  #         name: 'apicurio-analytics-credentials'
+  #         passwordKey: 'db-password'

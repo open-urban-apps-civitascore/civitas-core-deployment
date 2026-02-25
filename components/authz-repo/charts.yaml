@@ -1,4 +1,0 @@
----
-authzRepo:
-  networkpolicy:
-    chart: charts/authz-repo-networkpolicy

@@ -1,5 +1,0 @@
----
-networkPolicy:
-  enabled: false
-  podSelector:
-    app.kubernetes.io/name: authz-repo

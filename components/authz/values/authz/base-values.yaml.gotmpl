@@ -1,0 +1,20 @@
+---
+{{- $this := .Values.authz.authz }}
+{{- $global := .Values.global }}
+# Checklist:
+# - [x] Containers run as non-root with `readOnlyRootFilesystem`
+# - [x] Health probes
+# - [x] Graceful shutdown
+# - [x] Standard labels
+# - [ ] ServiceAccount with least privilege where required
+# - [x] Named ports
+# - [ ] Ingress with TLS
+
+authz:
+  database:
+    # TODO: Make it more dynamic from portal database resource
+    url: 'jdbc:postgresql://{{ .Values.databases.portal.host }}:5432/portal'
+    username: 'authz'
+    credentialsSecret:
+      name: db-authz-readonly
+      passwordKey: password

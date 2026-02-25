@@ -27,12 +27,11 @@ components:
   - etcd
   - kafka
   - keycloak
+  - portal
+  - authz
   - apisix
   - apicurio
   - frost
   - model-atlas
   - redpanda-connect
-  - portal
   - config-adapters
-  - opa
-  - authz-repo
