@@ -1,4 +1,0 @@
----
-component: opa
-parts:
-  - name: networkpolicy

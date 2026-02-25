@@ -1,0 +1,4 @@
+---
+authz:
+  authz:
+    chart: charts/authz

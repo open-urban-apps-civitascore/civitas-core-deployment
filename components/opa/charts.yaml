@@ -1,4 +1,0 @@
----
-opa:
-  networkpolicy:
-    chart: charts/opa-networkpolicy

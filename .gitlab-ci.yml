@@ -2,12 +2,14 @@
 .container-images:
   rules:
     - changes:
-        - container-images/$IMAGE/**/*
+        # - container-images/$IMAGE/**/* # TODO: fix the logic to trigger only for the relevant image
+        - container-images/**/*
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
   parallel:
     matrix:
       - IMAGE: etcdctl
       - IMAGE: opa
+      - IMAGE: cicd
 
 stages:
   - .pre
@@ -36,52 +38,17 @@ setup-version:
 
 pre-commit:
   stage: lint
-  image: debian:bookworm-slim
-  before_script:
-    # Install system dependencies
-    - apt-get update && apt-get install -y git bash gcc libffi-dev python3 python3-pip python3-venv wget
-
-    # Install pre-commit
-    - pip3 install --no-cache-dir --break-system-packages pre-commit
-
-    # Install Helm
-    - wget -qO- https://get.helm.sh/helm-v3.19.0-linux-amd64.tar.gz | tar xz
-    - mv linux-amd64/helm /usr/local/bin/
-    - rm -rf linux-amd64
-
-    # Install Helmfile
-    - wget -qO- https://github.com/helmfile/helmfile/releases/download/v1.1.9/helmfile_1.1.9_linux_amd64.tar.gz | tar xz
-    - mv helmfile /usr/local/bin/
-    - chmod +x /usr/local/bin/helmfile
+  image: registry.gitlab.com/civitas-connect/civitas-core/civitas-core-v2/civitas-core-deployment/cicd:a1aebd6
   script:
     - cp -r defaults/deployment deployment
     - pre-commit run --all-files
+  rules:
+    - when: always
 
 deploy:
   stage: deploy
-  image: debian:bookworm-slim
+  image: registry.gitlab.com/civitas-connect/civitas-core/civitas-core-v2/civitas-core-deployment/cicd:a1aebd6
   before_script:
-    # Install system dependencies
-    - apt-get update && apt-get install -y git bash curl wget ca-certificates
-
-    # Install kubectl
-    - KUBECTL_VERSION=$(curl -L -s https://dl.k8s.io/release/stable.txt)
-    - curl -LO "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl"
-    - install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
-    - kubectl version --client
-
-    # Install Helm
-    - wget -qO- https://get.helm.sh/helm-v3.19.0-linux-amd64.tar.gz | tar xz
-    - mv linux-amd64/helm /usr/local/bin/
-    - rm -rf linux-amd64
-    - helm version
-
-    # Install Helmfile
-    - wget -qO- https://github.com/helmfile/helmfile/releases/download/v1.1.9/helmfile_1.1.9_linux_amd64.tar.gz | tar xz
-    - mv helmfile /usr/local/bin/
-    - chmod +x /usr/local/bin/helmfile
-    - helmfile version
-
     # Setup kubeconfig
     - mkdir -p ~/.kube
     - echo "$KUBECONFIG_CONTENT" | base64 -d > ~/.kube/config

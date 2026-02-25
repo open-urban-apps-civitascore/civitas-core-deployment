@@ -4,3 +4,6 @@ apisix:
     gateway:
       repository: apache/apisix
       tag: '3.14.1-ubuntu'
+    apisixInitialConfig:
+      repository: alpine/curl
+      tag: '8.17.0'

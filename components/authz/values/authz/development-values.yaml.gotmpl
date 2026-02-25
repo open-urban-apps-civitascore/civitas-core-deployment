@@ -1,27 +1,32 @@
 ---
-{{- $this := .Values.portal.portal }}
+{{- $this := .Values.authz.authz }}
 {{- $global := .Values.global }}
 # Checklist:
 # - [x] Minimal Resources
-# - [x] Minimal storage -> not applicable
+# - [x] Minimal storage
 # - [x] 1 Replica
 
-backend:
+opa:
   replicaCount: 1
-  resources:
-    requests:
-      cpu: 100m
-      memory: 256Mi
-    limits:
-      cpu: 750m
-      memory: 768Mi
 
-frontend:
-  replicaCount: 1
   resources:
     requests:
       cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 100m
+      memory: 128Mi
+
+authz:
+  replicaCount: 1
+
+  resources:
+    requests:
+      cpu: 100m
       memory: 128Mi
     limits:
-      cpu: 250m
+      cpu: 500m
       memory: 256Mi
+
+  persistence:
+    enabled: false

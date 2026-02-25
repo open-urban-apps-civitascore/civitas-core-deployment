@@ -1,0 +1,258 @@
+---
+# Default values for authz chart
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# OPA (Open Policy Agent) configuration
+opa:
+  replicaCount: 1
+
+  image:
+    repository: registry.gitlab.com/civitas-connect/civitas-core/civitas-core-v2/civitas-core-platform/opa
+    tag: '0.0.0-1143-g5fddd8eb5'
+    pullPolicy: IfNotPresent
+
+  imagePullSecrets: []
+
+  serviceAccount:
+    create: false
+    name: ''
+
+  podAnnotations: {}
+  podLabels: {}
+
+  # Pod security context - non-root user
+  podSecurityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    fsGroup: 1000
+    seccompProfile:
+      type: RuntimeDefault
+
+  # Container security context - readOnlyRootFilesystem
+  containerSecurityContext:
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+        - ALL
+    readOnlyRootFilesystem: true
+    runAsNonRoot: true
+    runAsUser: 1000
+
+  service:
+    type: ClusterIP
+    port: 8181
+    annotations: {}
+
+  # Environment variables
+  env:
+    []
+    # - name: OPA_LOG_LEVEL
+    #   value: "info"
+
+  # OPA command line arguments
+  args:
+    - 'run'
+    - '--server'
+    - '--addr=0.0.0.0:8181'
+    - '--log-level=info'
+    - '--log-format=json'
+    - '--set=decision_logs.console=true'
+    - '/policies'
+    - '/lib'
+    - '/providers'
+    - '/data'
+
+  # Graceful shutdown configuration
+  terminationGracePeriodSeconds: 30
+
+  # Health probes
+  startupProbe:
+    httpGet:
+      path: /health?plugins
+      port: http
+    initialDelaySeconds: 10
+    periodSeconds: 5
+    timeoutSeconds: 3
+    failureThreshold: 30
+
+  livenessProbe:
+    httpGet:
+      path: /health?plugins
+      port: http
+    initialDelaySeconds: 0
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+
+  readinessProbe:
+    httpGet:
+      path: /health?plugins&bundle=true
+      port: http
+    initialDelaySeconds: 0
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+  # Rolling update strategy for production
+  strategy:
+    {}
+    # type: RollingUpdate
+    # rollingUpdate:
+    #   maxUnavailable: 0
+    #   maxSurge: 25%
+
+  autoscaling:
+    enabled: false
+    minReplicas: 2
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 80
+    # targetMemoryUtilizationPercentage: 80
+
+  volumeMounts: []
+  volumes: []
+
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+# Authz service configuration
+authz:
+  replicaCount: 1
+
+  image:
+    # yamllint disable-line rule:line-length
+    repository: registry.gitlab.com/civitas-connect/civitas-core/civitas-core-v2/civitas-core-platform/authz-repo-service
+    tag: '0.0.0-996-g77b5f124'
+    pullPolicy: IfNotPresent
+
+  imagePullSecrets: []
+
+  serviceAccount:
+    create: false
+    name: ''
+
+  podAnnotations: {}
+  podLabels: {}
+
+  # Pod security context - non-root user
+  podSecurityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    fsGroup: 1000
+    seccompProfile:
+      type: RuntimeDefault
+
+  # Container security context - readOnlyRootFilesystem
+  containerSecurityContext:
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+        - ALL
+    readOnlyRootFilesystem: true
+    runAsNonRoot: true
+    runAsUser: 1000
+
+  service:
+    type: ClusterIP
+    port: 8091
+    annotations: {}
+
+  # Database configuration
+  database:
+    url: 'jdbc:postgresql://postgres:5432/authz'
+    username: ''
+    credentialsSecret:
+      name: authz-db-credentials
+      usernameKey: username
+      passwordKey: password
+
+  # Additional environment variables
+  extraEnv:
+    []
+    # - name: OPA_URL
+    #   value: "http://authz-opa:8181"
+    # - name: LOG_LEVEL
+    #   value: "info"
+
+  # Command line arguments
+  args: []
+
+  # Graceful shutdown configuration
+  terminationGracePeriodSeconds: 30
+
+  # Health probes
+  startupProbe:
+    httpGet:
+      path: /actuator/health
+      port: http
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 30
+
+  livenessProbe:
+    httpGet:
+      path: /actuator/health
+      port: http
+    initialDelaySeconds: 20
+    periodSeconds: 30
+    timeoutSeconds: 5
+    failureThreshold: 3
+
+  readinessProbe:
+    httpGet:
+      path: /actuator/health
+      port: http
+    initialDelaySeconds: 20
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+  # Rolling update strategy for production
+  strategy:
+    {}
+    # type: RollingUpdate
+    # rollingUpdate:
+    #   maxUnavailable: 0
+    #   maxSurge: 25%
+
+  autoscaling:
+    enabled: false
+    minReplicas: 2
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 80
+    # targetMemoryUtilizationPercentage: 80
+
+  persistence:
+    enabled: false
+    mountPath: /data
+    # storageClass: "-"
+    # size: 1Gi
+
+  volumeMounts: []
+  volumes: []
+
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+# Global overrides
+nameOverride: ''
+fullnameOverride: ''

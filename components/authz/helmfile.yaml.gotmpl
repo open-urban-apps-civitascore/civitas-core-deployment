@@ -28,7 +28,7 @@ repositories:
 releases:
   {{- range $parts }}
   {{- $part := . }}
-  {{- $releaseName := printf "%s-%s" $component $part.name }}
+  {{- $releaseName := printf "%s-%s" ($component | kebabcase) $part.name }}
   - name: {{ $releaseName }}
     labels:
       release: {{ $releaseName }}
@@ -49,7 +49,7 @@ releases:
         {{- $items := splitList "." . -}}
         {{- $depComponent := index $items 0 -}}
         {{- $depPart := index $items 1 -}}
-      - {{ index $root $depComponent $depPart "namespace" }}/{{ printf "%s-%s" ($depComponent | kebabcase) $depPart }}
+      - {{ index $root $depComponent $depPart "namespace" }}/{{ printf "%s-%s" $depComponent $depPart }}
       {{- end }}
     {{- end }}
     {{- if index $part "hooks" }}

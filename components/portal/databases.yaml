@@ -9,3 +9,9 @@ portal:
     generate: true
   host: 'postgres-cluster-rw'
   port: 5432
+  additionalRoles:
+    - name: 'authz'
+      type: 'readonly'
+      credentialsSecret:
+        name: 'db-authz-readonly'
+        passwordKey: 'password'
