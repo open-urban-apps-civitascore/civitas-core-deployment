@@ -45,7 +45,7 @@ pre-commit:
   rules:
     - when: always
 
-deploy:
+.deploy-base:
   stage: deploy
   image: registry.gitlab.com/civitas-connect/civitas-core/civitas-core-v2/civitas-core-deployment/cicd:a1aebd6
   before_script:
@@ -58,11 +58,30 @@ deploy:
     # Verify connectivity
     - kubectl cluster-info
     - kubectl get nodes
+
+deploy-staging:
+  extends: .deploy-base
+  variables:
+    KUBECONFIG_CONTENT: $KUBECONFIG_CONTENT_STAGING
   script:
-    - helmfile -f ./helmfile.d/ sync -e default
+    - helmfile -f ./deployments/ sync -e staging
+  only:
+    - staging
+  when: manual
+  environment:
+    name: staging
+
+deploy-production:
+  extends: .deploy-base
+  variables:
+    KUBECONFIG_CONTENT: $KUBECONFIG_CONTENT_PRODUCTION
+  script:
+    - helmfile -f ./deployments/ sync -e production
   only:
     - main
   when: manual
+  environment:
+    name: production
 
 build-container-image:
   extends: .container-images
