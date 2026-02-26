@@ -69,12 +69,12 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: portal-backend-crypto
-                  key: civitas_master_key
+                  key: civitas-master-key
             - name: CIVITAS_MASTER_SALT
               valueFrom:
                 secretKeyRef:
                   name: portal-backend-crypto
-                  key: civitas_master_salt
+                  key: civitas-master-salt
           startupProbe:
             httpGet:
               path: /v2/actuator/health
