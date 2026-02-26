@@ -393,3 +393,26 @@ config:
               priority: 30
               userSetupAllowed: false
               autheticatorFlow: false
+  # TR-03187: Harden master realm — admin accounts are highest-value targets
+  master:
+    inline:
+      realm: master
+      # TR-03187 AR-11: Use ES256 for token signatures
+      defaultSignatureAlgorithm: ES256
+      # TR-03187: 30min idle timeout for admin sessions
+      ssoSessionIdleTimeout: 1800
+      ssoSessionMaxLifespan: 36000
+      rememberMe: false
+      # TR-03187: Brute force protection enabled, lockout after 10 attempts
+      bruteForceProtected: true
+      permanentLockout: false
+      maxFailureWaitSeconds: 900
+      minimumQuickLoginWaitSeconds: 60
+      waitIncrementSeconds: 60
+      quickLoginCheckMilliSeconds: 1000
+      maxDeltaTimeSeconds: 43200
+      failureFactor: 10
+      # TR-03187: Stricter password policy for admin accounts — 20 chars, upper, lower, digit, special
+      passwordPolicy: "length(20) and upperCase(1) and lowerCase(1) and digits(1) and specialChars(1)"
+      # TR-03187 AR-11: Use SHA256 for OTP
+      otpPolicyAlgorithm: HmacSHA256
