@@ -6,6 +6,10 @@ metadata:
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "authz.authz.labels" . | nindent 4 }}
+  {{- with .Values.authz.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
 spec:
   {{- if not .Values.authz.autoscaling.enabled }}
   replicas: {{ .Values.authz.replicaCount | default 1 }}

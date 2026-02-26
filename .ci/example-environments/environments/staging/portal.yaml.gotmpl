@@ -1,0 +1,22 @@
+---
+portal:
+  portal:
+    rawValues:
+      backend:
+        annotations:
+          keel.sh/policy: force
+          # Trigger: "poll" means Keel will check the registry periodically
+          keel.sh/trigger: poll
+          # Optional: How often to check (default is 1 minute)
+          keel.sh/pollSchedule: "@every 5m"
+          # Match tag: only update when the same tag (e.g. "develop") gets a new digest
+          keel.sh/match-tag: "true"
+      frontend:
+        annotations:
+          keel.sh/policy: force
+          # Trigger: "poll" means Keel will check the registry periodically
+          keel.sh/trigger: poll
+          # Optional: How often to check (default is 1 minute)
+          keel.sh/pollSchedule: "@every 5m"
+          # Match tag: only update when the same tag (e.g. "develop") gets a new digest
+          keel.sh/match-tag: "true"

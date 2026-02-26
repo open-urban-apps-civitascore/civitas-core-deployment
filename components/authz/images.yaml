@@ -1,2 +1,8 @@
 ---
-authz: {}
+authz:
+  authz:
+    repository: registry.gitlab.com/civitas-connect/civitas-core/civitas-core-v2/civitas-core-platform/authz-repo-service
+    tag: 'develop'
+  opa:
+    repository: registry.gitlab.com/civitas-connect/civitas-core/civitas-core-v2/civitas-core-platform/opa
+    tag: 'develop'
