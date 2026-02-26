@@ -2,7 +2,7 @@
 authz:
   authz:
     repository: registry.gitlab.com/civitas-connect/civitas-core/civitas-core-v2/civitas-core-platform/authz-repo-service
-    tag: 'develop'
+    tag: '0.0.0-1347-g6b52aa8bb'
   opa:
     repository: registry.gitlab.com/civitas-connect/civitas-core/civitas-core-v2/civitas-core-platform/opa
-    tag: 'develop'
+    tag: '0.0.0-1347-g6b52aa8bb'
