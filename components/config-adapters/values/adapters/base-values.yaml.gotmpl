@@ -75,6 +75,18 @@ env:
   - name: APISIX_TOPICS
     value: "de.civitascore.api.backend.created,de.civitascore.api.backend.updated,de.civitascore.api.backend.deleted"
 
+  # Crypto configuration (shared with portal backend)
+  - name: CIVITAS_MASTER_KEY
+    valueFrom:
+      secretKeyRef:
+        name: "portal-backend-crypto"
+        key: "civitas_master_key"
+  - name: CIVITAS_MASTER_SALT
+    valueFrom:
+      secretKeyRef:
+        name: "portal-backend-crypto"
+        key: "civitas_master_salt"
+
   # Health check configuration
   - name: HEALTHCHECK_PORT
     value: "8080"

@@ -64,6 +64,17 @@ spec:
             # Kafka configuration
             - name: KAFKA_BOOTSTRAP_SERVERS
               value: {{ .Values.kafka.bootstrapServers | quote }}
+            # Crypto configuration
+            - name: CIVITAS_MASTER_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: portal-backend-crypto
+                  key: civitas_master_key
+            - name: CIVITAS_MASTER_SALT
+              valueFrom:
+                secretKeyRef:
+                  name: portal-backend-crypto
+                  key: civitas_master_salt
           startupProbe:
             httpGet:
               path: /v2/actuator/health
