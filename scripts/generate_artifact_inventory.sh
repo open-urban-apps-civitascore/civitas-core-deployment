@@ -111,12 +111,6 @@ parse_images() {
   sed -E "s/^[[:space:]]*image:[[:space:]]*//; s/^['\"]//; s/['\"]$//"
 }
 
-extract_image_refs_from_tree() {
-  local path="$1"
-  rg -No --no-filename '^[[:space:]]*image:[[:space:]]*"?[^" ]+"?' "$path" -g '*.yaml' -g '*.yml' -g '*.gotmpl' \
-    | parse_images
-}
-
 init_timeout_bin() {
   TIMEOUT_BIN="timeout"
   if command -v gtimeout >/dev/null 2>&1; then
@@ -174,10 +168,22 @@ init_output_dirs() {
 }
 
 generate_source_sboms() {
-  syft "dir:$DEPLOYMENT_REPO" -o cyclonedx-json > "$OUT_DIR/sources/deployment.source.cdx.json"
-  syft "dir:$DEPLOYMENT_REPO" -o spdx-json > "$OUT_DIR/sources/deployment.source.spdx.json"
-  syft "dir:$PLATFORM_REPO" -o cyclonedx-json > "$OUT_DIR/sources/platform.source.cdx.json"
-  syft "dir:$PLATFORM_REPO" -o spdx-json > "$OUT_DIR/sources/platform.source.spdx.json"
+  syft "dir:$DEPLOYMENT_REPO" \
+    --exclude './dev-deployment/**' \
+    --exclude './out/**' \
+    -o cyclonedx-json > "$OUT_DIR/sources/deployment.source.cdx.json"
+  syft "dir:$DEPLOYMENT_REPO" \
+    --exclude './dev-deployment/**' \
+    --exclude './out/**' \
+    -o spdx-json > "$OUT_DIR/sources/deployment.source.spdx.json"
+  syft "dir:$PLATFORM_REPO" \
+    --exclude './dev-environment/**' \
+    --exclude './config-adapter/config-adapter-examples/**' \
+    -o cyclonedx-json > "$OUT_DIR/sources/platform.source.cdx.json"
+  syft "dir:$PLATFORM_REPO" \
+    --exclude './dev-environment/**' \
+    --exclude './config-adapter/config-adapter-examples/**' \
+    -o spdx-json > "$OUT_DIR/sources/platform.source.spdx.json"
 }
 
 render_manifests() {
@@ -191,8 +197,14 @@ build_image_list() {
   rg -No --no-filename '^[[:space:]]*image:[[:space:]]*"?[^" ]+"?' "$OUT_DIR/manifests/deployment-$ENV_NAME.rendered.yaml" \
     | parse_images > "$OUT_DIR/images/images.txt"
 
-  extract_image_refs_from_tree "$DEPLOYMENT_REPO" >> "$OUT_DIR/images/images.txt"
-  extract_image_refs_from_tree "$PLATFORM_REPO" >> "$OUT_DIR/images/images.txt"
+  # Extract CI runner images from GitLab CI configs (these run in production pipelines).
+  rg -No --no-filename '^[[:space:]]*image:[[:space:]]*"?[^" ]+"?' \
+    "$DEPLOYMENT_REPO/.gitlab-ci.yml" \
+    "$PLATFORM_REPO/.gitlab-ci.yml" \
+    2>/dev/null | parse_images >> "$OUT_DIR/images/images.txt" || true
+  rg -No --no-filename '^[[:space:]]*image:[[:space:]]*"?[^" ]+"?' \
+    "$PLATFORM_REPO/.gitlab/ci/"*.yml \
+    2>/dev/null | parse_images >> "$OUT_DIR/images/images.txt" || true
 
   grep -v '{{' "$OUT_DIR/images/images.txt" | grep -v '^$' | sort -u > "$OUT_DIR/images/images.clean.txt"
   mv "$OUT_DIR/images/images.clean.txt" "$OUT_DIR/images/images.txt"
@@ -319,27 +331,38 @@ derive_image_lists() {
 }
 
 derive_frontend_packages() {
-  local lockfile="$PLATFORM_REPO/portal-frontend/pnpm-lock.yaml"
+  local frontend_dir="$PLATFORM_REPO/portal-frontend"
+  local lockfile="$frontend_dir/pnpm-lock.yaml"
 
   if [[ -f "$lockfile" ]]; then
-    yq -r '.packages | keys | .[]' "$lockfile" | sort -u > "$OUT_DIR/derived-frontend-packages.txt"
-    FRONTEND_TOTAL_PACKAGES="$(yq -r '.packages | length' "$lockfile")"
     FRONTEND_DIRECT_PROD="$(yq -r '.importers["."].dependencies // {} | length' "$lockfile")"
     FRONTEND_DIRECT_DEV="$(yq -r '.importers["."].devDependencies // {} | length' "$lockfile")"
-    FRONTEND_REACT_MATCHING="$(yq -r '.packages | keys | map(select(test("(?i)react"))) | length' "$lockfile")"
+
+    # Use pnpm ls --prod to get only production dependencies (transitive).
+    # Falls back to the full lockfile package list if pnpm is unavailable or node_modules is missing.
+    if command -v pnpm >/dev/null 2>&1 && [[ -d "$frontend_dir/node_modules" ]]; then
+      (cd "$frontend_dir" && pnpm ls --prod --depth=Infinity --parseable 2>/dev/null) \
+        | grep -v "^$frontend_dir\$" \
+        | sed -E 's#.*/node_modules/##' \
+        | sort -u > "$OUT_DIR/derived-frontend-packages.txt"
+      FRONTEND_TOTAL_PACKAGES="$(count_lines "$OUT_DIR/derived-frontend-packages.txt")"
+    else
+      echo "WARNING: pnpm or node_modules not available, falling back to full lockfile (includes dev dependencies)" >&2
+      yq -r '.packages | keys | .[]' "$lockfile" | sort -u > "$OUT_DIR/derived-frontend-packages.txt"
+      FRONTEND_TOTAL_PACKAGES="$(yq -r '.packages | length' "$lockfile")"
+    fi
   else
     : > "$OUT_DIR/derived-frontend-packages.txt"
     FRONTEND_TOTAL_PACKAGES=0
     FRONTEND_DIRECT_PROD=0
     FRONTEND_DIRECT_DEV=0
-    FRONTEND_REACT_MATCHING=0
   fi
 }
 
 derive_backend_jars() {
   local pom moddir modname
 
-  for pom in $(rg --files "$PLATFORM_REPO" -g '**/pom.xml'); do
+  for pom in $(rg --files "$PLATFORM_REPO" -g '**/pom.xml' | grep -v '/dev-environment/' | grep -v '/config-adapter-examples/'); do
     moddir="$(dirname "$pom")"
     modname="$(echo "$moddir" | sed "s#^$PLATFORM_REPO/##; s#/#_#g")"
     mkdir -p "$moddir/.tmp"
@@ -421,11 +444,9 @@ write_summary() {
     echo "### JARs (Test Scope, Transitive)"
     emit_bullets "$OUT_DIR/derived-thirdparty-test-jars.txt"
     echo
-    echo "### Frontend Packages (Transitive, pnpm)"
-    echo "- Total resolved packages: $FRONTEND_TOTAL_PACKAGES"
-    echo "- Direct prod dependencies: $FRONTEND_DIRECT_PROD"
-    echo "- Direct dev dependencies: $FRONTEND_DIRECT_DEV"
-    echo "- React-matching package entries: $FRONTEND_REACT_MATCHING"
+    echo "### Frontend Packages (Production, Transitive, pnpm)"
+    echo "- Total production packages: $FRONTEND_TOTAL_PACKAGES"
+    echo "- Direct production dependencies: $FRONTEND_DIRECT_PROD"
     echo "- Full package list file: derived-frontend-packages.txt"
     echo
     echo "### Other Artifacts"
@@ -446,7 +467,7 @@ write_summary() {
     echo "## Dependency Totals"
     echo "- Backend runtime JARs (all/civitas/third-party): $BACKEND_RUNTIME_TOTAL / $BACKEND_RUNTIME_CIVITAS / $BACKEND_RUNTIME_THIRDPARTY"
     echo "- Backend test-scope JARs (all/civitas/third-party): $BACKEND_TEST_TOTAL / $BACKEND_TEST_CIVITAS / $BACKEND_TEST_THIRDPARTY"
-    echo "- Frontend packages (total): $FRONTEND_TOTAL_PACKAGES"
+    echo "- Frontend production packages: $FRONTEND_TOTAL_PACKAGES"
     echo
     echo "## Image Scan Status"
     echo "- Pending list: images/pending-images.txt"
