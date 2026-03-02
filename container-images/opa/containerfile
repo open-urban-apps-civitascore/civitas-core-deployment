@@ -4,7 +4,7 @@ ARG TARGETARCH
 
 # TODO: Add renovate definitions for these versions
 # https://docs.renovatebot.com/modules/datasource/github-releases/
-ENV OPA_VERSION=v1.13.1
+ENV OPA_VERSION=v1.14.0
 
 # Install dependencies
 RUN apk update && \
