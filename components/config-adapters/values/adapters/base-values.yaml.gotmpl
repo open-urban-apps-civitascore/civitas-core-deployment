@@ -81,18 +81,14 @@ env:
   - name: APISIX_TOPICS
     value: "de.civitascore.api.backend.created,de.civitascore.api.backend.updated,de.civitascore.api.backend.deleted,de.civitascore.api.route.created,de.civitascore.api.route.updated,de.civitascore.api.route.deleted"
 
-  # FROST configuration
-  {{- $frostHost := printf "%s.%s" (default "" .Values.frost.frost.subdomain) $global.domain | trimPrefix "." }}
-  {{- $frostUrl := printf "https://%s/FROST-Server/v1.1" $frostHost }}
+  # FROST configuration (accessed via linkerd service mesh, basic auth)
+  {{- $frostUrl := printf "http://frost-frost-http.%s/FROST-Server/v1.1" .Values.frost.frost.namespace }}
   - name: FROST_URL
     value: {{ $frostUrl | quote }}
-  - name: FROST_API_KEY
-    valueFrom:
-      secretKeyRef:
-        name: "frost-api-credentials"
-        key: "api-key"
-  - name: FROST_API_KEY_HEADER
-    value: "X-API-Key"
+  - name: FROST_USERNAME
+    value: "admin"
+  - name: FROST_PASSWORD
+    value: "admin"
   - name: FROST_TOPICS
     value: "de.civitascore.data.thing.created,de.civitascore.data.thing.updated,de.civitascore.data.thing.deleted,de.civitascore.data.location.created,de.civitascore.data.location.updated,de.civitascore.data.location.deleted,de.civitascore.data.sensor.created,de.civitascore.data.sensor.updated,de.civitascore.data.sensor.deleted,de.civitascore.data.observedproperty.created,de.civitascore.data.observedproperty.updated,de.civitascore.data.observedproperty.deleted,de.civitascore.data.datastream.created,de.civitascore.data.datastream.updated,de.civitascore.data.datastream.deleted,de.civitascore.data.project.created,de.civitascore.data.project.updated,de.civitascore.data.project.deleted"
 
