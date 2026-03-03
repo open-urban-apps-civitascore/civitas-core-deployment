@@ -41,6 +41,7 @@ pre-commit:
   image: registry.gitlab.com/civitas-connect/civitas-core/civitas-core-v2/civitas-core-deployment/cicd:a1aebd6
   script:
     - cp -r defaults/deployment deployment
+    - helmfile fetch -f deployment/helmfile.yaml -e default
     - pre-commit run --all-files
   rules:
     - when: always
