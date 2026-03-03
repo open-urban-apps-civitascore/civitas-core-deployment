@@ -59,6 +59,8 @@ pre-commit:
     - kubectl cluster-info
     - kubectl get nodes
 
+    - cp -r .ci/example-deployments deployment
+
 deploy-staging:
   extends: .deploy-base
   variables:
