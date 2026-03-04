@@ -75,7 +75,7 @@ spec:
             - name: JSON_SERVER_PORT
               value: "3001"
             - name: NEXT_PUBLIC_TENANT_NAME
-              value: "CIVITAS Staging"  
+              value: "CIVITAS Staging"
           startupProbe:
             httpGet:
               path: /
