@@ -77,7 +77,7 @@ repos:
       - id: helmfile-template
         name: Render Helmfile
         # TODO: clean up entry to use pass_filenames again
-        entry: helmfile template -f deployment/helmfile.yaml
+        entry: sh -c "helmfile template -f deployment/helmfile.yaml > /dev/null"
         language: system
         # pass_filenames: true
         # files: 'deployment/helmfile\.ya?ml$'
