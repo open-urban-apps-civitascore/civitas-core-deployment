@@ -4,7 +4,7 @@ FROM alpine:3.23.3
 # Set environment variables
 # https://docs.renovatebot.com/modules/datasource/github-releases/
 # Renovate definition: datasource=github-releases depName=etcd-io/etcd
-ENV ETCD_VERSION=v3.6.7
+ENV ETCD_VERSION=v3.6.8
 ENV ETCD_BINARIES_URL=https://github.com/etcd-io/etcd/releases/download
 
 # Install necessary dependencies
