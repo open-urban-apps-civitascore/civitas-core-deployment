@@ -59,7 +59,7 @@ opa:
     - '--log-format=json'
     - '--set=decision_logs.console=true'
     - '/policies'
-    - '/lib'
+    - '/helpers'
     - '/providers'
     - '/data'
 
