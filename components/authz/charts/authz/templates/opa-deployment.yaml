@@ -76,9 +76,6 @@ spec:
         securityContext:
           {{- toYaml . | nindent 10 }}
         {{- end }}
-        volumeMounts:
-        - name: lib
-          mountPath: /lib/apk/db
         {{- with .Values.opa.extraVolumeMounts }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
@@ -90,8 +87,6 @@ spec:
         configMap:
           name: {{ include "authz.fullname" . }}-opa-config
       - name: tmp
-        emptyDir: {}
-      - name: lib
         emptyDir: {}
       {{- with .Values.opa.volumes }}
       {{- toYaml . | nindent 6 }}
