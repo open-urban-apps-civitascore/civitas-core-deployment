@@ -10,7 +10,16 @@
 # - [x] Named ports
 # - [ ] Ingress with TLS
 
+opa:
+  image:
+    repository: {{ .Values.images.authz.opa.repository }}
+    tag: {{ .Values.images.authz.opa.tag }}
+
 authz:
+  image:
+    repository: {{ .Values.images.authz.authz.repository }}
+    tag: {{ .Values.images.authz.authz.tag }}
+
   database:
     # TODO: Make it more dynamic from portal database resource
     url: 'jdbc:postgresql://{{ .Values.databases.portal.host }}:5432/portal'

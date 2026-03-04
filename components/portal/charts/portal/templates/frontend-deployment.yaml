@@ -6,6 +6,10 @@ metadata:
   name: {{ include "portal.fullname" . }}-frontend
   labels:
     {{- include "portal.frontend.labels" . | nindent 4 }}
+  {{- with .Values.frontend.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
 spec:
   {{- if not .Values.autoscaling.frontend.enabled }}
   replicas: {{ .Values.frontend.replicaCount }}
@@ -23,7 +27,7 @@ spec:
       containers:
         - name: frontend
           image: "{{ .Values.frontend.image.repository }}:{{ .Values.frontend.image.tag }}"
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           ports:
             - name: http
               containerPort: 3000
@@ -70,6 +74,8 @@ spec:
               value: "http://localhost"
             - name: JSON_SERVER_PORT
               value: "3001"
+            - name: NEXT_PUBLIC_TENANT_NAME
+              value: "CIVITAS Staging"
           startupProbe:
             httpGet:
               path: /

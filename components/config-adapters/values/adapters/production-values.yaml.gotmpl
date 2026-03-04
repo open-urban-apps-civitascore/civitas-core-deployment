@@ -4,11 +4,13 @@
 # Checklist:
 # - [x] Resources (requests and limits)
 # - [x] Larger Storage -> not applicable
-# - [x] 2+ Replicas or HorizontalPodAutoscaler
-# - [x] Rolling updates `maxUnavailable: 0`, `maxSurge: 25%`
+# - [ ] 2+ Replicas or HorizontalPodAutoscaler
+# - [ ] Rolling updates `maxUnavailable: 0`, `maxSurge: 25%`
 # - [ ] PodDisruptionBudget (at least `minAvailable: 1`)  # TODO: add PDBs to charts
 
-replicaCount: 2
+# TODO: Add more replicas later. Currently every config adapter gets all messages - They must be handled only once.
+
+replicaCount: 1
 
 resources:
   requests:
@@ -18,8 +20,6 @@ resources:
     memory: '1Gi'
     cpu: '1000m'
 
+# TODO: Set to recreate, not always just run one instance, other
 updateStrategy:
-  type: RollingUpdate
-  rollingUpdate:
-    maxUnavailable: 0
-    maxSurge: 25%
+  type: Recreate
