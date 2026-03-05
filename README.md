@@ -36,10 +36,10 @@ minikube addons enable ingress
 
 # copy the default deployment and adjust it if needed
 # the deployment directory is in .gitignore and can be its own git repo
-cp -r default/deployment deployment
+cp -r defaults/deployment deployment
 cd deployment
 # in the deployment directory
-helmfile -f helmile.yaml sync -e local
+helmfile -f helmfile.yaml sync -e local
 # or (when CRDs are already installed)
-helmfile -f helmile.yaml apply -e local
+helmfile -f helmfile.yaml apply -e local
 ```
