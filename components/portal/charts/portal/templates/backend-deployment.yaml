@@ -6,6 +6,10 @@ metadata:
   name: {{ include "portal.fullname" . }}-backend
   labels:
     {{- include "portal.backend.labels" . | nindent 4 }}
+  {{- with .Values.backend.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
 spec:
   {{- if not .Values.autoscaling.backend.enabled }}
   replicas: {{ .Values.backend.replicaCount }}
@@ -23,7 +27,7 @@ spec:
       containers:
         - name: backend
           image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag }}"
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           ports:
             - name: http
               containerPort: 8080
@@ -60,6 +64,17 @@ spec:
             # Kafka configuration
             - name: KAFKA_BOOTSTRAP_SERVERS
               value: {{ .Values.kafka.bootstrapServers | quote }}
+            # Crypto configuration
+            - name: CIVITAS_MASTER_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: portal-backend-crypto
+                  key: civitas-master-key
+            - name: CIVITAS_MASTER_SALT
+              valueFrom:
+                secretKeyRef:
+                  name: portal-backend-crypto
+                  key: civitas-master-salt
           startupProbe:
             httpGet:
               path: /v2/actuator/health
