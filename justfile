@@ -2,7 +2,7 @@
 
 # MINIKUBE_IP := $(shell minikube ip)
 marker := 'MINIKUBE_HOSTS'
-hosts := 'apicurio.civitas.test keycloak.civitas.test apisix.civitas.test kafka-ui.civitas.test'
+hosts := 'idm.civitas.test portal.civitas.test'
 
 default:
 	@just --list

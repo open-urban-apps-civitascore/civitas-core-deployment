@@ -40,16 +40,7 @@ server:
   url: https://{{ $host }}
 
 ingress:
-  enabled: {{ $global.ingress.enabled }}
-  domain: {{ $host }}
-  annotations:
-    cert-manager.io/cluster-issuer: {{ $global.ingress.clusterIssuer }}
-    nginx.ingress.kubernetes.io/proxy-buffer-size: "16k"
-    nginx.ingress.kubernetes.io/proxy-buffers-number: "4"
-    nginx.ingress.kubernetes.io/proxy-busy-buffers-size: "24k"
-  tls:
-    enabled: true
-    secretName: portal-tls
+  enabled: false
 
 database:
   host: {{ .Values.databases.portal.host }}

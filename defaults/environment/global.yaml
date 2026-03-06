@@ -10,7 +10,6 @@ global:
     type: linkerd
     patchNamespaces: true
   ingress:
-    enabled: true
     clusterIssuer: 'selfsigned-ca'
     ingressClass: 'nginx'
   storage:

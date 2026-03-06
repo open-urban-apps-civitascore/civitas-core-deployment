@@ -1,0 +1,12 @@
+---
+keycloak:
+  name: Keycloak
+  description: Keycloak route pass-through
+  plugins:
+    request-id:
+      include_in_response: true
+    proxy-rewrite:
+      headers:
+        set:
+          X-Forwarded-Proto: http
+          X-Forwarded-Port: '80'

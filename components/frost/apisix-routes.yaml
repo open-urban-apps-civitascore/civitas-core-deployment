@@ -1,0 +1,6 @@
+---
+frost:
+  name: 'FROST-Server API'
+  description: 'FROST-Server API'
+  upstream: http://frost-frost-frost-server-http.dev.svc.cluster.local:80
+  uri: '/FROST-Server/v1.1'

@@ -1,0 +1,2 @@
+plugins:
+  {{ include "civitas.configFiles" (dict "components" .Values.components "file" "apisix-plugins.yaml") }}
