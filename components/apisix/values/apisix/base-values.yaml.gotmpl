@@ -86,21 +86,11 @@ apisix:
     enabled: {{ $global.metrics.enabled }}
   admin:
     enabled: true
+    allow:
+      ipList:
+        - 0.0.0.0/0 # TODO: configure dynamically to listen on service ip
     ingress:
-      enabled: {{ $global.ingress.enabled }}
-      annotations:
-        kubernetes.io/ingress.class: {{ $global.ingress.ingressClass }}
-        cert-manager.io/cluster-issuer: {{ $global.ingress.clusterIssuer }}
-      {{- $host := printf "%s.%s" (default "" $this.subdomain) $global.domain | trimPrefix "." }}
-      hosts:
-        - host: {{ $host }}
-          paths:
-            - '{{ $this.pathPrefix }}'
-      className: {{ $global.ingress.ingressClass }}
-      tls:
-        - hosts:
-            - {{ $host }}
-          secretName: {{ $host }}-tls
+      enabled: false
     credentials:
       secretName: apisix-admin-credentials
       secretAdminKey: admin
@@ -113,6 +103,29 @@ apisix:
         client_header_buffer_size 16k;
         large_client_header_buffers 4 16k;
 
+ingress:
+  enabled: true
+  className: {{ $global.ingress.ingressClass }}
+  annotations:
+    ingress.kubernetes.io/affinity: cookie
+    cert-manager.io/cluster-issuer: {{ $global.ingress.clusterIssuer }}
+  hosts:
+  {{- range $component, $config := .Values.routes }}
+    {{- if hasKey $config "subDomain" }}
+    - host: {{ $config.subDomain }}.{{ $global.domain }}
+      paths:
+        - '/'
+    {{- end }}
+  {{- end }}
+  tls:
+    - secretName: apisix-tls
+      hosts:
+      {{- range $component, $config := .Values.routes }}
+        {{- if hasKey $config "subDomain" }}
+        - {{ $config.subDomain }}.{{ $global.domain }}
+        {{- end }}
+      {{- end }}
+
 # Ingress Controller
 ingress-controller:
   enabled: false
@@ -121,99 +134,3 @@ ingress-controller:
 metrics:
   serviceMonitor:
     enabled: {{ $global.metrics.enabled }}
-
-extraContainers:
-  - name: apisix-initial-config
-    image: {{ .Values.images.apisix.apisix.apisixInitialConfig.repository }}:{{ .Values.images.apisix.apisix.apisixInitialConfig.tag }}
-    imagePullPolicy: IfNotPresent
-    command: ["/bin/sh", "-c"]
-    env:
-      - name: APISIX_ADMIN_KEY
-        valueFrom:
-          secretKeyRef:
-            name: apisix-admin-credentials
-            key: admin
-    ttlSecondsAfterFinished: 300
-    resources:
-      limits:
-        cpu: 100m
-        memory: 128Mi
-      requests:
-        cpu: 50m
-        memory: 64Mi
-    securityContext:
-      {{ .Values.securityDefaults.securityContext | toYaml | nindent 8 }}
-    args:
-      - |
-        # Wait for APISIX to be ready
-        timeout 15s sh -c 'echo "Waiting for APISIX to be ready..."; until nc -z 127.0.0.1 9180; do sleep 2; done'
-
-        # Create initial configuration using APISIX Admin API
-        echo "Creating initial configuration in APISIX..."
-        # Example: Create a simple route (customize as needed)
-
-
-        curl -s -X PUT http://localhost:9180/apisix/admin/services/svc-portal-backend -H "X-API-KEY: ${APISIX_ADMIN_KEY}" -H "Content-Type: application/json" -d '{
-          "name": "portal-backend",
-          "desc": "Portal Backend API Service",
-          "upstream": {
-            "type": "roundrobin",
-            "nodes": {
-              "portal-portal-backend.{{ $global.instanceSlug }}.svc.cluster.local:8089": 1
-            },
-            "timeout": {
-              "connect": 6,
-              "send": 6,
-              "read": 6
-            }
-          }
-        }' || exit 1
-
-        curl -s -X PUT http://localhost:9180/apisix/admin/plugin_configs/openid_opa_proxy_rewrite_request_id -H "X-API-KEY: ${APISIX_ADMIN_KEY}" -H "Content-Type: application/json" -d '{
-          "name": "openid_opa_proxy_rewrite_request_id",
-          "desc": "Combined plugin config for auth + authz + request ID",
-          "plugins": {
-            "openid-connect": {
-              "client_id": "apisix-validator",
-              "client_secret": "unused-for-jwks-validation",
-              "discovery": "http://keycloak-app-keycloakx-http.{{ $global.instanceSlug }}.svc.cluster.local:80/realms/{{ $global.instanceSlug }}/.well-known/openid-configuration",
-              "bearer_only": true,
-              "use_jwks": true,
-              "ssl_verify": false,
-              "set_userinfo_header": true
-            },
-            "opa": {
-              "host": "http://authz-authz-opa.{{ $global.instanceSlug }}.svc.cluster.local:8181",
-              "policy": "civitas/authz/decision",
-              "with_route": true,
-              "with_service": true,
-              "with_consumer": false,
-              "send_headers_upstream": [
-                "X-Allowed-Scope-Ids"
-              ]
-            },
-            "proxy-rewrite": {
-              "headers": {
-                "remove": [
-                  "X-Allowed-Scope-Ids"
-                ]
-              }
-            },
-            "request-id": {
-              "include_in_response": true
-            }
-          }
-        }' || exit 1
-
-        curl -s -X PUT http://localhost:9180/apisix/admin/routes/portal-backend-api -H "X-API-KEY: ${APISIX_ADMIN_KEY}" -H "Content-Type: application/json" -d '{
-          "name": "Portal Backend API (AuthZ)",
-          "uri": "/v2/*",
-          "service_id": "svc-portal-backend",
-          "plugin_config_id": "openid_opa_proxy_rewrite_request_id"
-        }' || exit 1
-
-        # TODO: find a better way to solve that:
-        # - job requires extra chart
-        # - initContainer runs before APISIX is ready, chicken egg problem
-        # - sidecar runs after APISIX is ready, but cannot finish without restarting
-        sleep infinity

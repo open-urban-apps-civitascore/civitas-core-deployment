@@ -1,0 +1,12 @@
+---
+portalBE:
+  name: Portal Backend
+  description: Portal Backend API Service
+  upstream: portal-portal-backend.dev.svc.cluster.local:8080
+  uri: /v2/*
+portalBFF:
+  name: Portal BFF
+  description: Backend-for-Frontend for the Civitas Portal
+  upstream: portal-portal-frontend.dev.svc.cluster.local:3000
+  subDomain: portal
+  uri: /*

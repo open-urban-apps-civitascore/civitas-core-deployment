@@ -1,0 +1,7 @@
+---
+keycloak:
+  name: Keycloak API
+  description: Keycloak API
+  upstream: keycloak-app-keycloakx-http.dev.svc.cluster.local:80
+  subDomain: idm
+  uri: '/*'

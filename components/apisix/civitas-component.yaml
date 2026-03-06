@@ -2,3 +2,6 @@
 component: apisix
 parts:
   - name: apisix
+  - name: configuration
+    needs:
+      - apisix.apisix
