@@ -211,6 +211,13 @@ build_image_list() {
 }
 
 init_scan_state() {
+  # If pending-images.txt already exists we are resuming a previous run —
+  # keep existing scan state so already-scanned images stay recorded.
+  if [[ -s "$OUT_DIR/images/pending-images.txt" ]]; then
+    echo "Resuming previous scan ($(count_lines "$OUT_DIR/images/pending-images.txt") images pending)"
+    return
+  fi
+
   : > "$OUT_DIR/images/scanned-images.txt"
   : > "$OUT_DIR/images/failed-images.txt"
   : > "$OUT_DIR/images/failure-reasons.tsv"
