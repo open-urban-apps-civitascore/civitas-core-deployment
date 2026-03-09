@@ -22,6 +22,7 @@ routes:
   #   plugin_id: 'openid_opa_proxy_rewrite_request_id'
 
 domain: 'example.com'
+realm: 'civitas'
 
 # Container image configuration for the route display job
 image:
