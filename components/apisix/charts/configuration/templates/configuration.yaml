@@ -43,6 +43,10 @@ spec:
               secretKeyRef:
                 name: {{ $root.Values.secret.adminKeySecretName }}
                 key: {{ $root.Values.secret.adminKeySecretKey }}
+          - name: DOMAIN
+            value: {{ $root.Values.domain }}
+          - name: REALM
+            value: {{ $root.Values.realm }}
         command:
         - /bin/sh
         - -c
@@ -87,7 +91,7 @@ spec:
             "service_id": "{{ $component }}",
             "plugin_config_id": "{{ $component }}"
             {{- if hasKey $config "subDomain" }},
-            "host": "{{ $config.subDomain }}.{{ $root.Values.domain }}"
+            "host": "{{ $config.subDomain }}.'${DOMAIN}'"
             {{- end }}
           }' || exit 1
 {{- end }}

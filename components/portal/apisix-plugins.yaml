@@ -6,13 +6,13 @@ portalBE:
     openid-connect:
       client_id: apisix-validator
       client_secret: unused-for-jwks-validation
-      discovery: http://idm.civitas.test/realms/dev/.well-known/openid-configuration
+      discovery: http://idm.'${DOMAIN}'/realms/'${REALM}'/.well-known/openid-configuration
       bearer_only: true
       use_jwks: true
       ssl_verify: false
       set_userinfo_header: true
     opa:
-      host: http://authz-authz-opa.dev.svc.cluster.local:8181
+      host: http://authz-authz-opa:8181
       policy: civitas/authz/decision
       with_route: true
       with_service: true
@@ -33,5 +33,5 @@ portalBFF:
       include_in_response: true
     proxy-rewrite:
       headers:
-        X-Forwarded-Proto: http
-        X-Forwarded-Port: '80'
+        X-Forwarded-Proto: https
+        X-Forwarded-Port: '443'
