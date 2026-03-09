@@ -311,7 +311,7 @@ derive_helm_lists() {
     | sed -E 's/^[[:space:]]*chart:[[:space:]]*//' >> "$OUT_DIR/derived-manifest-helm.txt"
   sort -u "$OUT_DIR/derived-manifest-helm.txt" -o "$OUT_DIR/derived-manifest-helm.txt"
 
-  awk -F' \| ' '{print $1}' "$OUT_DIR/derived-civitas-helm.txt" | sort -u > "$OUT_DIR/derived-civitas-helm-names.txt"
+  awk -F' | ' '{print $1}' "$OUT_DIR/derived-civitas-helm.txt" | sort -u > "$OUT_DIR/derived-civitas-helm-names.txt"
 
   : > "$OUT_DIR/derived-thirdparty-helm.txt"
   while IFS= read -r chartver; do
@@ -336,7 +336,6 @@ derive_frontend_packages() {
 
   if [[ -f "$lockfile" ]]; then
     FRONTEND_DIRECT_PROD="$(yq -r '.importers["."].dependencies // {} | length' "$lockfile")"
-    FRONTEND_DIRECT_DEV="$(yq -r '.importers["."].devDependencies // {} | length' "$lockfile")"
 
     # Use pnpm ls --prod to get only production dependencies (transitive).
     # Falls back to the full lockfile package list if pnpm is unavailable or node_modules is missing.
@@ -355,14 +354,14 @@ derive_frontend_packages() {
     : > "$OUT_DIR/derived-frontend-packages.txt"
     FRONTEND_TOTAL_PACKAGES=0
     FRONTEND_DIRECT_PROD=0
-    FRONTEND_DIRECT_DEV=0
   fi
 }
 
 derive_backend_jars() {
   local pom moddir modname
 
-  for pom in $(rg --files "$PLATFORM_REPO" -g '**/pom.xml' | grep -v '/dev-environment/' | grep -v '/config-adapter-examples/'); do
+  while IFS= read -r pom; do
+    [[ -n "$pom" ]] || continue
     moddir="$(dirname "$pom")"
     modname="$(echo "$moddir" | sed "s#^$PLATFORM_REPO/##; s#/#_#g")"
     mkdir -p "$moddir/.tmp"
@@ -372,7 +371,7 @@ derive_backend_jars() {
 
     "$TIMEOUT_BIN" "$MVN_TIMEOUT" mvn -B -f "$pom" -Djava.io.tmpdir="$moddir/.tmp" -DskipTests dependency:tree \
       -Dscope=test -DoutputFile="$OUT_DIR/${modname}.test.tree.txt" >/dev/null || true
-  done
+  done < <(rg --files "$PLATFORM_REPO" -g '**/pom.xml' | grep -v '/dev-environment/' | grep -v '/config-adapter-examples/')
 
   cat "$OUT_DIR"/*.runtime.tree.txt 2>/dev/null \
     | rg '[A-Za-z0-9_.-]+:[A-Za-z0-9_.-]+:jar:[A-Za-z0-9_.-]+' -o \
@@ -484,8 +483,8 @@ main() {
   render_manifests
   build_image_list
 
-  init_scan_state
   if [[ "$SKIP_IMAGE_SCAN" -eq 0 ]]; then
+    init_scan_state
     scan_images_resumable
   fi
 
