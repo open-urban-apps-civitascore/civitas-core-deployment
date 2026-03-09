@@ -131,3 +131,8 @@ verify-policies:
 [group('helpers')]
 template environment='local':
 	helmfile -f ./deployment/helmfile.yaml template -e {{environment}}
+
+# Print APIsix admin password
+[group('helpers')]
+apisix-password:
+	@kubectl --context minikube get secret -n dev apisix-admin-credentials -o jsonpath='{.data.admin}' | base64 -d && echo

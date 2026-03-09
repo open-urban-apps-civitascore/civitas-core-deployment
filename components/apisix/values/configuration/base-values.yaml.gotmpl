@@ -30,6 +30,7 @@ apisix:
   host: apisix-admin
 
 domain: {{ $global.domain }}
+realm: {{ $global.instanceSlug }}
 
 securityContext:
   {{ .Values.securityDefaults.securityContext | toYaml | nindent 2 }}

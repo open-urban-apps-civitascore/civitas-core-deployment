@@ -4,7 +4,7 @@ frost:
   description: FROST-Server API
   plugins:
     opa:
-      host: http://authz-authz-opa.dev.svc.cluster.local:8181 # TODO: make it more dynamic
+      host: http://authz-authz-opa:8181 # TODO: make it more dynamic
       policy: civitas/authz/decision
       with_route: true
       with_service: true
