@@ -1,6 +1,6 @@
 ---
-frost:
-  name: Frost
+frost-server:
+  name: frost-server
   description: FROST-Server API
   plugins:
     opa:

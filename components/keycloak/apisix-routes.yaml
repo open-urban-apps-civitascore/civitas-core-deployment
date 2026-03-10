@@ -1,6 +1,6 @@
 ---
 keycloak:
-  name: Keycloak API
+  name: keycloak
   description: Keycloak API
   upstream: keycloak-app-keycloakx-http:80
   subDomain: idm

@@ -1,16 +1,17 @@
 ---
-portalBE:
-  name: Portal Backend
+portal-backend:
+  name: portal-backend
   description: API for the Civitas Portal
   plugins:
     openid-connect:
-      client_id: apisix-validator
-      client_secret: unused-for-jwks-validation
-      discovery: https://idm.staging.dev.civitas2.fw-web.space:443/realms/staging/.well-known/openid-configuration
+      client_id: portal-frontend
+      client_secret: WEeoKGbjQ0FJqVgYf4YNeE7og8HFuypB
+      discovery: http://keycloak-app-keycloakx-http.staging.svc.cluster.local:80/realms/staging/.well-known/openid-configuration
       bearer_only: true
-      use_jwks: true
       ssl_verify: false
       set_userinfo_header: true
+      introspection_endpoint: http://keycloak-app-keycloakx-http.staging.svc.cluster.local:80/realms/staging/protocol/openid-connect/token/introspect
+      introspection_endpoint_auth_method: post
     opa:
       host: http://authz-authz-opa:8181
       policy: civitas/authz/decision
@@ -25,8 +26,8 @@ portalBE:
           - X-Allowed-Scope-Ids
     request-id:
       include_in_response: true
-portalBFF:
-  name: Portal BFF
+portal-bff:
+  name: portal-bff
   description: Backend-for-Frontend for the Civitas Portal
   plugins:
     request-id:
