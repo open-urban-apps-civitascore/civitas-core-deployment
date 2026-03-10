@@ -3,7 +3,7 @@ portalBE:
   name: Portal Backend
   description: Portal Backend API Service
   upstream: portal-portal-backend:8080
-  uri: /v2/*
+  uri: /v1/*
 portalBFF:
   name: Portal BFF
   description: Backend-for-Frontend for the Civitas Portal
