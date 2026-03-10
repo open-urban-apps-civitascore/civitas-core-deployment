@@ -6,7 +6,7 @@ portalBE:
     openid-connect:
       client_id: apisix-validator
       client_secret: unused-for-jwks-validation
-      discovery: http://idm.'${DOMAIN}'/realms/'${REALM}'/.well-known/openid-configuration
+      discovery: https://idm.staging.dev.civitas2.fw-web.space:443/realms/staging/.well-known/openid-configuration
       bearer_only: true
       use_jwks: true
       ssl_verify: false
