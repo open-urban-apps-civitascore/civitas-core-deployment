@@ -1,6 +1,6 @@
 ---
-frost:
-  name: 'FROST-Server API'
+frost-server:
+  name: frost-server
   description: 'FROST-Server API'
   upstream: frost-frost-frost-server-http:80
   uri: '/FROST-Server/v1.1'

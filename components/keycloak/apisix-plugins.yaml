@@ -1,6 +1,6 @@
 ---
 keycloak:
-  name: Keycloak
+  name: keycloak
   description: Keycloak route pass-through
   plugins:
     request-id:

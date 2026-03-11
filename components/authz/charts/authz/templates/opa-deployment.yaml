@@ -80,6 +80,7 @@ spec:
         securityContext:
           {{- toYaml . | nindent 10 }}
         {{- end }}
+        volumeMounts:
         {{- with .Values.opa.extraVolumeMounts }}
         {{- toYaml . | nindent 8 }}
         {{- end }}

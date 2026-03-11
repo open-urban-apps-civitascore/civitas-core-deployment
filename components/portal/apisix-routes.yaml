@@ -1,11 +1,11 @@
 ---
-portalBE:
-  name: Portal Backend
+portal-backend:
+  name: portal-backend
   description: Portal Backend API Service
   upstream: portal-portal-backend:8080
   uri: /v1/*
-portalBFF:
-  name: Portal BFF
+portal-bff:
+  name: portal-bff
   description: Backend-for-Frontend for the Civitas Portal
   upstream: portal-portal-frontend:3000
   subDomain: portal

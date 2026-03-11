@@ -39,6 +39,9 @@ kafka:
 server:
   url: https://{{ $host }}
 
+apisix:
+  serviceUrl: "http://apisix-gateway.{{ .Values.apisix.apisix.namespace }}.svc.cluster.local"
+
 ingress:
   enabled: false
 
