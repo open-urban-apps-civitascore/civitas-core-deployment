@@ -77,7 +77,7 @@ spec:
                   key: civitas-master-salt
           startupProbe:
             httpGet:
-              path: /v2/actuator/health
+              path: /v1/actuator/health
               port: http
               scheme: HTTP
             initialDelaySeconds: 30
@@ -86,7 +86,7 @@ spec:
             failureThreshold: 30
           livenessProbe:
             httpGet:
-              path: /v2/actuator/health/liveness
+              path: /v1/actuator/health/liveness
               port: http
               scheme: HTTP
             initialDelaySeconds: 0
@@ -95,7 +95,7 @@ spec:
             failureThreshold: 3
           readinessProbe:
             httpGet:
-              path: /v2/actuator/health/readiness
+              path: /v1/actuator/health/readiness
               port: http
               scheme: HTTP
             initialDelaySeconds: 0
