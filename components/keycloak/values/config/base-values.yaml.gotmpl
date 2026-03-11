@@ -316,7 +316,7 @@ config:
           "authorizationServicesEnabled" false
           "redirectUris" (list (printf "https://%s.%s%s" $subdomain $global.domain $redirectPath))
           "webOrigins" (list (printf "https://%s.%s" $subdomain $global.domain))
-          "defaultClientScopes" (list "email" "profile" "roles" "web-origins")
+          "defaultClientScopes" (list "basic" "email" "profile" "roles" "web-origins")
           "optionalClientScopes" (list "address" "phone" "offline_access" "microprofile-jwt")
           "attributes" (dict "post.logout.redirect.uris" "+" "pkce.code.challenge.method" "S256")
         }}
