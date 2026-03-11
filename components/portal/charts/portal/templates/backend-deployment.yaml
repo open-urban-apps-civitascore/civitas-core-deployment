@@ -44,7 +44,7 @@ spec:
                   name: {{ .Values.database.secret.name }}
                   key: {{ .Values.database.secret.passwordKey }}
             # Keycloak configuration
-            - name: KEYCLOAK_AUTHSERVERURL
+            - name: KEYCLOAK_AUTH_SERVER_URL
               value: {{ .Values.keycloak.authServerUrl }}
             - name: KEYCLOAK_REALM
               value: {{ .Values.keycloak.realm }}
@@ -52,6 +52,9 @@ spec:
               value: {{ .Values.keycloak.authServerUrl }}
             - name: KEYCLOAK_TARGET_REALM
               value: {{ .Values.keycloak.realm }}
+            # JWT configuration
+            - name: SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWS_ALGORITHMS
+              value: ES256
             # Spring Boot configuration
             - name: SPRING_PROFILES_ACTIVE
               value: postgres,debug
