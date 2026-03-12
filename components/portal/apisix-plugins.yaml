@@ -6,12 +6,12 @@ portal-backend:
     openid-connect:
       client_id: apisix-validator
       client_secret: unused-for-jwks-validation # TODO It's required
-      discovery: http://keycloak-app-keycloakx-http.'${REALM}'.svc.cluster.local:80/realms/'${REALM}'/.well-known/openid-configuration
+      discovery: http://keycloak-app-keycloakx-http.'${REALM}'.svc.cluster.local:80/realms/'${REALM}'/.well-known/openid-configuration # yamllint disable-line rule:line-length
       bearer_only: true
       use_jwks: true
       ssl_verify: false
       set_userinfo_header: true
-      introspection_endpoint: http://keycloak-app-keycloakx-http.'${REALM}'.svc.cluster.local:80/realms/'${REALM}'/protocol/openid-connect/token/introspect
+      introspection_endpoint: http://keycloak-app-keycloakx-http.'${REALM}'.svc.cluster.local:80/realms/'${REALM}'/protocol/openid-connect/token/introspect # yamllint disable-line rule:line-length
       introspection_endpoint_auth_method: post
     opa:
       host: http://authz-authz-opa:8181
