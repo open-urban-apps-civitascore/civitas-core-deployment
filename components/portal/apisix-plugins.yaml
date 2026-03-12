@@ -6,11 +6,11 @@ portal-backend:
     openid-connect:
       client_id: portal-frontend
       client_secret: WEeoKGbjQ0FJqVgYf4YNeE7og8HFuypB
-      discovery: http://keycloak-app-keycloakx-http.staging.svc.cluster.local:80/realms/staging/.well-known/openid-configuration
+      discovery: http://keycloak-app-keycloakx-http.'${REALM}'.svc.cluster.local:80/realms/'${REALM}'/.well-known/openid-configuration # yamllint disable-line rule:line-length
       bearer_only: true
       ssl_verify: false
       set_userinfo_header: true
-      introspection_endpoint: http://keycloak-app-keycloakx-http.staging.svc.cluster.local:80/realms/staging/protocol/openid-connect/token/introspect
+      introspection_endpoint: http://keycloak-app-keycloakx-http.'${REALM}'.svc.cluster.local:80/realms/'${REALM}'/protocol/openid-connect/token/introspect # yamllint disable-line rule:line-length
       introspection_endpoint_auth_method: post
     opa:
       host: http://authz-authz-opa:8181

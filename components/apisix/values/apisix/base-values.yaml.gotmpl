@@ -18,6 +18,10 @@ image:
   tag: {{ .Values.images.apisix.apisix.gateway.tag }}
   pullPolicy: IfNotPresent
 
+service:
+  type: "ClusterIP"
+  externalTrafficPolicy: null
+
 serviceAccount:
   create: true
 
