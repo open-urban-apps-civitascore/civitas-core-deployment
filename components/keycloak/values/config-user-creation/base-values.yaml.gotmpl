@@ -1,0 +1,69 @@
+---
+{{- $this := .Values.keycloak.config }}
+{{- $global := .Values.global }}
+# Checklist:
+# - [ ] Containers run as non-root with `readOnlyRootFilesystem` -> does not work yet with config-cli
+# - [x] Health probes -> not applicable for jobs
+# - [ ] Graceful shutdown
+# - [ ] Standard labels
+# - [ ] ServiceAccount with least privilege where required
+# - [ ] Named ports
+# - [ ] Ingress with TLS
+
+containerSecurityContext:
+  {{ .Values.securityDefaults.securityContext | toYaml | nindent 2 }}
+
+securityContext:
+  {{ .Values.securityDefaults.podSecurityContext | toYaml | nindent 2 }}
+
+image:
+  {{- with .Values.images.keycloak.configCli }}
+  repository: {{ .repository }}
+  tag: {{ .tag }}
+  {{- end }}
+backoffLimit: 2
+job:
+  resources:
+    # resources are hardcoded since config-cli is a job which won't need more resources, even when the platform scales up
+    limits:
+      cpu: "400m"
+      memory: "1024Mi"
+    requests:
+      cpu:  "100m"
+      memory: "512Mi"
+
+annotations:
+  "helm.sh/hook": post-install
+  "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded,hook-failed
+
+env:
+  KEYCLOAK_AVAILABILITYCHECK_ENABLED: "true"
+  KEYCLOAK_AVAILABILITYCHECK_RETRIES: 10s
+  KEYCLOAK_URL: http://keycloak-app-keycloakx-http.{{ .Values.keycloak.app.namespace }}.svc.cluster.local:80{{ .Values.keycloak.app.pathPrefix | trimSuffix "/" }}
+  KEYCLOAK_USER: "{{ .Values.keycloak.app.admin.username }}"
+  IMPORT_FILES_LOCATIONS: /config/*
+  IMPORT_VARSUBSTITUTION_ENABLED: "true"
+  IMPORT_VARSUBSTITUTION_NESTED: "false"
+
+existingSecret: keycloak-admin-user
+existingSecretKey: password
+
+config:
+  {{ $global.instanceSlug }}:
+    inline:
+      id: {{ $global.instanceSlug }}
+      realm: "{{ $global.instanceSlug }}"
+      users:
+        - username: {{ .Values.keycloak.app.admin.username }}@{{ $global.domain }}
+          enabled: true
+          firstName: "Platform"
+          lastName: "Admin"
+          emailVerified: true
+          email: {{ .Values.keycloak.app.admin.username }}@{{ $global.domain }}
+          credentials:
+            - type: password
+              value: "${env:KEYCLOAK_PASSWORD}"
+              temporary: true
+          clientRoles:
+            realm-management:
+              - realm-admin
