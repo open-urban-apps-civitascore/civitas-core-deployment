@@ -40,7 +40,7 @@ env:
   - name: KAFKA_GROUP_ID
     value: config-adapter-group
 
-  # Keycloak configuration
+  # Keycloak configuration — uses dedicated config-adapter client with password grant
   {{- $keycloakHost := printf "%s.%s" (default "" .Values.keycloak.app.subdomain) $global.domain | trimPrefix "." }}
   {{- $keycloakPath := .Values.keycloak.app.pathPrefix -}}
   {{- $keycloakUrl := printf "https://%s%s" $keycloakHost $keycloakPath -}}
@@ -50,14 +50,14 @@ env:
   - name: KEYCLOAK_REALM
     value: {{ $realmName | quote }}
   - name: KEYCLOAK_USERNAME
-    value: "admin"  # TODO: custom service account
+    value: "config-adapter@internal.local"
   - name: KEYCLOAK_PASSWORD
     valueFrom:
       secretKeyRef:
-        name: "keycloak-admin-user"
+        name: "config-adapter-keycloak-user"
         key: "password"
   - name: KEYCLOAK_CLIENT_ID
-    value: "admin-cli"
+    value: "config-adapter"
   # Keycloak Topics:
   # User Events (7): user.created, user.updated, user.deleted, user.locked, user.unlocked, user.password.changed, user.password.reset
   # Realm Events (3): realm.created, realm.updated, realm.deleted

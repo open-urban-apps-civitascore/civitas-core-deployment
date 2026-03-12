@@ -67,6 +67,11 @@ spec:
             # Kafka configuration
             - name: KAFKA_BOOTSTRAP_SERVERS
               value: {{ .Values.kafka.bootstrapServers | quote }}
+            - name: KAFKA_ENABLED
+              value: "true"
+            # Model Atlas
+            # - name: MODEL_ATLAS_URL
+            #   value: http://model-atlas.staging.svc.cluster.local:8080
             # Crypto configuration
             - name: CIVITAS_MASTER_KEY
               valueFrom:

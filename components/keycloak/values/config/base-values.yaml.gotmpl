@@ -77,6 +77,11 @@ extraEnv:
         name: {{ printf "keycloak-client-%s" $clientId }}
         key: client-secret
   {{- end }}
+  - name: CONFIG_ADAPTER_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        name: config-adapter-keycloak-user
+        key: password
 
 config:
   {{ $global.instanceSlug }}:
@@ -294,6 +299,23 @@ config:
         clientSessionMaxLifespan: "0"
         clientOfflineSessionIdleTimeout: "0"
       userManagedAccessAllowed: false
+      # Dedicated service user for the config-adapter — granted realm-admin via realm-management client role
+      # username must equal email because registrationEmailAsUsername is enabled on this realm
+      users:
+        - username: config-adapter@internal.local
+          enabled: true
+          emailVerified: true
+          email: config-adapter@internal.local
+          firstName: Config
+          lastName: Adapter
+          requiredActions: []
+          credentials:
+            - type: password
+              value: "$(CONFIG_ADAPTER_PASSWORD)"
+              temporary: false
+          clientRoles:
+            realm-management:
+              - realm-admin
       clients:
         {{- range $clientId, $client := .Values.keycloakClients }}
         {{- $subdomain := $client.subdomain | default $clientId }}
