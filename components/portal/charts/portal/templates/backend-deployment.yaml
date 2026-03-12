@@ -70,8 +70,10 @@ spec:
             - name: KAFKA_ENABLED
               value: "true"
             # Model Atlas
-            # - name: MODEL_ATLAS_URL
-            #   value: http://model-atlas.staging.svc.cluster.local:8080
+            - name: MODEL_ATLAS_URL
+              value: {{ .Values.modelAtlas.url }}
+            - name: MODEL_ATLAS_SCOPE
+              value: civitas
             # Crypto configuration
             - name: CIVITAS_MASTER_KEY
               valueFrom:
