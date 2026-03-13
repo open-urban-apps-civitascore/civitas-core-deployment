@@ -3,8 +3,8 @@ portal:
   backend:
     repository: registry.gitlab.com/civitas-connect/civitas-core/civitas-core-v2/civitas-core-platform/backend-portal
     # TODO: Pin before release
-    tag: '0.0.0-1785-g90ca58c17'
+    tag: 'develop'
   frontend:
     repository: registry.gitlab.com/civitas-connect/civitas-core/civitas-core-v2/civitas-core-platform/frontend-portal
     # TODO: Pin before release
-    tag: '0.0.0-1785-g90ca58c17'
+    tag: 'develop'
