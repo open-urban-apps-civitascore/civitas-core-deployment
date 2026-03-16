@@ -183,14 +183,14 @@ config:
         strictTransportSecurity: max-age=31536000; includeSubDomains
       smtpServer:
         # TODO: This is a temporary solution. Find a better way to manage secrets in templates.
-        password: "${env:SMTP_PASSWORD}"
-        host: "${env:SMTP_HOST}"
-        port: "${env:SMTP_PORT}"
-        from: "${env:SMTP_FROM}"
-        user: "${env:SMTP_USER}"
-        starttls: true
-        auth: true
-        ssl: ""
+        password: "$(SMTP_PASSWORD)"
+        host: "$(SMTP_HOST)"
+        port: "$(SMTP_PORT)"
+        from: "$(SMTP_FROM)"
+        user: "$(SMTP_USER)"
+        starttls: "true"
+        auth: "true"
+        ssl: "false"
       loginTheme: keycloak
       accountTheme: keycloak
       adminTheme: keycloak

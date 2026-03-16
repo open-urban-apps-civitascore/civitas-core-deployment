@@ -11,22 +11,22 @@ opa:
 
   resources:
     requests:
-      cpu: 50m
-      memory: 64Mi
+      cpu: 200m
+      memory: 256Mi
     limits:
-      cpu: 100m
-      memory: 128Mi
+      cpu: 500m
+      memory: 512Mi
 
 authz:
   replicaCount: 1
 
   resources:
     requests:
-      cpu: 100m
-      memory: 128Mi
+      cpu: 200m
+      memory: 256Mi
     limits:
       cpu: 500m
-      memory: 256Mi
+      memory: 512Mi
 
   persistence:
     enabled: false

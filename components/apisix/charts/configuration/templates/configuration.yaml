@@ -47,6 +47,13 @@ spec:
             value: {{ $root.Values.domain }}
           - name: REALM
             value: {{ $root.Values.realm }}
+          {{- range $envVar := $root.Values.extraSecretEnvVars }}
+          - name: {{ $envVar.name }}
+            valueFrom:
+              secretKeyRef:
+                name: {{ $envVar.secretName }}
+                key: {{ $envVar.secretKey }}
+          {{- end }}
         command:
         - /bin/sh
         - -c
@@ -59,11 +66,15 @@ spec:
 {{ range $component, $config := $root.Values.plugins }}
 
           echo "Configuring plugin: {{ $component }}"
-          curl -s -X PUT http://{{ $root.Values.apisix.host }}:{{ $root.Values.apisix.port }}/apisix/admin/plugin_configs/{{ $component }} -H "X-API-KEY: ${APISIX_ADMIN_KEY}" -H "Content-Type: application/json" -d '{
-            "name": "{{ $config.name }}",
-            "desc": "{{ $config.description }}",
-            "plugins": {{ $config.plugins | toJson }}
-          }' || exit 1
+          PLUGIN_JSON='{{ $config.plugins | toJson }}'
+          {{- range $envVar := $root.Values.extraSecretEnvVars }}
+          PLUGIN_JSON=$(echo "${PLUGIN_JSON}" | sed "s|\${ {{- $envVar.name -}} }|${ {{- $envVar.name -}} }|g")
+          {{- end }}
+          PLUGIN_JSON=$(echo "${PLUGIN_JSON}" | sed "s|\${REALM}|${REALM}|g" | sed "s|\${DOMAIN}|${DOMAIN}|g")
+          curl -s -X PUT "http://{{ $root.Values.apisix.host }}:{{ $root.Values.apisix.port }}/apisix/admin/plugin_configs/{{ $component }}" \
+            -H "X-API-KEY: ${APISIX_ADMIN_KEY}" \
+            -H "Content-Type: application/json" \
+            -d "{\"name\":\"{{ $config.name }}\",\"desc\":\"{{ $config.description }}\",\"plugins\":${PLUGIN_JSON}}" || exit 1
 {{- end }}
 {{ range $component, $config := $root.Values.routes }}
 

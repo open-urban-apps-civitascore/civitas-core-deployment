@@ -4,8 +4,8 @@ portal-backend:
   description: API for the Civitas Portal
   plugins:
     openid-connect:
-      client_id: portal-frontend
-      client_secret: WEeoKGbjQ0FJqVgYf4YNeE7og8HFuypB
+      client_id: apisix-validator
+      client_secret: '${APISIX_VALIDATOR_CLIENT_SECRET}'
       discovery: http://keycloak-app-keycloakx-http.'${REALM}'.svc.cluster.local:80/realms/'${REALM}'/.well-known/openid-configuration # yamllint disable-line rule:line-length
       bearer_only: true
       ssl_verify: false
