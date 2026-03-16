@@ -1,5 +1,6 @@
 ---
-plugins: {}
+plugins:
+  {}
   # Example plugin configuration:
   # frost:
   #   name: 'frost'
@@ -10,7 +11,8 @@ plugins: {}
   #         host: 'http://authz-authz-opa.example.svc.cluster.local:8181'
   #         policy: 'civitas/authz/decision'
 
-routes: {}
+routes:
+  {}
   # Example route configuration:
   # frost:
   #   name: 'FROST-Server API'
