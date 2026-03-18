@@ -13,7 +13,7 @@
 image:
   repository: {{ .Values.images.modelAtlas.app.repository }}
   tag: {{ .Values.images.modelAtlas.app.tag }}
-  pullPolicy: IfNotPresent
+  pullPolicy: Always
 
 initContainers:
   - name: init-tmp-dir
@@ -31,11 +31,9 @@ initContainers:
           - ALL
       readOnlyRootFilesystem: true
 
-env:
-  - name: APICURIO_HOST
-    value: "apicurio-apicurio-app"
-  - name: APICURIO_PORT
-    value: '8080'
+apicurio:
+  host: "apicurio-apicurio-app.{{ .Values.apicurio.apicurio.namespace }}.svc.cluster.local"
+  port: "8080"
 
 ingress:
   enabled: false
