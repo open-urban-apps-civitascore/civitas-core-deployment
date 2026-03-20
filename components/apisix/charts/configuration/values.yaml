@@ -54,6 +54,14 @@ secret:
   adminKeySecretName: apisix-admin-credentials
   adminKeySecretKey: admin
 
+# Extra environment variables sourced from Kubernetes secrets
+# Example:
+# extraSecretEnvVars:
+#   - name: APISIX_VALIDATOR_CLIENT_SECRET
+#     secretName: keycloak-client-apisix-validator
+#     secretKey: client-secret
+extraSecretEnvVars: []
+
 apisix:
   host: apisix
   port: 9180

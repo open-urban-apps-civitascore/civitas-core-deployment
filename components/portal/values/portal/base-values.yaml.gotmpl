@@ -42,6 +42,9 @@ server:
 apisix:
   serviceUrl: "http://apisix-gateway.{{ .Values.apisix.apisix.namespace }}.svc.cluster.local"
 
+modelAtlas:
+  url: "http://model-atlas-model-atlas.{{ .Values.modelAtlas.modelAtlas.namespace }}.svc.cluster.local:8080"
+
 ingress:
   enabled: false
 

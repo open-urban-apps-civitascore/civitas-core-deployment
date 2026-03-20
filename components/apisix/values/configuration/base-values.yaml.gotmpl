@@ -29,6 +29,11 @@ secret:
 apisix:
   host: apisix-admin
 
+extraSecretEnvVars:
+  - name: APISIX_VALIDATOR_CLIENT_SECRET
+    secretName: keycloak-client-apisix-validator
+    secretKey: client-secret
+
 domain: {{ $global.domain }}
 realm: {{ $global.instanceSlug }}
 

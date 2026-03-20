@@ -87,6 +87,9 @@ keycloak:
 kafka:
   bootstrapServers: ''
 
+modelAtlas:
+  url: ''
+
 database:
   host: ''
   port: 5432

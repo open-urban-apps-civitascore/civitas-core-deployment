@@ -14,19 +14,13 @@ opa:
   image:
     repository: {{ .Values.images.authz.opa.repository }}
     tag: {{ .Values.images.authz.opa.tag }}
-    
-  volumeMounts:
-    - name: opa-config
-      mountPath: /data/config.json
-      subPath: opa-config.json
-      readOnly: true
-    - name: tmp
-      mountPath: /tmp
+    pullPolicy: Always
 
 authz:
   image:
     repository: {{ .Values.images.authz.authz.repository }}
     tag: {{ .Values.images.authz.authz.tag }}
+    pullPolicy: Always
 
   database:
     # TODO: Make it more dynamic from portal database resource
