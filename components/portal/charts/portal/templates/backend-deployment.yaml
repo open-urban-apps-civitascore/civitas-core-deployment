@@ -74,6 +74,8 @@ spec:
               value: {{ .Values.modelAtlas.url }}
             - name: MODEL_ATLAS_SCOPE
               value: civitas
+            - name: SPRING_KAFKA_PRODUCER_PROPERTIES_COMPRESSION_TYPE
+              value: lz4
             # Crypto configuration
             - name: CIVITAS_MASTER_KEY
               valueFrom:
