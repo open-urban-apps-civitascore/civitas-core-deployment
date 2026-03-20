@@ -15,22 +15,6 @@ opa:
     repository: {{ .Values.images.authz.opa.repository }}
     tag: {{ .Values.images.authz.opa.tag }}
     pullPolicy: Always
-    
-  volumeMounts:
-    - name: opa-config
-      mountPath: /data/config.json
-      subPath: opa-config.json
-      readOnly: true
-    - name: tmp
-      mountPath: /tmp
-
-  volumeMounts:
-    - name: opa-config
-      mountPath: /data/config.json
-      subPath: opa-config.json
-      readOnly: true
-    - name: tmp
-      mountPath: /tmp
 
 authz:
   image:
