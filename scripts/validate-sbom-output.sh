@@ -6,7 +6,7 @@ usage() {
 Validate SBOM output from generate_artifact_inventory.sh.
 
 Usage:
-  scripts/validate_sbom_output.sh [--out-dir <path>] [--deployment-repo <path>]
+  scripts/validate-sbom-output.sh [--out-dir <path>] [--deployment-repo <path>]
 
 Options:
   --out-dir <path>          Output directory to validate (default: latest in <deployment>/out/sbom-*)
