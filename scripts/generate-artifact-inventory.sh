@@ -6,7 +6,7 @@ usage() {
 Generate full CIVITAS artifact inventory + SBOM outputs and write SUMMARY.md.
 
 Usage:
-  scripts/generate_artifact_inventory.sh --platform-repo <path> [options]
+  scripts/generate-artifact-inventory.sh --platform-repo <path> [options]
 
 Options:
   --deployment-repo <path>  Deployment repo path (default: cwd)
