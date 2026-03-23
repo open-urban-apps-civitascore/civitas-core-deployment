@@ -3,7 +3,7 @@ set -euo pipefail
 
 usage() {
   cat <<'USAGE'
-Validate SBOM output from generate_artifact_inventory.sh.
+Validate SBOM output from generate-artifact-inventory.sh.
 
 Usage:
   scripts/validate-sbom-output.sh [--out-dir <path>] [--deployment-repo <path>]

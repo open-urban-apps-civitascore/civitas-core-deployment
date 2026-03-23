@@ -100,7 +100,21 @@ spec:
             "desc": "{{ $config.description }}",
             "uri": "{{ $config.uri }}",
             "service_id": "{{ $component }}",
-            "plugin_config_id": "{{ $component }}"
+            "plugin_config_id": "{{ $component }}",
+            "upstream": {
+              "type": "roundrobin",
+              "nodes": {
+                "{{ $config.upstream }}": 1
+              },
+              "timeout": {
+                "connect": 6,
+                "send": 6,
+                "read": 6
+              }
+            }
+            {{- if hasKey $config "priority" }},
+            "priority": {{ $config.priority }}
+            {{- end }}
             {{- if hasKey $config "subDomain" }},
             "host": "{{ $config.subDomain }}.'${DOMAIN}'"
             {{- end }}
