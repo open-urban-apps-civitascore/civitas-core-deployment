@@ -8,7 +8,14 @@ spec:
   policyTypes:
     - Ingress
   ingress:
-    - ports:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: linkerd
+          podSelector:
+            matchLabels:
+              linkerd.io/control-plane-ns: linkerd
+      ports:
         - port: 4143
           protocol: TCP
         - port: 4190
