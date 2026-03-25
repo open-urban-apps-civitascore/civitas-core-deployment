@@ -26,4 +26,8 @@ spec:
           podSelector:
             matchLabels:
               app.kubernetes.io/name: kafka-ui
+        - namespaceSelector: {}
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: config-adapter
 {{- end }}
