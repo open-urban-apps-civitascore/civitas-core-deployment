@@ -87,6 +87,20 @@ spec:
                 secretKeyRef:
                   name: portal-backend-crypto
                   key: civitas-master-salt
+            - name: INIT_GROUPS_0_NAME
+              value: Tenant Admins
+            - name: INIT_GROUPS_0_ROLENAME
+              value: Tenant Admin
+            - name: INIT_GROUPS_0_DESCRIPTION
+              value: Admin
+            - name: INIT_USERS_0_FIRSTNAME
+              value: Tenant
+            - name: INIT_USERS_0_LASTNAME
+              value: Admin
+            - name: INIT_USERS_0_EMAIL
+              value: {{ .Values.initialUser.email }}
+            - name: INIT_USERS_0_GROUPS_0
+              value: Tenant Admins
           startupProbe:
             httpGet:
               path: /v1/actuator/health

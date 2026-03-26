@@ -25,6 +25,18 @@ sync environment='local':
 	echo "Syncing environment: {{environment}} to minikube"
 	helmfile -f ./deployment/helmfile.yaml sync -e {{environment}}
 
+# Sync a specific component in an environment
+[group('deployment')]
+sync-component environment='local' component='':
+	echo "Syncing component: {{component}} in environment: {{environment}}"
+	helmfile -f ./deployment/helmfile.yaml sync -e {{environment}} --selector component={{component}}
+
+# Destroy a specific component in an environment
+[group('deployment')]
+destroy-component environment='local' component='':
+	echo "Destroying component: {{component}} in environment: {{environment}}"
+	helmfile -f ./deployment/helmfile.yaml destroy -e {{environment}} --selector component={{component}}
+
 # Deploy minikube
 [group('deployment')]
 _minikube namespace='dev':
@@ -131,6 +143,11 @@ verify-policies:
 [group('helpers')]
 template environment='local':
 	helmfile -f ./deployment/helmfile.yaml template -e {{environment}}
+
+# Render helmfile for a specific component in an environment
+[group('helpers')]
+template-component environment='local' component='':
+	helmfile -f ./deployment/helmfile.yaml template -e {{environment}} --selector component={{component}}
 
 # Print APIsix admin password
 [group('helpers')]
