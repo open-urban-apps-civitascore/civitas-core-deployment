@@ -2,6 +2,7 @@
 global:
   domain: civitas.test
   instanceSlug: dev
+  initialUserEmail: admin@civitas.local
   profile: development
   createNamespaces: true
   singleNamespace: true
@@ -26,7 +27,6 @@ components:
   - etcd
   - kafka
   - keycloak
-  - portal
   - authz
   - apisix
   - apicurio
@@ -34,3 +34,4 @@ components:
   - model-atlas
   - redpanda-connect
   - config-adapters
+  - portal

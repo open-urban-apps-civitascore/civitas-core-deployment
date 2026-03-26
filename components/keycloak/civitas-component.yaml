@@ -5,9 +5,6 @@ parts:
   - name: config
     needs:
       - keycloak.app
-  - name: configUserCreation
-    needs:
-      - keycloak.config
   - name: networkpolicy
     needs:
       - keycloak.app
