@@ -57,7 +57,7 @@ spec:
               value: ES256
             # Spring Boot configuration
             - name: SPRING_PROFILES_ACTIVE
-              value: postgres
+              value: postgres,init
             - name: LOGGING_LEVEL_ROOT
               value: {{ .Values.backend.env.loggingLevelRoot }}
             - name: SERVER_PORT
