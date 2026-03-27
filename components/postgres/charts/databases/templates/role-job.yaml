@@ -53,6 +53,8 @@ spec:
               key: {{ $role.credentialsSecret.passwordKey | default "password" }}
         - name: ROLE_TYPE
           value: {{ $role.type | default "readonly" | quote }}
+        - name: DB_OWNER
+          value: {{ $config.user | quote }}
         command:
         - /bin/sh
         - -c
@@ -114,10 +116,10 @@ spec:
               GRANT USAGE, SELECT, UPDATE ON ALL SEQUENCES IN SCHEMA public TO "${ROLE_NAME}";
               GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA public TO "${ROLE_NAME}";
 
-              -- Set default privileges for future objects
-              ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO "${ROLE_NAME}";
-              ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT USAGE, SELECT, UPDATE ON SEQUENCES TO "${ROLE_NAME}";
-              ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT EXECUTE ON FUNCTIONS TO "${ROLE_NAME}";
+              -- Set default privileges for future objects created by the database owner
+              ALTER DEFAULT PRIVILEGES FOR ROLE "${DB_OWNER}" IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO "${ROLE_NAME}";
+              ALTER DEFAULT PRIVILEGES FOR ROLE "${DB_OWNER}" IN SCHEMA public GRANT USAGE, SELECT, UPDATE ON SEQUENCES TO "${ROLE_NAME}";
+              ALTER DEFAULT PRIVILEGES FOR ROLE "${DB_OWNER}" IN SCHEMA public GRANT EXECUTE ON FUNCTIONS TO "${ROLE_NAME}";
           EOSQL
           else
             echo "Granting read-only permissions..."
@@ -125,9 +127,9 @@ spec:
               GRANT SELECT ON ALL TABLES IN SCHEMA public TO "${ROLE_NAME}";
               GRANT SELECT ON ALL SEQUENCES IN SCHEMA public TO "${ROLE_NAME}";
 
-              -- Set default privileges for future objects
-              ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO "${ROLE_NAME}";
-              ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON SEQUENCES TO "${ROLE_NAME}";
+              -- Set default privileges for future objects created by the database owner
+              ALTER DEFAULT PRIVILEGES FOR ROLE "${DB_OWNER}" IN SCHEMA public GRANT SELECT ON TABLES TO "${ROLE_NAME}";
+              ALTER DEFAULT PRIVILEGES FOR ROLE "${DB_OWNER}" IN SCHEMA public GRANT SELECT ON SEQUENCES TO "${ROLE_NAME}";
           EOSQL
           fi
 

@@ -26,6 +26,12 @@ resources:
     memory: "400Mi"
 
 affinity:
-  enablePodAntiAffinity: true
-  podAntiAffinityType: required
-  topologyKey: kubernetes.io/hostname
+  podAntiAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      - labelSelector:
+          matchExpressions:
+            - key: app.kubernetes.io/name
+              operator: In
+              values:
+                - cloudnative-pg
+        topologyKey: kubernetes.io/hostname
