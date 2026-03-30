@@ -1,0 +1,9 @@
+---
+{{- $this := .Values.networkpolicies.networkpolicies }}
+{{- $global := .Values.global }}
+# Checklist:
+# - [ ] Resources (requests and limits) -> not applicable
+# - [ ] Larger Storage -> not applicable
+# - [ ] 2+ Replicas or HorizontalPodAutoscaler -> not applicable
+# - [ ] Rolling updates `maxUnavailable: 0`, `maxSurge: 25%` -> not applicable
+# - [ ] PodDisruptionBudget (at least `minAvailable: 1`) -> not applicable

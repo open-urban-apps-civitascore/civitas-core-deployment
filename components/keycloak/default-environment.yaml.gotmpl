@@ -17,7 +17,4 @@ keycloak:
   configUserCreation:
     enabled: true
     namespace: {{ include "civitas.namespace" (dict "global" .Values.global "suffix" "keycloak") }}
-  networkpolicy:
-    enabled: true
-    namespace: {{ include "civitas.namespace" (dict "global" .Values.global "suffix" "keycloak") }}
 

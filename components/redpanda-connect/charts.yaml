@@ -4,5 +4,3 @@ redpandaConnect:
     repository: https://charts.redpanda.com
     chart: redpanda-connect/connect
     version: '3.1.0'
-  networkpolicy:
-    chart: charts/redpanda-connect-networkpolicy

@@ -89,6 +89,3 @@ users: []
 customServiceMesh:
   enable: false
   type: ''
-
-networkPolicy:
-  enabled: false

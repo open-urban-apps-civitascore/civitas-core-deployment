@@ -1,0 +1,45 @@
+---
+kafka-cluster:
+  podSelector:
+    strimzi.io/cluster: kafka-cluster
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector: {}
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: apicurio
+        - namespaceSelector: {}
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: portal
+              app.kubernetes.io/component: backend
+        - namespaceSelector: {}
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: kafka-ui
+        - namespaceSelector: {}
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: config-adapter
+        - namespaceSelector: {}
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: redpanda-connect
+
+kafka-allow-linkerd:
+  podSelector:
+    strimzi.io/cluster: kafka-cluster
+    strimzi.io/kind: Kafka
+    strimzi.io/name: kafka-cluster-kafka
+  policyTypes:
+    - Ingress
+  ingress:
+    - ports:
+        - port: 4143
+          protocol: TCP
+        - port: 4190
+          protocol: TCP
+        - port: 4191
+          protocol: TCP

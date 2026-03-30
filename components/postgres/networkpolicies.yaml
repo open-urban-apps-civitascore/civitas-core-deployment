@@ -1,0 +1,46 @@
+---
+postgres:
+  podSelector:
+    cnpg.io/cluster: postgres-cluster
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        # CloudNative-PG operator
+        - namespaceSelector: {}
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: cloudnative-pg
+        # Portal backend
+        - namespaceSelector: {}
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: portal
+        - namespaceSelector: {}
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/component: backend
+        # Keycloak
+        - namespaceSelector: {}
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/instance: keycloak-app
+        # Authz
+        - namespaceSelector: {}
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: authz-repo
+        - namespaceSelector: {}
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: authz
+        # Frost
+        - namespaceSelector: {}
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/instance: frost-frost
+        # Database role setup job
+        - namespaceSelector: {}
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/component: database-role-setup
