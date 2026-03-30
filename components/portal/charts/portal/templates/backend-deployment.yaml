@@ -24,6 +24,30 @@ spec:
     spec:
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      {{- $trustStoreConfig := .Values.backend.trustStore | default dict }}
+      {{- $trustStoreSecret := lookup "v1" "Secret" .Release.Namespace ($trustStoreConfig.secretName | default "") }}
+      {{- if and ($trustStoreConfig.enabled | default false) $trustStoreSecret }}
+      initContainers:
+        - name: init-truststore
+          image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag }}"
+          command: ['sh', '-c']
+          args:
+            - |
+              cp $JAVA_HOME/lib/security/cacerts /truststore/cacerts
+              keytool -importcert -noprompt -trustcacerts \
+                -alias custom-ca \
+                -file /ca-cert/{{ $trustStoreConfig.certKey | default "ca.crt" }} \
+                -keystore /truststore/cacerts \
+                -storepass changeit
+          volumeMounts:
+            - name: truststore
+              mountPath: /truststore
+            - name: ca-cert
+              mountPath: /ca-cert
+              readOnly: true
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+      {{- end }}
       containers:
         - name: backend
           image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag }}"
@@ -101,6 +125,10 @@ spec:
               value: {{ .Values.initialUser.email }}
             - name: INIT_USERS_0_GROUPS_0
               value: Tenant Admins
+            {{- if and ($trustStoreConfig.enabled | default false) $trustStoreSecret }}
+            - name: JAVA_TOOL_OPTIONS
+              value: "-Djavax.net.ssl.trustStore=/truststore/cacerts -Djavax.net.ssl.trustStorePassword=changeit"
+            {{- end }}
           startupProbe:
             httpGet:
               path: /v1/actuator/health
@@ -135,7 +163,19 @@ spec:
           volumeMounts:
             - name: tmp
               mountPath: /tmp
+            {{- if and ($trustStoreConfig.enabled | default false) $trustStoreSecret }}
+            - name: truststore
+              mountPath: /truststore
+              readOnly: true
+            {{- end }}
       volumes:
         - name: tmp
           emptyDir: {}
+        {{- if and ($trustStoreConfig.enabled | default false) $trustStoreSecret }}
+        - name: truststore
+          emptyDir: {}
+        - name: ca-cert
+          secret:
+            secretName: {{ $trustStoreConfig.secretName }}
+        {{- end }}
 {{- end }}

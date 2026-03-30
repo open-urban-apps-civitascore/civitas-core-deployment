@@ -8,6 +8,10 @@
 
 backend:
   replicaCount: 1
+  trustStore:
+    enabled: true
+    secretName: "custom-ca-cert"
+    certKey: "ca.crt"
   resources:
     requests:
       cpu: 100m

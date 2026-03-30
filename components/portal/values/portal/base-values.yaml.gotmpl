@@ -15,6 +15,10 @@ backend:
   image:
     repository: {{ .Values.images.portal.backend.repository }}
     tag: {{ .Values.images.portal.backend.tag }}
+  trustStore:
+    enabled: false
+    secretName: ""
+    certKey: "tls.crt"
 
 frontend:
   enabled: true
