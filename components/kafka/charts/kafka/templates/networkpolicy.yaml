@@ -30,4 +30,8 @@ spec:
           podSelector:
             matchLabels:
               app.kubernetes.io/name: config-adapter
+        - namespaceSelector: {}
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: redpanda-connect
 {{- end }}
