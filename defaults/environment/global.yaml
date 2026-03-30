@@ -23,6 +23,7 @@ global:
 components:
   - prepare
   - secrets
+  - networkpolicies
   - postgres
   - etcd
   - kafka

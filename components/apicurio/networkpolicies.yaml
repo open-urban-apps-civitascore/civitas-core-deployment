@@ -1,0 +1,13 @@
+---
+apicurio:
+  podSelector:
+    app.kubernetes.io/instance: apicurio-apicurio
+    app.kubernetes.io/name: apicurio
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector: {}
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: model-atlas

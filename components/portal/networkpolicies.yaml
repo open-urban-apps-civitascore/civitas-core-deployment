@@ -1,0 +1,32 @@
+---
+portal-frontend:
+  podSelector:
+    app.kubernetes.io/instance: portal-portal
+    app.kubernetes.io/name: portal
+    app.kubernetes.io/component: frontend
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector: {}
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: apisix
+
+portal-backend:
+  podSelector:
+    app.kubernetes.io/instance: portal-portal
+    app.kubernetes.io/name: portal
+    app.kubernetes.io/component: backend
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector: {}
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: apisix
+        - namespaceSelector: {}
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: portal

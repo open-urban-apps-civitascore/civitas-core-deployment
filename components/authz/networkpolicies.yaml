@@ -1,0 +1,26 @@
+---
+# Network policy for OPA (Open Policy Agent)
+opa:
+  podSelector:
+    app.kubernetes.io/name: opa
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector: {}
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: apisix
+
+# Network policy for authz-repo service
+authz-repo:
+  podSelector:
+    app.kubernetes.io/name: authz-repo
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector: {}
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: opa

@@ -2,6 +2,3 @@
 component: redpandaConnect
 parts:
   - name: connect
-  - name: networkpolicy
-    needs:
-      - redpandaConnect.connect

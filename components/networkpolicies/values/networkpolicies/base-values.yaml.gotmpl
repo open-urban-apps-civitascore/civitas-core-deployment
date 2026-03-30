@@ -1,0 +1,15 @@
+---
+{{- $this := .Values.networkpolicies.networkpolicies }}
+{{- $global := .Values.global }}
+
+# Pass the collected networkpolicies from defaults/environment/networkpolicies.yaml.gotmpl
+# to the chart so it can create NetworkPolicy resources
+# Note: We exclude the 'networkpolicies' key itself (which contains component metadata)
+# and only pass the actual policy definitions
+networkpolicies:
+  {{- range $key, $value := .Values.networkpolicies }}
+    {{- if ne $key "networkpolicies" }}
+  {{ $key }}:
+    {{- toYaml $value | nindent 4 }}
+    {{- end }}
+  {{- end }}
