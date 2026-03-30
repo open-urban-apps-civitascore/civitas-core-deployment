@@ -7,6 +7,10 @@ keycloak:
       include_in_response: true
     proxy-rewrite:
       headers:
+        remove:
+          - X-Userinfo
+          - X-Access-Token
+          - X-Allowed-Scope-Ids
         set:
           X-Forwarded-Proto: https
           X-Forwarded-Port: '443'
