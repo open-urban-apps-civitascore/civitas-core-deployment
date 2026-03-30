@@ -41,8 +41,7 @@ env:
     value: config-adapter-group
 
   # Keycloak configuration — uses dedicated config-adapter client with password grant
-  {{- $keycloakPath := .Values.keycloak.app.pathPrefix | trimSuffix "/" -}}
-  {{- $keycloakUrl := printf "http://keycloak-app-keycloakx-http.%s.svc.cluster.local:80%s" .Values.keycloak.app.namespace $keycloakPath -}}
+  {{- $keycloakUrl := printf "http://keycloak-app-keycloakx-http.%s.svc.cluster.local:80" .Values.keycloak.app.namespace -}}
   {{- $realmName := $global.instanceSlug }}
   - name: KEYCLOAK_URL
     value: {{ $keycloakUrl | quote }}
