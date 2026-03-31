@@ -16,6 +16,7 @@ apisix:
         - protocol: TCP
           port: 9180
     - from:
+        - namespaceSelector: {}
       ports:
         - protocol: TCP
           port: 80

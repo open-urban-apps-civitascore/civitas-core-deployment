@@ -38,10 +38,7 @@ config-adapter-egress:
   egress:
     # DNS resolution (required for all service lookups)
     - to:
-        - namespaceSelector: 'kube-system'
-          podSelector:
-            matchLabels:
-              k8s-app: kube-dns
+        - namespaceSelector: {}
       ports:
         - port: 53
           protocol: UDP
@@ -104,7 +101,7 @@ config-adapter-egress:
     - to:
         - podSelector:
             matchLabels:
-              app.kubernetes.io/name: kafka
+              strimzi.io/cluster: kafka-cluster
       ports:
         - port: 9092
           protocol: TCP
