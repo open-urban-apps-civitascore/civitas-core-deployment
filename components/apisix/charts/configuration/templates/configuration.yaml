@@ -71,7 +71,7 @@ spec:
           PLUGIN_JSON=$(echo "${PLUGIN_JSON}" | sed "s|\${ {{- $envVar.name -}} }|${ {{- $envVar.name -}} }|g")
           {{- end }}
           PLUGIN_JSON=$(echo "${PLUGIN_JSON}" | sed "s|\${REALM}|${REALM}|g" | sed "s|\${DOMAIN}|${DOMAIN}|g")
-          curl -s -X PUT "http://{{ $root.Values.apisix.host }}:{{ $root.Values.apisix.port }}/apisix/admin/plugin_configs/{{ $component }}" \
+          curl -s --fail -X PUT "http://{{ $root.Values.apisix.host }}:{{ $root.Values.apisix.port }}/apisix/admin/plugin_configs/{{ $component }}" \
             -H "X-API-KEY: ${APISIX_ADMIN_KEY}" \
             -H "Content-Type: application/json" \
             -d "{\"name\":\"{{ $config.name }}\",\"desc\":\"{{ $config.description }}\",\"plugins\":${PLUGIN_JSON}}" || exit 1
@@ -79,7 +79,7 @@ spec:
 {{ range $component, $config := $root.Values.routes }}
 
           echo "Configuring service: {{ $component }}"
-          curl -s -X PUT http://{{ $root.Values.apisix.host }}:{{ $root.Values.apisix.port }}/apisix/admin/services/{{ $component }} -H "X-API-KEY: ${APISIX_ADMIN_KEY}" -H "Content-Type: application/json" -d '{
+          curl -s --fail -X PUT http://{{ $root.Values.apisix.host }}:{{ $root.Values.apisix.port }}/apisix/admin/services/{{ $component }} -H "X-API-KEY: ${APISIX_ADMIN_KEY}" -H "Content-Type: application/json" -d '{
             "name": "{{ $config.name }}",
             "desc": "{{ $config.description }}",
             "upstream": {
@@ -95,7 +95,7 @@ spec:
             }
           }' || exit 1
           echo "Configuring route: {{ $component }}"
-          curl -s -X PUT http://{{ $root.Values.apisix.host }}:{{ $root.Values.apisix.port }}/apisix/admin/routes/{{ $component }} -H "X-API-KEY: ${APISIX_ADMIN_KEY}" -H "Content-Type: application/json" -d '{
+          curl -s --fail -X PUT http://{{ $root.Values.apisix.host }}:{{ $root.Values.apisix.port }}/apisix/admin/routes/{{ $component }} -H "X-API-KEY: ${APISIX_ADMIN_KEY}" -H "Content-Type: application/json" -d '{
             "name": "{{ $config.name }}",
             "desc": "{{ $config.description }}",
             "uri": "{{ $config.uri }}",
