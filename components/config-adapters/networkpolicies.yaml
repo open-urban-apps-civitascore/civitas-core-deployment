@@ -13,10 +13,26 @@ config-adapter:
 
 config-adapter-allow-linkerd:
   podSelector:
-    app.kubernetes.io/instance: config-adapters-adapters
+    app.kubernetes.io/instance: config-adapter
     app.kubernetes.io/name: config-adapter
   policyTypes:
     - Ingress
+    - Egress
+  egress:
+    - ports:
+        - port: 4143
+          protocol: TCP
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: linkerd
+      ports:
+        - protocol: TCP
+          port: 8080 # identity
+        - protocol: TCP
+          port: 8086 # destination
+        - protocol: TCP
+          port: 8090 # policy
   ingress:
     - ports:
         - port: 4143
