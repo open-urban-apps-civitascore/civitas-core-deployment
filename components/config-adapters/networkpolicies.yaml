@@ -56,6 +56,11 @@ config-adapter-egress:
         - port: 8090 # linkerd-policy
           protocol: TCP
 
+    # Linkerd proxy data plane (required for all meshed service-to-service communication)
+    - ports:
+        - port: 4143
+          protocol: TCP
+
     # Linkerd proxy admin port (same pod, no namespace restriction)
     - ports:
         - port: 4191
