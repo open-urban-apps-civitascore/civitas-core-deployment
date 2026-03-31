@@ -99,6 +99,11 @@ apisix:
       secretName: apisix-admin-credentials
       secretAdminKey: admin
       secretViewerKey: viewer
+  trustedAddresses:
+    - 127.0.0.1
+    - 10.0.0.0/8
+    - 172.16.0.0/12
+    - 192.168.0.0/16
   nginx:
     configurationSnippet:
       httpEnd: |
