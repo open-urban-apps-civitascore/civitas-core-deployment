@@ -4,3 +4,5 @@ componentSlug: model-atlas
 parts:
   - name: modelAtlas
     slug: model-atlas
+    needs:
+      - apicurio.apicurio
