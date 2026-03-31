@@ -30,6 +30,27 @@ initContainers:
         drop:
           - ALL
       readOnlyRootFilesystem: true
+  - name: wait-for-apicurio
+    image: {{ .Values.images.modelAtlas.init.repository }}:{{ .Values.images.modelAtlas.init.tag }}
+    command:
+      - 'sh'
+      - '-c'
+      - |
+        APICURIO_URL="http://apicurio-apicurio-app.{{ .Values.apicurio.apicurio.namespace }}.svc.cluster.local:8080"
+        echo "Waiting for Apicurio to be ready at ${APICURIO_URL}..."
+        until wget -qO- "${APICURIO_URL}/health/ready" > /dev/null 2>&1; do
+          echo "Apicurio is not ready yet. Retrying in 5 seconds..."
+          sleep 5
+        done
+        echo "Apicurio is ready!"
+    securityContext:
+      runAsNonRoot: true
+      runAsUser: 1000
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+          - ALL
+      readOnlyRootFilesystem: true
 
 apicurio:
   host: "apicurio-apicurio-app.{{ .Values.apicurio.apicurio.namespace }}.svc.cluster.local"
