@@ -23,8 +23,6 @@ image:
 {{- end }}
   pullPolicy: IfNotPresent
 extraEnv: |
-  - name: KC_PROXY
-    value: edge
   - name: KC_HOSTNAME_STRICT
     value: "false"
   - name: JGROUPS_DISCOVERY_PROTOCOL
