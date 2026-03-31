@@ -1,17 +1,4 @@
 ---
-# Ingress: Allow health checks from kubelet
-config-adapter:
-  podSelector:
-    app.kubernetes.io/instance: config-adapters-adapters
-    app.kubernetes.io/name: config-adapter
-  policyTypes:
-    - Ingress
-  ingress:
-    # Allow health checks from kubelet (liveness/readiness probes)
-    - ports:
-        - protocol: TCP
-          port: 8080
-
 # Egress: Allow outbound connections
 config-adapter-egress:
   podSelector:
