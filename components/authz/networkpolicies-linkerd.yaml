@@ -26,7 +26,8 @@ authz-repo-allow-linkerd:
     - from:
         - podSelector:
             matchLabels:
-              app.kubernetes.io/name: opa
+              app.kubernetes.io/name: authz
+              app.kubernetes.io/component: opa
       ports:
         - port: 4143
           protocol: TCP

@@ -2,7 +2,8 @@
 # Network policy for OPA (Open Policy Agent)
 opa:
   podSelector:
-    app.kubernetes.io/name: opa
+    app.kubernetes.io/name: authz
+    app.kubernetes.io/component: opa
   policyTypes:
     - Ingress
   ingress:
@@ -21,4 +22,5 @@ authz-repo:
     - from:
         - podSelector:
             matchLabels:
-              app.kubernetes.io/name: opa
+              app.kubernetes.io/name: authz
+              app.kubernetes.io/component: opa
