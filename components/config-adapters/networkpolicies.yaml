@@ -12,22 +12,6 @@ config-adapter:
         - protocol: TCP
           port: 8080
 
-# Ingress: Allow Linkerd proxy traffic
-config-adapter-allow-linkerd:
-  podSelector:
-    app.kubernetes.io/instance: config-adapters-adapters
-    app.kubernetes.io/name: config-adapter
-  policyTypes:
-    - Ingress
-  ingress:
-    - ports:
-        - port: 4143
-          protocol: TCP
-        - port: 4190
-          protocol: TCP
-        - port: 4191
-          protocol: TCP
-
 # Egress: Allow outbound connections
 config-adapter-egress:
   podSelector:
@@ -43,27 +27,6 @@ config-adapter-egress:
         - port: 53
           protocol: UDP
         - port: 53
-          protocol: TCP
-
-    # Linkerd control plane (required for service mesh mTLS)
-    - to:
-        - namespaceSelector: 'linkerd'
-      ports:
-        - port: 8080 # linkerd-identity
-          protocol: TCP
-        - port: 8086 # linkerd-destination
-          protocol: TCP
-        - port: 8090 # linkerd-policy
-          protocol: TCP
-
-    # Linkerd proxy data plane (required for all meshed service-to-service communication)
-    - ports:
-        - port: 4143
-          protocol: TCP
-
-    # Linkerd proxy admin port (same pod, no namespace restriction)
-    - ports:
-        - port: 4191
           protocol: TCP
 
     # Keycloak (for client management and auth)

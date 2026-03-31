@@ -1,0 +1,21 @@
+---
+frost-allow-linkerd:
+  podSelector:
+    app.kubernetes.io/instance: frost-frost
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: apisix
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: config-adapter
+      ports:
+        - port: 4143
+          protocol: TCP
+        - port: 4190
+          protocol: TCP
+        - port: 4191
+          protocol: TCP
