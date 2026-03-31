@@ -6,7 +6,6 @@ redpanda-connect:
     - Ingress
   ingress:
     - from:
-        - namespaceSelector: {}
-          podSelector:
+        - podSelector:
             matchLabels:
               app.kubernetes.io/name: config-adapter

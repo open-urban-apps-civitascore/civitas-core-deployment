@@ -1,15 +1,98 @@
 ---
-{{- $this := .Values.networkpolicies.networkpolicies }}
 {{- $global := .Values.global }}
 
 # Pass the collected networkpolicies from defaults/environment/networkpolicies.yaml.gotmpl
 # to the chart so it can create NetworkPolicy resources
-# Note: We exclude the 'networkpolicies' key itself (which contains component metadata)
-# and only pass the actual policy definitions
+# 
+# This template automatically injects namespaceSelector for secure-by-default policies:
+# - No namespaceSelector key = auto-inject instanceSlug namespace
+# - namespaceSelector: "string" = use literal namespace name
+# - namespaceSelector: {} = allow all namespaces (explicit opt-in)
 networkpolicies:
-  {{- range $key, $value := .Values.networkpolicies }}
-    {{- if ne $key "networkpolicies" }}
-  {{ $key }}:
-    {{- toYaml $value | nindent 4 }}
+{{- range $policyName, $policyConfig := .Values.networkpolicies }}
+  {{- if ne $policyName "networkpolicies" }}
+  {{ $policyName }}:
+  {{- range $key, $value := $policyConfig }}
+    {{- if not (has $key (list "egress" "ingress")) }}
+    {{ $key }}:
+      {{- toYaml $value | nindent 6 }}
     {{- end }}
   {{- end }}
+  {{- if hasKey $policyConfig "ingress" }}
+    ingress:
+    {{- range $policyConfig.ingress }}
+    {{- $rule := . }}
+    - {{- if hasKey $rule "from" }}
+      from:
+      {{- range $rule.from }}
+      {{- $from := . }}
+      - {{- if hasKey $from "namespaceSelector" }}
+          {{- if eq (typeOf $from.namespaceSelector) "string" }}
+        namespaceSelector:
+          matchLabels:
+            kubernetes.io/metadata.name: {{ $from.namespaceSelector }}
+          {{- else }}
+        namespaceSelector:
+          {{- toYaml $from.namespaceSelector | nindent 10 }}
+          {{- end }}
+        {{- else if hasKey $from "podSelector" }}
+        namespaceSelector:
+          matchLabels:
+            kubernetes.io/metadata.name: {{ if hasKey $policyConfig "namespace" }}{{ $policyConfig.namespace }}{{ else }}{{ $global.instanceSlug }}{{ end }}
+        {{- end }}
+        {{- if hasKey $from "podSelector" }}
+        podSelector:
+          {{- toYaml $from.podSelector | nindent 10 }}
+        {{- end }}
+        {{- if hasKey $from "ipBlock" }}
+        ipBlock:
+          {{- toYaml $from.ipBlock | nindent 10 }}
+        {{- end }}
+      {{- end }}
+      {{- end }}
+      {{- if hasKey $rule "ports" }}
+      ports:
+        {{- toYaml $rule.ports | nindent 6 }}
+      {{- end }}
+    {{- end }}
+  {{- end }}
+  {{- if hasKey $policyConfig "egress" }}
+    egress:
+    {{- range $policyConfig.egress }}
+    {{- $rule := . }}
+    - {{- if hasKey $rule "to" }}
+      to:
+      {{- range $rule.to }}
+      {{- $to := . }}
+      - {{- if hasKey $to "namespaceSelector" }}
+          {{- if eq (typeOf $to.namespaceSelector) "string" }}
+        namespaceSelector:
+          matchLabels:
+            kubernetes.io/metadata.name: {{ $to.namespaceSelector }}
+          {{- else }}
+        namespaceSelector:
+          {{- toYaml $to.namespaceSelector | nindent 10 }}
+          {{- end }}
+        {{- else if hasKey $to "podSelector" }}
+        namespaceSelector:
+          matchLabels:
+            kubernetes.io/metadata.name: {{ if hasKey $policyConfig "namespace" }}{{ $policyConfig.namespace }}{{ else }}{{ $global.instanceSlug }}{{ end }}
+        {{- end }}
+        {{- if hasKey $to "podSelector" }}
+        podSelector:
+          {{- toYaml $to.podSelector | nindent 10 }}
+        {{- end }}
+        {{- if hasKey $to "ipBlock" }}
+        ipBlock:
+          {{- toYaml $to.ipBlock | nindent 10 }}
+        {{- end }}
+      {{- end }}
+      {{- end }}
+      {{- if hasKey $rule "ports" }}
+      ports:
+        {{- toYaml $rule.ports | nindent 6 }}
+      {{- end }}
+    {{- end }}
+  {{- end }}
+  {{- end }}
+{{- end }}

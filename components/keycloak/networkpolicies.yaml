@@ -6,15 +6,12 @@ keycloak:
     - Ingress
   ingress:
     - from:
-        - namespaceSelector: {}
-          podSelector:
+        - podSelector:
             matchLabels:
               app.kubernetes.io/name: apisix
-        - namespaceSelector: {}
-          podSelector:
+        - podSelector:
             matchLabels:
               app.kubernetes.io/name: config-adapter
-        - namespaceSelector: {}
-          podSelector:
+        - podSelector:
             matchLabels:
               app.kubernetes.io/name: keycloak-config-cli

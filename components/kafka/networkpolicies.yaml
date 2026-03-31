@@ -6,25 +6,20 @@ kafka-cluster:
     - Ingress
   ingress:
     - from:
-        - namespaceSelector: {}
-          podSelector:
+        - podSelector:
             matchLabels:
               app.kubernetes.io/name: apicurio
-        - namespaceSelector: {}
-          podSelector:
+        - podSelector:
             matchLabels:
               app.kubernetes.io/name: portal
               app.kubernetes.io/component: backend
-        - namespaceSelector: {}
-          podSelector:
+        - podSelector:
             matchLabels:
               app.kubernetes.io/name: kafka-ui
-        - namespaceSelector: {}
-          podSelector:
+        - podSelector:
             matchLabels:
               app.kubernetes.io/name: config-adapter
-        - namespaceSelector: {}
-          podSelector:
+        - podSelector:
             matchLabels:
               app.kubernetes.io/name: redpanda-connect
 

@@ -1,78 +1,24 @@
 ---
+# Ingress: Allow health checks from kubelet
 config-adapter:
   podSelector:
     app.kubernetes.io/instance: config-adapters-adapters
     app.kubernetes.io/name: config-adapter
   policyTypes:
     - Ingress
-    - Egress
   ingress:
     # Allow health checks from kubelet (liveness/readiness probes)
     - ports:
         - protocol: TCP
           port: 8080
-  egress:
-    # Allow DNS resolution (kube-dns/CoreDNS)
-    - to:
-        - namespaceSelector: {}
-          podSelector:
-            matchLabels:
-              k8s-app: kube-dns
-      ports:
-        - protocol: UDP
-          port: 53
-        - protocol: TCP
-          port: 53
-    # Allow egress to Kafka (port 9092)
-    - to:
-        - namespaceSelector: {}
-          podSelector:
-            matchLabels:
-              strimzi.io/cluster: kafka-cluster
-      ports:
-        - protocol: TCP
-          port: 9092
-    # Allow egress to Keycloak (port 80)
-    - to:
-        - namespaceSelector: {}
-          podSelector:
-            matchLabels:
-              app.kubernetes.io/instance: keycloak-app
-      ports:
-        - protocol: TCP
-          port: 80
-    # Allow egress to APISIX Admin (port 9180)
-    - to:
-        - namespaceSelector: {}
-          podSelector:
-            matchLabels:
-              app.kubernetes.io/name: apisix
-      ports:
-        - protocol: TCP
-          port: 9180
 
+# Ingress: Allow Linkerd proxy traffic
 config-adapter-allow-linkerd:
   podSelector:
     app.kubernetes.io/instance: config-adapters-adapters
     app.kubernetes.io/name: config-adapter
   policyTypes:
     - Ingress
-    - Egress
-  egress:
-    - ports:
-        - port: 4143
-          protocol: TCP
-    - to:
-        - namespaceSelector:
-            matchLabels:
-              kubernetes.io/metadata.name: linkerd
-      ports:
-        - protocol: TCP
-          port: 8080 # identity
-        - protocol: TCP
-          port: 8086 # destination
-        - protocol: TCP
-          port: 8090 # policy
   ingress:
     - ports:
         - port: 4143
@@ -80,4 +26,94 @@ config-adapter-allow-linkerd:
         - port: 4190
           protocol: TCP
         - port: 4191
+          protocol: TCP
+
+# Egress: Allow outbound connections
+config-adapter-egress:
+  podSelector:
+    app.kubernetes.io/instance: config-adapters-adapters
+    app.kubernetes.io/name: config-adapter
+  policyTypes:
+    - Egress
+  egress:
+    # DNS resolution (required for all service lookups)
+    - to:
+        - namespaceSelector: 'kube-system'
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - port: 53
+          protocol: UDP
+        - port: 53
+          protocol: TCP
+
+    # Linkerd control plane (required for service mesh mTLS)
+    - to:
+        - namespaceSelector: 'linkerd'
+      ports:
+        - port: 8080 # linkerd-identity
+          protocol: TCP
+        - port: 8086 # linkerd-destination
+          protocol: TCP
+        - port: 8090 # linkerd-policy
+          protocol: TCP
+
+    # Linkerd proxy admin port (same pod, no namespace restriction)
+    - ports:
+        - port: 4191
+          protocol: TCP
+
+    # Keycloak (for client management and auth)
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/instance: keycloak-app
+      ports:
+        - port: 8080
+          protocol: TCP
+
+    # FROST (for SensorThings API configuration)
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/instance: frost-frost
+      ports:
+        - port: 8080
+          protocol: TCP
+
+    # ETCD (for configuration storage)
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: etcd
+      ports:
+        - port: 2379
+          protocol: TCP
+
+    # PostgreSQL (if config-adapter needs direct DB access)
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: postgresql
+      ports:
+        - port: 5432
+          protocol: TCP
+
+    # Kafka (for event streaming)
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: kafka
+      ports:
+        - port: 9092
+          protocol: TCP
+
+    # APISIX (if config-adapter needs to access gateway)
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: apisix
+      ports:
+        - port: 9080
           protocol: TCP

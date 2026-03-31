@@ -1,0 +1,4 @@
+# ---
+# default-deny-ingress:
+#   policyTypes:
+#     - Ingress

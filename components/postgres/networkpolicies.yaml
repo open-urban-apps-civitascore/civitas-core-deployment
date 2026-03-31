@@ -5,42 +5,44 @@ postgres:
   policyTypes:
     - Ingress
   ingress:
+    # CloudNative-PG operator - allow from all namespaces
     - from:
-        # CloudNative-PG operator
-        - namespaceSelector: {}
-          podSelector:
+        - podSelector:
             matchLabels:
               app.kubernetes.io/name: cloudnative-pg
-        # Portal backend
-        - namespaceSelector: {}
-          podSelector:
+    # Portal backend - auto-inject instanceSlug namespace
+    - from:
+        - podSelector:
             matchLabels:
               app.kubernetes.io/name: portal
-        - namespaceSelector: {}
-          podSelector:
+        - podSelector:
             matchLabels:
               app.kubernetes.io/component: backend
-        # Keycloak
-        - namespaceSelector: {}
-          podSelector:
+    # Keycloak - auto-inject instanceSlug namespace
+    - from:
+        - podSelector:
             matchLabels:
               app.kubernetes.io/instance: keycloak-app
-        # Authz
-        - namespaceSelector: {}
-          podSelector:
+    # Authz - auto-inject instanceSlug namespace
+    - from:
+        - podSelector:
             matchLabels:
               app.kubernetes.io/name: authz-repo
-        - namespaceSelector: {}
-          podSelector:
+        - podSelector:
             matchLabels:
               app.kubernetes.io/name: authz
-        # Frost
-        - namespaceSelector: {}
-          podSelector:
+    # Frost - auto-inject instanceSlug namespace
+    - from:
+        - podSelector:
             matchLabels:
               app.kubernetes.io/instance: frost-frost
-        # Database role setup job
-        - namespaceSelector: {}
-          podSelector:
+    # Database role setup jobs - auto-inject instanceSlug namespace
+    - from:
+        - podSelector:
             matchLabels:
               app.kubernetes.io/component: database-role-setup
+    # Portal database job (authz readonly role creation)
+    - from:
+        - podSelector:
+            matchLabels:
+              batch.kubernetes.io/job-name: portal-db-create-role-authz-readonly
