@@ -23,6 +23,8 @@ portal-backend:
     proxy-rewrite:
       headers:
         remove:
+          - X-Userinfo
+          - X-Access-Token
           - X-Allowed-Scope-Ids
     request-id:
       include_in_response: true
@@ -34,5 +36,10 @@ portal-bff:
       include_in_response: true
     proxy-rewrite:
       headers:
-        X-Forwarded-Proto: https
-        X-Forwarded-Port: '443'
+        remove:
+          - X-Userinfo
+          - X-Access-Token
+          - X-Allowed-Scope-Ids
+        set:
+          X-Forwarded-Proto: https
+          X-Forwarded-Port: '443'
