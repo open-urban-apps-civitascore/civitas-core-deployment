@@ -7,8 +7,7 @@ model-atlas:
     - Ingress
   ingress:
     - from:
-        - namespaceSelector: {}
-          podSelector:
+        - podSelector:
             matchLabels:
               app.kubernetes.io/name: portal
               app.kubernetes.io/component: backend

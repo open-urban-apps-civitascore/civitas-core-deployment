@@ -6,19 +6,16 @@ apisix:
     - Ingress
   ingress:
     - from:
-        - namespaceSelector: {}
-          podSelector:
+        - podSelector:
             matchLabels:
               app.kubernetes.io/name: config-adapter
-        - namespaceSelector: {}
-          podSelector:
+        - podSelector:
             matchLabels:
               app.kubernetes.io/component: apisix-static-configuration
       ports:
         - protocol: TCP
           port: 9180
     - from:
-        - namespaceSelector: {}
       ports:
         - protocol: TCP
           port: 80

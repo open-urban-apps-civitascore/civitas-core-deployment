@@ -7,8 +7,7 @@ frost:
   ingress:
     # APISIX Gateway proxied den externen Traffic zu FROST
     - from:
-        - namespaceSelector: {}
-          podSelector:
+        - podSelector:
             matchLabels:
               app.kubernetes.io/name: apisix
       ports:
@@ -16,8 +15,7 @@ frost:
           port: 8080
     # Config-Adapter greift direkt auf FROST zu (CRUD fuer Things, Sensors, etc.)
     - from:
-        - namespaceSelector: {}
-          podSelector:
+        - podSelector:
             matchLabels:
               app.kubernetes.io/name: config-adapter
       ports:
