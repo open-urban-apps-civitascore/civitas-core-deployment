@@ -5,60 +5,11 @@ config-adapter:
     app.kubernetes.io/name: config-adapter
   policyTypes:
     - Ingress
-    - Egress
   ingress:
     # Allow health checks from kubelet (liveness/readiness probes)
     - ports:
         - protocol: TCP
           port: 8080
-  egress:
-    # Allow DNS resolution (kube-dns/CoreDNS)
-    - to:
-        - namespaceSelector: {}
-          podSelector:
-            matchLabels:
-              k8s-app: kube-dns
-      ports:
-        - protocol: UDP
-          port: 53
-        - protocol: TCP
-          port: 53
-    # Allow egress to Kafka (port 9092)
-    - to:
-        - namespaceSelector: {}
-          podSelector:
-            matchLabels:
-              strimzi.io/cluster: kafka-cluster
-      ports:
-        - protocol: TCP
-          port: 9092
-    # Allow egress to Keycloak (port 80)
-    - to:
-        - namespaceSelector: {}
-          podSelector:
-            matchLabels:
-              app.kubernetes.io/instance: keycloak-app
-      ports:
-        - protocol: TCP
-          port: 80
-    # Allow egress to FROST (port 8080)
-    - to:
-        - namespaceSelector: {}
-          podSelector:
-            matchLabels:
-              app.kubernetes.io/instance: frost-frost
-      ports:
-        - protocol: TCP
-          port: 8080
-    # Allow egress to APISIX Admin (port 9180)
-    - to:
-        - namespaceSelector: {}
-          podSelector:
-            matchLabels:
-              app.kubernetes.io/name: apisix
-      ports:
-        - protocol: TCP
-          port: 9180
 
 config-adapter-allow-linkerd:
   podSelector:
@@ -66,22 +17,6 @@ config-adapter-allow-linkerd:
     app.kubernetes.io/name: config-adapter
   policyTypes:
     - Ingress
-    - Egress
-  egress:
-    - ports:
-        - port: 4143
-          protocol: TCP
-    - to:
-        - namespaceSelector:
-            matchLabels:
-              kubernetes.io/metadata.name: linkerd
-      ports:
-        - protocol: TCP
-          port: 8080 # identity
-        - protocol: TCP
-          port: 8086 # destination
-        - protocol: TCP
-          port: 8090 # policy
   ingress:
     - ports:
         - port: 4143
