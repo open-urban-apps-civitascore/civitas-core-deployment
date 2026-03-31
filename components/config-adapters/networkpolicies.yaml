@@ -41,6 +41,15 @@ config-adapter:
       ports:
         - protocol: TCP
           port: 80
+    # Allow egress to FROST (port 8080)
+    - to:
+        - namespaceSelector: {}
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/instance: frost-frost
+      ports:
+        - protocol: TCP
+          port: 8080
     # Allow egress to APISIX Admin (port 9180)
     - to:
         - namespaceSelector: {}
