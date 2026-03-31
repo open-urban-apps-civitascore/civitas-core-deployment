@@ -1,5 +1,7 @@
 ---
 redpandaConnect:
+  streamsconfig:
+    chart: charts/streams-config
   connect:
     repository: https://charts.redpanda.com
     chart: redpanda-connect/connect
