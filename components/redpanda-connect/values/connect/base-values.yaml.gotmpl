@@ -16,3 +16,15 @@ securityContext:
 
 podSecurityContext:
   {{ .Values.securityDefaults.podSecurityContext | toYaml | nindent 2 }}
+
+http:
+  root_path: ""
+
+streams:
+  enabled: true
+  api:
+    enable: true
+  streamsConfigMap: redpanda-connect-streams
+
+args:
+  - "streams"

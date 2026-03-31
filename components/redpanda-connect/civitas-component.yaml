@@ -1,4 +1,7 @@
 ---
 component: redpandaConnect
 parts:
+  - name: streamsconfig
   - name: connect
+    needs:
+      - redpandaConnect.streamsconfig
