@@ -16,6 +16,9 @@ securityContext:
 podSecurityContext:
   {{ .Values.securityDefaults.podSecurityContext | toYaml | nindent 2 }}
 
+podAnnotations:
+  config.linkerd.io/skip-outbound-ports: "25,465,587" # ignore smtp ports
+
 image:
 {{- with .Values.images.keycloak.app }}
   repository: {{ .repository }}
