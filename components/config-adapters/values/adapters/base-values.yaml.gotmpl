@@ -56,6 +56,10 @@ env:
         key: "password"
   - name: KEYCLOAK_CLIENT_ID
     value: "config-adapter"
+  - name: KEYCLOAK_INVITATION_CLIENT_ID
+    value: "portal-frontend"
+  - name: KEYCLOAK_INVITATION_REDIRECT_URI
+    value: "https://portal.{{ $global.domain }}/"
   # Keycloak Topics:
   # User Events (7): user.created, user.updated, user.deleted, user.locked, user.unlocked, user.password.changed, user.password.reset
   # Realm Events (3): realm.created, realm.updated, realm.deleted

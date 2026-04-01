@@ -320,6 +320,11 @@ config:
         {{- range $clientId, $client := .Values.keycloakClients }}
         {{- $subdomain := $client.subdomain | default $clientId }}
         {{- $redirectPath := $client.redirectPath | default "/*" }}
+        {{- /* Build the redirect URI list: start with the primary redirectPath, then append any additionalRedirectPaths */}}
+        {{- $redirectUris := list (printf "https://%s.%s%s" $subdomain $global.domain $redirectPath) }}
+        {{- range (index $client "additionalRedirectPaths" | default list) }}
+        {{- $redirectUris = append $redirectUris (printf "https://%s.%s%s" $subdomain $global.domain .) }}
+        {{- end }}
         {{- $clientDefaults := dict
           "clientId" $clientId
           "name" ($client.name | default $clientId)
@@ -336,7 +341,7 @@ config:
           "directAccessGrantsEnabled" true
           "serviceAccountsEnabled" false
           "authorizationServicesEnabled" false
-          "redirectUris" (list (printf "https://%s.%s%s" $subdomain $global.domain $redirectPath))
+          "redirectUris" $redirectUris
           "webOrigins" (list (printf "https://%s.%s" $subdomain $global.domain))
           "defaultClientScopes" (list "basic" "email" "profile" "roles" "web-origins")
           "optionalClientScopes" (list "address" "phone" "offline_access" "microprofile-jwt")
