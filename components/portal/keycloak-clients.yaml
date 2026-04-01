@@ -4,6 +4,8 @@ portal-frontend:
   description: CIVITAS Portal Frontend Application
   subdomain: portal
   redirectPath: /api/auth/callback/keycloak
+  additionalRedirectPaths:
+    - /
 
 apisix-validator:
   name: APISIX Validator

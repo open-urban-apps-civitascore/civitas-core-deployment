@@ -29,3 +29,7 @@ frontend:
     limits:
       cpu: 250m
       memory: 256Mi
+
+initialUser:
+  # development profile only: full admin is enabled for convenience; outside development, tenant admins should not receive all data roles by default to preserve governance and require explicit role assignment
+  isFullAdmin: true

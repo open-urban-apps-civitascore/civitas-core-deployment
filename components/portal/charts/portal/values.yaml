@@ -104,3 +104,4 @@ networkPolicy:
 
 initialUser:
   email: ''
+  isFullAdmin: false
