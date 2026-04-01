@@ -9,9 +9,9 @@
 
 [![Latest Release](https://gitlab.com/civitas-connect/civitas-core/civitas-core-v2/civitas-core-platform/-/badges/release.svg)](https://gitlab.com/civitas-connect/civitas-core/civitas-core-v2/civitas-core-platform/-/releases) [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](CODE_OF_CONDUCT.md)
 
-Dieses Repository stellt die **CIVITAS/CORE Plattform (Version 2)** bereit.
+Dieses Repository stellt die **CIVITAS/CORE Plattform Version 2** bereit.
 
-> For information in English please see the [English Readme](README.md).
+> For information in English please see the [👉 English Readme](README.md).
 
 ## Beschreibung
 
@@ -39,17 +39,14 @@ Im Vergleich zu Version 1 liegt der Fokus von CIVITAS/CORE v2 auf:
 * Self-Service und Automatisierung über den gesamten Datenlebenszyklus
 * Verbesserter Benutzeroberflächen zur Verwaltung von Daten und Konfigurationen
 
-Die Architektur von Version 2 befindet sich in Weiterentwicklung und ist in der Dokumentation beschrieben:
+Die Architektur von Version 2 befindet sich in Weiterentwicklung und ist in der [👉 Dokumentation](https://docs.core.civitasconnect.digital/docs_v2/intro) beschrieben.
 
-👉 https://docs.core.civitasconnect.digital/docs_v2/intro
 
-> Hinweis: Version 2 ist eine grundlegende Weiterentwicklung und nicht mehr auf IoT-basierte Anwendungsfälle beschränkt. Sie unterstützt **beliebige Datentypen und Anwendungsfälle jeder Komplexität**.
+> Hinweis: Version 2 ist eine grundlegende Weiterentwicklung und nicht mehr auf IoT-basierte Anwendungsfälle beschränkt wie Version 1. Sie unterstützt **beliebige Datentypen und Anwendungsfälle jeder Komplexität**.
 
 ## Nutzung
 
-Um CIVITAS/CORE v2 zu betreiben und zu nutzen, folgen Sie bitte der offiziellen Dokumentation:
-
-👉 https://docs.core.civitasconnect.digital/docs_v2/intro
+Um CIVITAS/CORE v2 zu betreiben und zu nutzen, folgen Sie bitte der offiziellen [👉 Dokumentation](https://docs.core.civitasconnect.digital/docs_v2/intro).
 
 Die Einrichtung, Architektur und der Betrieb von Version 2 unterscheiden sich deutlich von Version 1 und sind vollständig in der Dokumentation beschrieben.
 
@@ -60,27 +57,24 @@ CIVITAS/CORE wird gemeinschaftlich von Mitgliedern des Vereins Civitas Connect e
 
 ## Releases & Roadmap
 
-Stabile Versionen werden regelmäßig veröffentlicht. Die neueste Version findet sich im [Deployment-Repository]. Der aktuelle Entwicklungsstand kann über unser [Issue-Board](https://gitlab.com/groups/civitas-connect/civitas-core/-/boards) verfolgt werden.
+Stabile Versionen werden 1x pro Quartal veröffentlicht. Die neueste Version findet sich in diesem Deployment-Repository. Der aktuelle Entwicklungsstand kann über unser [Issue-Board](https://gitlab.com/groups/civitas-connect/civitas-core/-/boards) verfolgt werden.
 
-**Version 2.x** ist die nächste große Evolutionsstufe von CIVITAS/CORE. Sie ermöglicht die Umsetzung von Anwendungsfällen jeglicher Komplexität – auch für große Organisationen – und bietet Benutzeroberflächen, die Nutzer:innen bei der Verwaltung aller Aspekte ihrer Daten unterstützen.
+Weitere Informationen zur langfristigen Roadmap [👉 hier](https://www.civitasconnect.digital/civitas-core/)
 
-Weitere Informationen zur langfristigen Roadmap:
-👉 https://www.civitasconnect.digital/civitas-core/
+Detaillierte Roadmap für Version 2 [👉 hier](https://gitlab.com/groups/civitas-connect/civitas-core/-/roadmap?state=opened&sort=END_DATE_ASC&layout=MONTHS&timeframe_range_type=CURRENT_YEAR&label_name[]=v::2&progress=WEIGHT&show_progress=true&show_milestones=true&milestones_type=ALL&show_labels=false)
 
-Detaillierte Roadmap für Version 2:
-👉 https://gitlab.com/groups/civitas-connect/civitas-core/-/roadmap?label_name[]=v::2
 
 ## Mitarbeit
 
-Sie haben einen Bug gefunden, möchten ein Problem melden oder Code bzw. Feature Requests beitragen? [-> Contribution guide](CONTRIBUTION-GUIDE.md)
+Sie haben einen Bug gefunden, möchten ein Problem melden oder Code bzw. Feature Requests beitragen? [👉 Contribution guide](CONTRIBUTION-GUIDE.md)
 
 ## Mitwirkende
 
-[-> Liste der Mitwirkenden](CONTRIBUTORS.md)
+[👉 Liste der Mitwirkenden](CONTRIBUTORS.md)
 
 ## Sicherheitslücken melden
 
-[-> Security](SECURITY.md)
+[👉 Security](SECURITY.md)
 
 ## Finanzierung
 
