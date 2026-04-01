@@ -53,7 +53,7 @@ Die Einrichtung, Architektur und der Betrieb von Version 2 unterscheiden sich de
 ## Wer?
 
 CIVITAS/CORE wird gemeinschaftlich von Mitgliedern des Vereins Civitas Connect e.V. entwickelt. Diese bestehen aus Städten, Regionen und kommunalen Unternehmen, die ausschließlich im öffentlichen Sektor tätig sind.
-[Civitas Connect e.V.](https://www.civitasconnect.digital/) organisiert diese Gemeinschaft und alle Entwicklungsaktivitäten. Alle Mitglieder finden Sie auf unserer [Website](https://www.civitasconnect.digital/ueber-uns-2/mitglieder/).
+Eine Abteilung im Verein [Civitas Connect e.V.](https://www.civitasconnect.digital/) organisiert diese Gemeinschaft und alle Entwicklungsaktivitäten. Alle Mitglieder finden Sie auf unserer [Website](https://www.civitasconnect.digital/civitas-core-community/).
 
 ## Releases & Roadmap
 
