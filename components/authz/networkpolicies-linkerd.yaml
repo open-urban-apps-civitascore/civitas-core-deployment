@@ -19,7 +19,8 @@ opa-allow-linkerd:
 
 authz-repo-allow-linkerd:
   podSelector:
-    app.kubernetes.io/name: authz-repo
+    app.kubernetes.io/name: authz
+    app.kubernetes.io/component: authz
   policyTypes:
     - Ingress
   ingress:

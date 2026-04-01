@@ -15,7 +15,8 @@ opa:
 # Network policy for authz-repo service
 authz-repo:
   podSelector:
-    app.kubernetes.io/name: authz-repo
+    app.kubernetes.io/name: authz
+    app.kubernetes.io/component: authz
   policyTypes:
     - Ingress
   ingress:
