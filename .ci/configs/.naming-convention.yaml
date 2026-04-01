@@ -45,5 +45,8 @@ exclude-patterns:
   - '.*template-component/.*'
   # Community standard files (uppercase by convention)
   - 'CONTRIBUTION_GUIDE\.md$'
+  - 'CONTRIBUTORS\.md$'
   - 'CODE_OF_CONDUCT\.md$'
   - 'SECURITY\.md$'
+  - 'TRADEMARK\.md$'
+
