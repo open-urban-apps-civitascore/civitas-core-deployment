@@ -1,8 +1,6 @@
 # List of contributors
 
-Thanks to everyone who contributed to this project or previous works!
-
-Contributors for version 1 of CIVITAS/CORE ([-> source](https://gitlab.com/civitas-connect/civitas-core/civitas-core/-/blob/main/CONTRIBUTORS.md)):
+Thanks to everyone who contributed to this project:
 
 ### Kernblick GmbH
 Andreas Linneweber
@@ -52,3 +50,6 @@ Linus Lawrenz
 Mario Dietze
 Mathias Renner
 Robin Lamberti
+
+
+Please also see the contributors for version 1 of CIVITAS/CORE ([-> here](https://gitlab.com/civitas-connect/civitas-core/civitas-core/-/blob/main/CONTRIBUTORS.md)).
