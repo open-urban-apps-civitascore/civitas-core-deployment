@@ -107,11 +107,6 @@ env:
       secretKeyRef:
         name: "portal-backend-crypto"
         key: "civitas-master-key"
-  - name: CIVITAS_MASTER_SALT
-    valueFrom:
-      secretKeyRef:
-        name: "portal-backend-crypto"
-        key: "civitas-master-salt"
 
   # Health check configuration
   - name: HEALTHCHECK_PORT

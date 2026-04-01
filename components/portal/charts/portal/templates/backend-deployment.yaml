@@ -106,11 +106,6 @@ spec:
                 secretKeyRef:
                   name: portal-backend-crypto
                   key: civitas-master-key
-            - name: CIVITAS_MASTER_SALT
-              valueFrom:
-                secretKeyRef:
-                  name: portal-backend-crypto
-                  key: civitas-master-salt
             - name: INIT_GROUPS_0_NAME
               value: Tenant Admins
             - name: INIT_GROUPS_0_ROLENAME
