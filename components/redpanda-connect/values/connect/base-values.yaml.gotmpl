@@ -11,6 +11,9 @@
 # - [ ] Ingress with TLS
 
 # TODO: set helm values for broker here
+podAnnotations:
+  config.linkerd.io/skip-outbound-ports: "8883"
+
 securityContext:
   {{ .Values.securityDefaults.securityContext | toYaml | nindent 2 }}
 
