@@ -1,5 +1,5 @@
 ---
-redpanda-connect:
+redpanda-connect-allow-linkerd:
   podSelector:
     app.kubernetes.io/instance: redpanda-connect-connect
   policyTypes:
@@ -9,3 +9,10 @@ redpanda-connect:
         - podSelector:
             matchLabels:
               app.kubernetes.io/name: config-adapter
+      ports:
+        - port: 4143
+          protocol: TCP
+        - port: 4190
+          protocol: TCP
+        - port: 4191
+          protocol: TCP
