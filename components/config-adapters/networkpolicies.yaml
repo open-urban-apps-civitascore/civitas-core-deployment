@@ -1,4 +1,13 @@
 ---
+# Ingress: block all connections
+config-adapter:
+  podSelector:
+    app.kubernetes.io/instance: config-adapters-adapters
+    app.kubernetes.io/name: config-adapter
+  policyTypes:
+    - Ingress
+  ingress:
+
 # Egress: Allow outbound connections
 config-adapter-egress:
   podSelector:
