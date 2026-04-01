@@ -1,5 +1,5 @@
 ---
-portal-frontend:
+portal-frontend-allow-linkerd:
   podSelector:
     app.kubernetes.io/instance: portal-portal
     app.kubernetes.io/name: portal
@@ -11,8 +11,15 @@ portal-frontend:
         - podSelector:
             matchLabels:
               app.kubernetes.io/name: apisix
+      ports:
+        - port: 4143
+          protocol: TCP
+        - port: 4190
+          protocol: TCP
+        - port: 4191
+          protocol: TCP
 
-portal-backend:
+portal-backend-allow-linkerd:
   podSelector:
     app.kubernetes.io/instance: portal-portal
     app.kubernetes.io/name: portal
@@ -27,3 +34,10 @@ portal-backend:
         - podSelector:
             matchLabels:
               app.kubernetes.io/name: portal
+      ports:
+        - port: 4143
+          protocol: TCP
+        - port: 4190
+          protocol: TCP
+        - port: 4191
+          protocol: TCP

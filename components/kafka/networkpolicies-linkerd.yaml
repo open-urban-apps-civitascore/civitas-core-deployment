@@ -1,7 +1,9 @@
 ---
-kafka-cluster:
+kafka-allow-linkerd:
   podSelector:
     strimzi.io/cluster: kafka-cluster
+    strimzi.io/kind: Kafka
+    strimzi.io/name: kafka-cluster-kafka
   policyTypes:
     - Ingress
   ingress:
@@ -22,3 +24,10 @@ kafka-cluster:
         - podSelector:
             matchLabels:
               app.kubernetes.io/name: redpanda-connect
+      ports:
+        - port: 4143
+          protocol: TCP
+        - port: 4190
+          protocol: TCP
+        - port: 4191
+          protocol: TCP

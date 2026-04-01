@@ -1,5 +1,5 @@
 ---
-keycloak:
+keycloak-allow-linkerd:
   podSelector:
     app.kubernetes.io/instance: keycloak-app
   policyTypes:
@@ -15,3 +15,10 @@ keycloak:
         - podSelector:
             matchLabels:
               app.kubernetes.io/name: keycloak-config-cli
+      ports:
+        - port: 4143
+          protocol: TCP
+        - port: 4190
+          protocol: TCP
+        - port: 4191
+          protocol: TCP

@@ -14,15 +14,6 @@ ports:
   - port: 443:443
     nodeFilters:
       - loadbalancer
-  - port: 1883:1883
-    nodeFilters:
-      - loadbalancer
-  - port: 9876:9876
-    nodeFilters:
-      - loadbalancer
-  - port: 6379:6379
-    nodeFilters:
-      - loadbalancer
 options:
   k3d: # k3d runtime settings
     wait: true

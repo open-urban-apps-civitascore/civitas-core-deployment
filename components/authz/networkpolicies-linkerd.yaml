@@ -1,9 +1,7 @@
 ---
-# Network policy for OPA (Open Policy Agent)
-opa:
+opa-allow-linkerd:
   podSelector:
-    app.kubernetes.io/name: authz
-    app.kubernetes.io/component: opa
+    app.kubernetes.io/name: opa
   policyTypes:
     - Ingress
   ingress:
@@ -11,9 +9,15 @@ opa:
         - podSelector:
             matchLabels:
               app.kubernetes.io/name: apisix
+      ports:
+        - port: 4143
+          protocol: TCP
+        - port: 4190
+          protocol: TCP
+        - port: 4191
+          protocol: TCP
 
-# Network policy for authz-repo service
-authz-repo:
+authz-repo-allow-linkerd:
   podSelector:
     app.kubernetes.io/name: authz
     app.kubernetes.io/component: authz
@@ -25,3 +29,10 @@ authz-repo:
             matchLabels:
               app.kubernetes.io/name: authz
               app.kubernetes.io/component: opa
+      ports:
+        - port: 4143
+          protocol: TCP
+        - port: 4190
+          protocol: TCP
+        - port: 4191
+          protocol: TCP

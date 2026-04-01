@@ -1,5 +1,5 @@
 ---
-model-atlas:
+model-atlas-allow-linkerd:
   podSelector:
     app.kubernetes.io/instance: model-atlas-model-atlas
     app.kubernetes.io/name: model-atlas
@@ -11,3 +11,10 @@ model-atlas:
             matchLabels:
               app.kubernetes.io/name: portal
               app.kubernetes.io/component: backend
+      ports:
+        - port: 4143
+          protocol: TCP
+        - port: 4190
+          protocol: TCP
+        - port: 4191
+          protocol: TCP

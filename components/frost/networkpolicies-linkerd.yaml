@@ -1,7 +1,7 @@
 ---
-keycloak:
+frost-allow-linkerd:
   podSelector:
-    app.kubernetes.io/instance: keycloak-app
+    app.kubernetes.io/instance: frost-frost
   policyTypes:
     - Ingress
   ingress:
@@ -12,6 +12,10 @@ keycloak:
         - podSelector:
             matchLabels:
               app.kubernetes.io/name: config-adapter
-        - podSelector:
-            matchLabels:
-              app.kubernetes.io/name: keycloak-config-cli
+      ports:
+        - port: 4143
+          protocol: TCP
+        - port: 4190
+          protocol: TCP
+        - port: 4191
+          protocol: TCP

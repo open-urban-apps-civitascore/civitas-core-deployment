@@ -1,5 +1,5 @@
 ---
-apicurio:
+apicurio-allow-linkerd:
   podSelector:
     app.kubernetes.io/instance: apicurio-apicurio
     app.kubernetes.io/name: apicurio
@@ -10,3 +10,10 @@ apicurio:
         - podSelector:
             matchLabels:
               app.kubernetes.io/name: model-atlas
+      ports:
+        - port: 4143
+          protocol: TCP
+        - port: 4190
+          protocol: TCP
+        - port: 4191
+          protocol: TCP
