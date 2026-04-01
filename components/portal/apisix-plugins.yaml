@@ -23,7 +23,12 @@ portal-backend:
     serverless-pre-function:
       phase: rewrite
       functions:
-        - 'return function() ngx.req.clear_header("X-Userinfo"); ngx.req.clear_header("X-Access-Token"); ngx.req.clear_header("X-Allowed-Scope-Ids") end'
+        - >-
+          return function()
+            ngx.req.clear_header("X-Userinfo")
+            ngx.req.clear_header("X-Access-Token")
+            ngx.req.clear_header("X-Allowed-Scope-Ids")
+          end
     request-id:
       include_in_response: true
 portal-bff:
@@ -35,7 +40,12 @@ portal-bff:
     serverless-pre-function:
       phase: rewrite
       functions:
-        - 'return function() ngx.req.clear_header("X-Userinfo"); ngx.req.clear_header("X-Access-Token"); ngx.req.clear_header("X-Allowed-Scope-Ids") end'
+        - >-
+          return function()
+            ngx.req.clear_header("X-Userinfo")
+            ngx.req.clear_header("X-Access-Token")
+            ngx.req.clear_header("X-Allowed-Scope-Ids")
+          end
     proxy-rewrite:
       headers:
         set:
