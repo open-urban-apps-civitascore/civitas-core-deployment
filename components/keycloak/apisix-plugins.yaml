@@ -5,12 +5,17 @@ keycloak:
   plugins:
     request-id:
       include_in_response: true
+    serverless-pre-function:
+      phase: rewrite
+      functions:
+        - >-
+          return function()
+            ngx.req.clear_header("X-Userinfo")
+            ngx.req.clear_header("X-Access-Token")
+            ngx.req.clear_header("X-Allowed-Scope-Ids")
+          end
     proxy-rewrite:
       headers:
-        remove:
-          - X-Userinfo
-          - X-Access-Token
-          - X-Allowed-Scope-Ids
         set:
           X-Forwarded-Proto: https
           X-Forwarded-Port: '443'
