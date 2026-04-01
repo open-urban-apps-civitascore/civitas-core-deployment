@@ -4,6 +4,13 @@ portal-frontend:
   description: CIVITAS Portal Frontend Application
   subdomain: portal
   redirectPath: /api/auth/callback/keycloak
+  # Also allow redirect to the portal root so Keycloak can redirect users there
+  # after completing admin-initiated required actions (e.g. account activation via invitation email).
+  # Without this, Keycloak would show a static "Your account has been updated" page because
+  # the config-adapter passes redirect_uri=<portalRoot> when calling execute-actions-email,
+  # and Keycloak rejects redirect URIs that are not registered for the client.
+  additionalRedirectPaths:
+    - /
 
 apisix-validator:
   name: APISIX Validator

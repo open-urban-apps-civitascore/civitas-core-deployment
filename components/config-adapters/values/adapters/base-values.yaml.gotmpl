@@ -56,6 +56,14 @@ env:
         key: "password"
   - name: KEYCLOAK_CLIENT_ID
     value: "config-adapter"
+  # Client ID and redirect URI passed to Keycloak's execute-actions-email endpoint when sending
+  # invitation emails to newly created users. Keycloak embeds these in the action token so that
+  # after the user completes the required actions (set password, verify email) they are redirected
+  # back to the portal instead of seeing the static "Your account has been updated" page.
+  - name: KEYCLOAK_INVITATION_CLIENT_ID
+    value: "portal-frontend"
+  - name: KEYCLOAK_INVITATION_REDIRECT_URI
+    value: "https://portal.{{ $global.domain }}/"
   # Keycloak Topics:
   # User Events (7): user.created, user.updated, user.deleted, user.locked, user.unlocked, user.password.changed, user.password.reset
   # Realm Events (3): realm.created, realm.updated, realm.deleted
