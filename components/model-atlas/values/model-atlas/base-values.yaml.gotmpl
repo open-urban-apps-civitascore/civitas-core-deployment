@@ -19,6 +19,13 @@ initContainers:
   - name: init-tmp-dir
     image: {{ .Values.images.modelAtlas.init.repository }}:{{ .Values.images.modelAtlas.init.tag }}
     command: ['sh', '-c', 'mkdir -p /tmp/modelatlas && chmod 755 /tmp/modelatlas']
+    resources:
+      requests:
+        cpu: 10m
+        memory: 16Mi
+      limits:
+        cpu: 50m
+        memory: 32Mi
     volumeMounts:
       - name: tmp
         mountPath: /tmp
@@ -43,6 +50,13 @@ initContainers:
           sleep 5
         done
         echo "Apicurio is ready!"
+    resources:
+      requests:
+        cpu: 10m
+        memory: 16Mi
+      limits:
+        cpu: 50m
+        memory: 32Mi
     securityContext:
       runAsNonRoot: true
       runAsUser: 1000
