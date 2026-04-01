@@ -1,3 +1,10 @@
 ---
 global:
+  domain: main.civitas2.fw-web.space/
   profile: production
+  instanceSlug: civitas
+  initialUserEmail: pk@codestryke.com
+  ingress:
+    enabled: true
+    clusterIssuer: 'letsencrypt-prod'
+    ingressClass: 'nginx'
