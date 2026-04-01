@@ -43,3 +43,7 @@ exclude-patterns:
   - '.*\.gitlab-ci-local/.*'
   # Exclude template with jinja2 syntax
   - '.*template-component/.*'
+  # Community standard files (uppercase by convention)
+  - 'CONTRIBUTION_GUIDE\.md$'
+  - 'CODE_OF_CONDUCT\.md$'
+  - 'SECURITY\.md$'
