@@ -14,8 +14,6 @@ frost-server:
     proxy-rewrite:
       headers:
         remove:
-          - X-Userinfo
-          - X-Access-Token
           - X-Allowed-Scope-Ids
         set:
           # Frost is secured by OpenPolicyAgent but still requires basic auth (writer:writer)
