@@ -116,7 +116,15 @@ spec:
             - name: INIT_GROUPS_0_ROLENAME
               value: Tenant Admin
             - name: INIT_GROUPS_0_DESCRIPTION
-              value: Admin
+              value: Users with full access to tenant management
+            - name: INIT_GROUPS_1_NAME
+              value: Data Owner
+            - name: INIT_GROUPS_1_SCOPETYPE
+              value: TENANT
+            - name: INIT_GROUPS_1_ROLENAME
+              value: Data Owner
+            - name: INIT_GROUPS_1_DESCRIPTION
+              value: Users with full access to data
             - name: INIT_USERS_0_FIRSTNAME
               value: Tenant
             - name: INIT_USERS_0_LASTNAME
@@ -125,6 +133,10 @@ spec:
               value: {{ .Values.initialUser.email }}
             - name: INIT_USERS_0_GROUPS_0
               value: Tenant Admins
+            {{- if .Values.initialUser.isFullAdmin }}
+            - name: INIT_USERS_0_GROUPS_1
+              value: Data Owner
+            {{- end }}
             {{- if and ($trustStoreConfig.enabled | default false) $trustStoreSecret }}
             - name: JAVA_TOOL_OPTIONS
               value: "-Djavax.net.ssl.trustStore=/truststore/cacerts -Djavax.net.ssl.trustStorePassword=changeit"
