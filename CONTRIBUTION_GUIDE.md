@@ -1,4 +1,4 @@
-**Content of this document**
+**Content of this document**  
 
 [[_TOC_]]
 
@@ -16,7 +16,7 @@ CIVITAS/CORE is a project that welcomes all kinds of contributions from the comm
 
 While we value all contributions, there are certain types that may not align with the project's goals or development philosophy. Before making a contribution, please ensure it fits within the project's scope.
 
-Please, don't use the issue tracker for support questions. Instead, check our communication channels (e.g. [openCode](https://discourse.opencode.de/c/civitas-core/953)) to reach out for help. Also, Stack Overflow is worth considering.
+Please, don't use the issue tracker for support questions. Instead, check our communication channels to reach out for help. Also, Stack Overflow is worth considering.
 
 
 ## Ground Rules
@@ -25,9 +25,9 @@ Every contributor, regardless of the type of contribution, is asked to adhere to
 
 Like many other open source projects, we apply the Contributor Covenant as our Code of Conduct, which is available [in english](https://www.contributor-covenant.org/version/2/1/code_of_conduct/) and [in german](https://www.contributor-covenant.org/de/version/2/1/code_of_conduct/).
 
-Instances of abusive, harassing, or otherwise unacceptable behavior may be reported to the community leaders responsible for enforcement at [core@civitasconnect.digital](mailto:core@civitasconnect.digital). As a result, individuals might be excluded and banned from the community.
+Instances of abusive, harassing, or otherwise unacceptable behavior may be reported to the community leaders responsible for enforcement at [core@civitasconnect.digital](mailto:core@civitasconnect.digital). As a result, indivuduals might be excluded and banned from the community.
 
-### Additional responsibilities
+### Additional responsibilites
 By contributing code, you agree to fulfill certain technical responsibilities:
 
 - Ensure vendor- and operator-independence for every change that is accepted. Especially, don't create dependencies to proprietary, non-open source software.
@@ -39,10 +39,9 @@ By contributing code, you agree to fulfill certain technical responsibilities:
 
 
 ## Project Structure
-* The project is divided into [the core platform](https://gitlab.com/civitas-connect/civitas-core/civitas-core-v2/civitas-core-platform), the [deployment repository](https://gitlab.com/civitas-connect/civitas-core/civitas-core-v2/civitas-core-deployment), [the documentation](https://gitlab.com/civitas-connect/civitas.core/documentation) and various repositories that are used by the platform repository.
-* The **core platform** repository contains all code of civitas core created applications.
-* The **deployment repository** container the helmfile deployment code, including custom helm charts.
-* Within the **documentation** repository you can find extensive documentation about deployment, administration, and usage of the platform.
+* The project is divided into [the core platform](https://gitlab.com/civitas-connect/civitas.core/civitas-core), [the documentation](https://gitlab.com/civitas-connect/civitas.core/documentation) and various repositories that are used by the platform repository.
+* The **core platform** repository contains everything needed to set up the platform.
+* Within the **documentation** repository you can find extensive documentation about deployment, administration and usage of the platform.
 
 ### Naming Conventions
 * All names (groups and projects) are lowercase and delimited by a hyphen (e.g. group-or-project-name).
@@ -92,9 +91,9 @@ If your contribution requires tests, make sure to include them in your merge req
 ### How to Report a Bug
 
 Please create an issue (=ticket) in the repository the bug is related to. We appreciate if you use our bug report template, which provides a structured format for gathering essential information to reproduce and understand the issue. At least provide information about:
-- the precondition and environment where you found the bug,
-- the steps to reproduce it,
-- the expected and the observed behavior.
+- the precondition and environment where you found the bug, 
+- the steps to reproduce it, 
+- the expected and the observed behavior. 
 
 Also, please add the label `type::bug` to the bug issues that you create.
 
@@ -111,31 +110,21 @@ Code reviews are an essential part of maintaining code quality and consistency. 
 To ensure smooth collaboration, contributors are not granted direct commit access. However, exceptional contributors who consistently provide valuable contributions may be.
 
 ## Release Process
-CIVITAS/CORE follows the conventions of [Semantic Versioning](https://semver.org). Breaking changes result in an increased major version, new features increment the minor version, and bugfixes and patches increase the patch version. Versions should be as atomic as possible. If you want to publish a new version follow this process:
+CIVITAS/CORE follows the conventions of [Semantic Versioning](https://semver.org). Breaking changes result in an increased major version, new features increment the minor version and bugfixes and patches increase the patch version. Versions should be as atomic as possible. If you want to publish a new version follow this process:
 1. Develop features and bugfixes in feature branches
-2. If you want to merge a branch create a merge request to merge into the `main` branch and follow its [review process](https://gitlab.com/civitas-connect/civitas-core/civitas-core-v2/civitas-core-deployment/-/blob/main/CONTRIBUTION-GUIDE.md#code-review-process)
+2. If you want to merge a branch create a merge request to merge into the `main` branch and follow its [review process](https://gitlab.com/civitas-connect/civitas-core/civitas-core/-/blob/main/CONTRIBUTION-GUIDE.md#code-review-process)
 3. If all code you need for a new version is on the `main` branch make sure no new bugs were introduced to the code base
 4. Append to the top of the CHANGELOG.md what changed feature-wise since the last version and what are known issues
 5. If manual steps need to be performed to upgrade to the new version document them in the MIGRATION.md
 6. Create a gitlab release with a corresponding git tab following the following name schema: `v<major>.<minor>.<patch>`
 
-If older (major or minor) versions need to be patched create a branch from the correspondig git tag and merge the patches into this branch. Then follow the above steps to create a patched version without merging the changes to the `main` branch.
+If older (major or minor) versions need to be patched create a branch from the correspondig git tag and merge the patches into this branch. Then follow the above steps to create a patched version without merging the changes to the `main` branch. 
 
 ## How to apply the license
 All contributions to this repository are licensed under the [EU PL 1.2](LICENSE) or any later version.
-This project doesn't require a CLA (Contributor License Agreement). The copyright belongs to all the individual contributors.
+This project doesn't require a CLA (Contributor License Agreement). The copyright belongs to all the individual contributors. 
 
-Therefore, each file should begin with the following lines:
-
-```
-# This work has been created or enhanced by
-#    <your name>, <year>
-#
-# This file is covered by the EU PL 1.2 license.
-# You may obtain a copy of the licence at
-# https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
-#
-```
+Information on how the license header should be set can be found in the [documentation](https://docs.core.civitasconnect.digital/docs_v2/Development/intro).
 
 Please add this header if it does not exist and add your name, if you changed the file substantially.
 
