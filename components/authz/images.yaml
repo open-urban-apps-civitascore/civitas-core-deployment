@@ -3,9 +3,7 @@ authz:
   authz:
     # yamllint disable-line rule:line-length
     repository: registry.gitlab.com/civitas-connect/civitas-core/civitas-core-v2/civitas-core-platform/authz-repo-service
-    # TODO: Pin before release
-    tag: 'develop'
+    tag: 'v1.0.0'
   opa:
     repository: registry.gitlab.com/civitas-connect/civitas-core/civitas-core-v2/civitas-core-platform/opa
-    # TODO: Pin before release
-    tag: 'develop'
+    tag: 'v1.0.0'
