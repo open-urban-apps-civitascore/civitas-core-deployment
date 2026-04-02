@@ -5,6 +5,3 @@ parts:
   - name: config
     needs:
       - keycloak.app
-  - name: networkpolicy
-    needs:
-      - keycloak.app

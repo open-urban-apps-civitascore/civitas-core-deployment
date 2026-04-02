@@ -259,6 +259,3 @@ registry:
 
     # Image pull secrets
     imagePullSecrets: []
-
-networkPolicy:
-  enabled: false

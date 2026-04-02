@@ -40,24 +40,26 @@ env:
   - name: KAFKA_GROUP_ID
     value: config-adapter-group
 
-  # Keycloak configuration
-  {{- $keycloakHost := printf "%s.%s" (default "" .Values.keycloak.app.subdomain) $global.domain | trimPrefix "." }}
-  {{- $keycloakPath := .Values.keycloak.app.pathPrefix -}}
-  {{- $keycloakUrl := printf "https://%s%s" $keycloakHost $keycloakPath -}}
+  # Keycloak configuration — uses dedicated config-adapter client with password grant
+  {{- $keycloakUrl := printf "http://keycloak-app-keycloakx-http.%s.svc.cluster.local:80" .Values.keycloak.app.namespace -}}
   {{- $realmName := $global.instanceSlug }}
   - name: KEYCLOAK_URL
     value: {{ $keycloakUrl | quote }}
   - name: KEYCLOAK_REALM
     value: {{ $realmName | quote }}
   - name: KEYCLOAK_USERNAME
-    value: "admin"  # TODO: custom service account
+    value: "config-adapter@internal.local"
   - name: KEYCLOAK_PASSWORD
     valueFrom:
       secretKeyRef:
-        name: "keycloak-admin-user"
+        name: "config-adapter-keycloak-user"
         key: "password"
   - name: KEYCLOAK_CLIENT_ID
-    value: "admin-cli"
+    value: "config-adapter"
+  - name: KEYCLOAK_INVITATION_CLIENT_ID
+    value: "portal-frontend"
+  - name: KEYCLOAK_INVITATION_REDIRECT_URI
+    value: "https://portal.{{ $global.domain }}/"
   # Keycloak Topics:
   # User Events (7): user.created, user.updated, user.deleted, user.locked, user.unlocked, user.password.changed, user.password.reset
   # Realm Events (3): realm.created, realm.updated, realm.deleted
@@ -70,7 +72,7 @@ env:
   # APISIX configuration
   {{- $apisixHost := printf "%s.%s" (default "" .Values.apisix.apisix.subdomain) $global.domain | trimPrefix "." }}
   {{- $apisixPath := .Values.apisix.apisix.pathPrefix }}
-  {{- $apisixUrl := printf "https://%s%s" $apisixHost $apisixPath }}
+  {{- $apisixUrl := printf "http://%s%s" "apisix-admin:9180" $apisixPath }}
   - name: APISIX_ADMIN_URL
     value: {{ $apisixUrl | quote }}
   - name: APISIX_ADMIN_KEY
@@ -82,18 +84,23 @@ env:
     value: "de.civitascore.api.backend.created,de.civitascore.api.backend.updated,de.civitascore.api.backend.deleted,de.civitascore.api.route.created,de.civitascore.api.route.updated,de.civitascore.api.route.deleted"
 
   # FROST configuration (accessed via linkerd service mesh, basic auth)
-  {{- $frostUrl := printf "http://frost-frost-http.%s/FROST-Server/v1.1" .Values.frost.frost.namespace }}
+  {{- $frostUrl := printf "http://frost-frost-frost-server-http.%s/FROST-Server/v1.1" .Values.frost.frost.namespace }}
+  # TODO: only FROST_BASE should be required, but we keep FROST_URL for backward compatibility for now, should be removed in future
   - name: FROST_URL
     value: {{ $frostUrl | quote }}
-  - name: FROST_USERNAME
+  - name: FROST_PUBLIC_URL
+    value: {{ $frostUrl | quote }}
+  - name: FROST_BASE
+    value: {{ $frostUrl | quote }}
+  - name: FROST_BASIC_AUTH_USERNAME
     value: "admin"
-  - name: FROST_PASSWORD
+  - name: FROST_BASIC_AUTH_PASSWORD
     value: "admin"
   - name: FROST_TOPICS
     value: "de.civitascore.data.thing.created,de.civitascore.data.thing.updated,de.civitascore.data.thing.deleted,de.civitascore.data.location.created,de.civitascore.data.location.updated,de.civitascore.data.location.deleted,de.civitascore.data.sensor.created,de.civitascore.data.sensor.updated,de.civitascore.data.sensor.deleted,de.civitascore.data.observedproperty.created,de.civitascore.data.observedproperty.updated,de.civitascore.data.observedproperty.deleted,de.civitascore.data.datastream.created,de.civitascore.data.datastream.updated,de.civitascore.data.datastream.deleted,de.civitascore.data.project.created,de.civitascore.data.project.updated,de.civitascore.data.project.deleted"
 
   # Redpanda configuration
-  {{- $redpandaUrl := printf "http://redpanda-connect.%s:4195" .Values.redpandaConnect.connect.namespace }}
+  {{- $redpandaUrl := printf "http://redpanda-connect-connect.%s:80" .Values.redpandaConnect.connect.namespace }}
   - name: REDPANDA_URL
     value: {{ $redpandaUrl | quote }}
   - name: REDPANDA_TOPICS
@@ -105,11 +112,6 @@ env:
       secretKeyRef:
         name: "portal-backend-crypto"
         key: "civitas-master-key"
-  - name: CIVITAS_MASTER_SALT
-    valueFrom:
-      secretKeyRef:
-        name: "portal-backend-crypto"
-        key: "civitas-master-salt"
 
   # Health check configuration
   - name: HEALTHCHECK_PORT

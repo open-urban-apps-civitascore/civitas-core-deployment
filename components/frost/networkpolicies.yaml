@@ -1,0 +1,23 @@
+---
+frost:
+  podSelector:
+    app.kubernetes.io/instance: frost-frost
+  policyTypes:
+    - Ingress
+  ingress:
+    # APISIX Gateway proxied den externen Traffic zu FROST
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: apisix
+      ports:
+        - protocol: TCP
+          port: 8080
+    # Config-Adapter greift direkt auf FROST zu (CRUD fuer Things, Sensors, etc.)
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: config-adapter
+      ports:
+        - protocol: TCP
+          port: 8080

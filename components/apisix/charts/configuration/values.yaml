@@ -1,0 +1,67 @@
+---
+plugins:
+  {}
+  # Example plugin configuration:
+  # frost:
+  #   name: 'frost'
+  #   description: 'FROST-Server API'
+  #   plugin:
+  #     openid_opa_proxy_rewrite_request_id:
+  #       opa:
+  #         host: 'http://authz-authz-opa.example.svc.cluster.local:8181'
+  #         policy: 'civitas/authz/decision'
+
+routes:
+  {}
+  # Example route configuration:
+  # frost:
+  #   name: 'FROST-Server API'
+  #   description: 'FROST-Server API'
+  #   upstream: 'frost-server'
+  #   uri: '/FROST-Server/v1.1'
+  #   plugin_id: 'openid_opa_proxy_rewrite_request_id'
+
+domain: 'example.com'
+realm: 'civitas'
+
+# Container image configuration for the route display job
+image:
+  repository: alpine/curl
+  tag: '8.17.0'
+  pullPolicy: IfNotPresent
+
+# Pod-level security context for the route display job
+podSecurityContext: {}
+
+# Container-level security context for the route display job
+containerSecurityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+  readOnlyRootFilesystem: true
+
+# Resource limits and requests for the route display job
+resources:
+  limits:
+    cpu: 100m
+    memory: 64Mi
+  requests:
+    cpu: 10m
+    memory: 16Mi
+
+secret:
+  adminKeySecretName: apisix-admin-credentials
+  adminKeySecretKey: admin
+
+# Extra environment variables sourced from Kubernetes secrets
+# Example:
+# extraSecretEnvVars:
+#   - name: APISIX_VALIDATOR_CLIENT_SECRET
+#     secretName: keycloak-client-apisix-validator
+#     secretKey: client-secret
+extraSecretEnvVars: []
+
+apisix:
+  host: apisix
+  port: 9180

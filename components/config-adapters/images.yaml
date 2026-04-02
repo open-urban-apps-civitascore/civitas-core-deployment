@@ -2,5 +2,4 @@
 configAdapters:
   adapters:
     repository: 'registry.gitlab.com/civitas-connect/civitas-core/civitas-core-v2/civitas-core-platform/config-adapter'
-    # TODO: Pin before release
-    tag: 'develop'
+    tag: 'v1.0.0'

@@ -20,7 +20,7 @@ version:
   postgis: "3.4"
 
 cluster:
-  imageName: ""  # TODO: set image  <image>:<tag>@sha256:<digestValue>
+  imageName: "{{ .Values.images.postgres.cluster.repository }}:{{ .Values.images.postgres.cluster.tag }}"
   storage:
     size: "8Gi"
     storageClass: "{{ $global.storage.storageClass.rwo | default "" }}"

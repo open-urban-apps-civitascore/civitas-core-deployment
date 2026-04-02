@@ -82,7 +82,7 @@ registry:
       type: ClusterIP
       port: 8080
     ingress:
-      enabled: {{ $global.ingress.enabled }}
+      enabled: false
       ingressClassName: {{ $global.ingress.ingressClass }}
       annotations:
         cert-manager.io/cluster-issuer: {{ $global.ingress.clusterIssuer }}
@@ -96,5 +96,3 @@ registry:
     podDisruptionBudget:
       enabled: false
 
-networkPolicy:
-  enabled: true

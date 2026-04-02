@@ -1,8 +1,8 @@
 ---
 redpandaConnect:
-  connect:
+  streamsconfig:
     enabled: true
     namespace: {{ include "civitas.namespace" (dict "global" .Values.global "suffix" "redpanda-connect") }}
-  networkpolicy:
+  connect:
     enabled: true
     namespace: {{ include "civitas.namespace" (dict "global" .Values.global "suffix" "redpanda-connect") }}

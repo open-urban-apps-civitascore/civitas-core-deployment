@@ -16,6 +16,9 @@ securityContext:
 podSecurityContext:
   {{ .Values.securityDefaults.podSecurityContext | toYaml | nindent 2 }}
 
+podAnnotations:
+  config.linkerd.io/skip-outbound-ports: "25,465,587" # ignore smtp ports
+
 image:
 {{- with .Values.images.keycloak.app }}
   repository: {{ .repository }}
@@ -31,6 +34,8 @@ extraEnv: |
     value: dump_requests=true,port_range=0,namespace={{ $this.namespace }}
   - name: KC_BOOTSTRAP_ADMIN_USERNAME
     value: {{ $this.admin.username }}
+  - name: KC_HOSTNAME
+    value: 'https://{{ .Values.routes.keycloak.subDomain }}.{{ $global.domain }}'
   - name: KC_BOOTSTRAP_ADMIN_PASSWORD
     valueFrom:
       secretKeyRef:
@@ -38,37 +43,9 @@ extraEnv: |
         key: password
 
 ingress:
-  enabled: {{ $global.ingress.enabled }}
-  ingressClassName: {{ $global.ingress.ingressClass }}
-  servicePort: http
-  annotations:
-    ingress.kubernetes.io/affinity: cookie
-    cert-manager.io/cluster-issuer: {{ $global.ingress.clusterIssuer }}
-  rules:
-    {{- $host := printf "%s.%s" (default "" $this.subdomain) $global.domain | trimPrefix "." }}
-    - host: {{ $host }}
-      paths:
-        - path: '{{ $this.pathPrefix }}'
-          pathType: Prefix
-  tls:
-    - hosts:
-        - {{ $host }}
-      secretName: {{ $host }}-tls
+  enabled: false
   console:
-    enabled: true
-    ingressClassName: {{ $global.ingress.ingressClass }}
-    annotations:
-      ingress.kubernetes.io/affinity: cookie
-      cert-manager.io/cluster-issuer: {{ $global.ingress.clusterIssuer }}
-    rules:
-      - host: {{ $host }}
-        paths:
-          - path: '{{ $this.pathPrefix | trimSuffix "/" }}/admin'
-            pathType: Prefix
-    tls:
-      - hosts:
-          - {{ $host }}
-        secretName: {{ $host }}-tls
+    enabled: false
 dbchecker:
   enabled: true
   image:

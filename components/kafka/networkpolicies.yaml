@@ -1,0 +1,24 @@
+---
+kafka-cluster:
+  podSelector:
+    strimzi.io/cluster: kafka-cluster
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: apicurio
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: portal
+              app.kubernetes.io/component: backend
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: kafka-ui
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: config-adapter
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: redpanda-connect

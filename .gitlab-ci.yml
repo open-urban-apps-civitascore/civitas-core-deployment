@@ -67,7 +67,7 @@ deploy-staging:
   variables:
     KUBECONFIG_CONTENT: $KUBECONFIG_CONTENT_STAGING
   script:
-    - helmfile -f ./deployments/ sync -e staging
+    - helmfile -f ./deployment/ sync -e staging
   only:
     - staging
   when: manual
@@ -79,10 +79,10 @@ deploy-production:
   variables:
     KUBECONFIG_CONTENT: $KUBECONFIG_CONTENT_PRODUCTION
   script:
-    - helmfile -f ./deployments/ sync -e production
-  only:
-    - main
-  when: manual
+    - helmfile -f ./deployment/ sync -e production
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main" || $CI_COMMIT_TAG'
+      when: manual
   environment:
     name: production
 

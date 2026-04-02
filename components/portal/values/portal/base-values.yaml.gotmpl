@@ -15,6 +15,10 @@ backend:
   image:
     repository: {{ .Values.images.portal.backend.repository }}
     tag: {{ .Values.images.portal.backend.tag }}
+  trustStore:
+    enabled: false
+    secretName: ""
+    certKey: "tls.crt"
 
 frontend:
   enabled: true
@@ -39,17 +43,14 @@ kafka:
 server:
   url: https://{{ $host }}
 
+apisix:
+  serviceUrl: "http://apisix-gateway.{{ .Values.apisix.apisix.namespace }}.svc.cluster.local"
+
+modelAtlas:
+  url: "http://model-atlas-model-atlas.{{ .Values.modelAtlas.modelAtlas.namespace }}.svc.cluster.local:8080"
+
 ingress:
-  enabled: {{ $global.ingress.enabled }}
-  domain: {{ $host }}
-  annotations:
-    cert-manager.io/cluster-issuer: {{ $global.ingress.clusterIssuer }}
-    nginx.ingress.kubernetes.io/proxy-buffer-size: "16k"
-    nginx.ingress.kubernetes.io/proxy-buffers-number: "4"
-    nginx.ingress.kubernetes.io/proxy-busy-buffers-size: "24k"
-  tls:
-    enabled: true
-    secretName: portal-tls
+  enabled: false
 
 database:
   host: {{ .Values.databases.portal.host }}
@@ -61,4 +62,7 @@ database:
     passwordKey: password
 
 networkPolicy:
-  enabled: true
+  enabled: false
+
+initialUser:
+  email: {{ $global.initialUserEmail }}

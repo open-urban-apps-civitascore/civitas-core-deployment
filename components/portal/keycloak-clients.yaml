@@ -4,3 +4,27 @@ portal-frontend:
   description: CIVITAS Portal Frontend Application
   subdomain: portal
   redirectPath: /api/auth/callback/keycloak
+  additionalRedirectPaths:
+    - /
+
+apisix-validator:
+  name: APISIX Validator
+  description: Confidential client used by APISIX to validate tokens via introspection
+  subdomain: apisix-validator
+  redirectPath: /
+  rawValues:
+    publicClient: false
+    bearerOnly: false
+    standardFlowEnabled: false
+    implicitFlowEnabled: false
+    directAccessGrantsEnabled: false
+    serviceAccountsEnabled: true
+    authorizationServicesEnabled: false
+    redirectUris: []
+    webOrigins: []
+    defaultClientScopes:
+      - basic
+      - email
+      - profile
+      - roles
+    optionalClientScopes: []

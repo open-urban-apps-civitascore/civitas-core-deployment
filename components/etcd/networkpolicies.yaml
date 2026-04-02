@@ -1,0 +1,15 @@
+---
+etcd:
+  podSelector:
+    app.kubernetes.io/instance: etcd-etcd
+    app.kubernetes.io/name: etcd
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: apisix
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: etcd

@@ -15,6 +15,3 @@ postgres:
   databases:
     enabled: true
     namespace: {{ include "civitas.namespace" (dict "global" .Values.global "suffix" "postgres") }}
-  networkpolicy:
-    enabled: true
-    namespace: {{ include "civitas.namespace" (dict "global" .Values.global "suffix" "postgres") }}

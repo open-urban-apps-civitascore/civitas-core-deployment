@@ -2,7 +2,7 @@
 modelAtlas:
   app:
     repository: eclipsefennec/model.atlas
-    tag: 'snapshot' # todo: update to release version
+    tag: 'apicurio-0.0.1'
   init:
     repository: busybox
     tag: '1.37'

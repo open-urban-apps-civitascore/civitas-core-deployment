@@ -310,6 +310,3 @@ metrics:
     interval: 30s
     scrapeTimeout: 10s
     labels: {}
-
-networkPolicy:
-  enabled: false

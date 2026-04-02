@@ -14,11 +14,13 @@ opa:
   image:
     repository: {{ .Values.images.authz.opa.repository }}
     tag: {{ .Values.images.authz.opa.tag }}
+    pullPolicy: Always
 
 authz:
   image:
     repository: {{ .Values.images.authz.authz.repository }}
     tag: {{ .Values.images.authz.authz.tag }}
+    pullPolicy: Always
 
   database:
     # TODO: Make it more dynamic from portal database resource

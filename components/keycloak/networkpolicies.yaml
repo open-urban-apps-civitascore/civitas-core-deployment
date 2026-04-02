@@ -1,0 +1,17 @@
+---
+keycloak:
+  podSelector:
+    app.kubernetes.io/instance: keycloak-app
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: apisix
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: config-adapter
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: keycloak-config-cli

@@ -1,0 +1,42 @@
+---
+postgres-allow-linkerd:
+  podSelector:
+    cnpg.io/cluster: postgres-cluster
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: cloudnative-pg
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: portal
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/component: backend
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/instance: keycloak-app
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: authz-repo
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: authz
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/instance: frost-frost
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/component: database-role-setup
+        - podSelector:
+            matchLabels:
+              batch.kubernetes.io/job-name: portal-db-create-role-authz-readonly
+      ports:
+        - port: 4143
+          protocol: TCP
+        - port: 4190
+          protocol: TCP
+        - port: 4191
+          protocol: TCP
