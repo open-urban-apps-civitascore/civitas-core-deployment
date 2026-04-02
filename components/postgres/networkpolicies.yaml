@@ -5,11 +5,15 @@ postgres:
   policyTypes:
     - Ingress
   ingress:
-    # CloudNative-PG operator - allow from all namespaces
+    # CloudNative-PG operator and join jobs - allow from all namespaces
     - from:
         - podSelector:
             matchLabels:
               app.kubernetes.io/name: cloudnative-pg
+    - from:
+        - podSelector:
+            matchLabels:
+              cnpg.io/jobRole: join
     # Portal backend - auto-inject instanceSlug namespace
     - from:
         - podSelector:
