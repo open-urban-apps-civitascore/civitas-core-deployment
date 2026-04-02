@@ -86,4 +86,4 @@ Dieses Werk ist unter der [EU PL 1.2](LICENSE) lizenziert durch Civitas Connect 
 
 Für dieses Projekt ist kein CLA (Contributor License Agreement) erforderlich. Das Urheberrecht liegt bei den einzelnen Mitwirkenden.
 
-Civitas Core ist ein trademark (Markenzeichen). Weitere Informationen sind [hier](TRADEMARK.md) zu finden.
+CIVITAS/CORE ist ein trademark (Markenzeichen). Weitere Informationen sind [hier](TRADEMARK.md) zu finden.
