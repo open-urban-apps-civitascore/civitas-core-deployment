@@ -60,7 +60,7 @@ A department in the association [Civitas Connect e.V.](https://www.civitasconnec
 Stable versions are released on a regular basis. For the latest release, take a look at the [👉 deployment repository](https://gitlab.com/civitas-connect/civitas-core/civitas-core-v2/civitas-core-deployment). The current state of development can be followed on our [👉 issue board](https://gitlab.com/groups/civitas-connect/civitas-core/-/boards).
 
 Please see the long-term roadmap [👉 here](https://www.civitasconnect.digital/civitas-core/)
- 
+
 Detailed roadmap for version 2 [👉 here](https://gitlab.com/groups/civitas-connect/civitas-core/-/roadmap?state=opened&sort=END_DATE_ASC&layout=MONTHS&timeframe_range_type=CURRENT_YEAR&label_name[]=v::2&progress=WEIGHT&show_progress=true&show_milestones=true&milestones_type=ALL&show_labels=false)
 
 ## How to contribute

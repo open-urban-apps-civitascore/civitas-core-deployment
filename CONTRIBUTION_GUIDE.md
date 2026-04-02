@@ -1,4 +1,4 @@
-**Content of this document**  
+**Content of this document**
 
 [[_TOC_]]
 
@@ -91,9 +91,9 @@ If your contribution requires tests, make sure to include them in your merge req
 ### How to Report a Bug
 
 Please create an issue (=ticket) in the repository the bug is related to. We appreciate if you use our bug report template, which provides a structured format for gathering essential information to reproduce and understand the issue. At least provide information about:
-- the precondition and environment where you found the bug, 
-- the steps to reproduce it, 
-- the expected and the observed behavior. 
+- the precondition and environment where you found the bug,
+- the steps to reproduce it,
+- the expected and the observed behavior.
 
 Also, please add the label `type::bug` to the bug issues that you create.
 
@@ -118,11 +118,11 @@ CIVITAS/CORE follows the conventions of [Semantic Versioning](https://semver.org
 5. If manual steps need to be performed to upgrade to the new version document them in the MIGRATION.md
 6. Create a gitlab release with a corresponding git tab following the following name schema: `v<major>.<minor>.<patch>`
 
-If older (major or minor) versions need to be patched create a branch from the correspondig git tag and merge the patches into this branch. Then follow the above steps to create a patched version without merging the changes to the `main` branch. 
+If older (major or minor) versions need to be patched create a branch from the correspondig git tag and merge the patches into this branch. Then follow the above steps to create a patched version without merging the changes to the `main` branch.
 
 ## How to apply the license
 All contributions to this repository are licensed under the [EU PL 1.2](LICENSE) or any later version.
-This project doesn't require a CLA (Contributor License Agreement). The copyright belongs to all the individual contributors. 
+This project doesn't require a CLA (Contributor License Agreement). The copyright belongs to all the individual contributors.
 
 Information on how the license header should be set can be found in the [documentation](https://docs.core.civitasconnect.digital/docs_v2/Development/intro).
 

@@ -49,4 +49,4 @@ exclude-patterns:
   - 'CODE_OF_CONDUCT\.md$'
   - 'SECURITY\.md$'
   - 'TRADEMARK\.md$'
-
+  - 'README-de\.md$'
