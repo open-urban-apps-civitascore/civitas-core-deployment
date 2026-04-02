@@ -67,19 +67,6 @@ releases:
       - values/{{ $part.name }}/base-values.yaml.gotmpl
       - values/{{ $part.name }}/{{ $root.global.profile }}-values.yaml.gotmpl
       - {{- index $root $component $part.name "rawValues" | default dict | toYaml | nindent 8 }}
-    {{- if eq $part.name "cluster" }}
-    # Patch: Add inheritedMetadata to propagate Linkerd opaque-ports annotation to all CNPG-managed objects (including join/initdb jobs)
-    # The upstream chart (cc2-cnpg/cluster) does not support inheritedMetadata in its values, so we patch the rendered Cluster CR.
-    strategicMergePatches:
-      - apiVersion: postgresql.cnpg.io/v1
-        kind: Cluster
-        metadata:
-          name: {{ $component }}-{{ $part.name }}
-        spec:
-          inheritedMetadata:
-            annotations:
-              config.linkerd.io/opaque-ports: "5432"
-    {{- end }}
   {{- end }}
 
 commonLabels:
