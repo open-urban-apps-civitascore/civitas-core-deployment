@@ -75,6 +75,11 @@ database:
   username: {{ .Values.databases.keycloak.user }}
   existingSecret: {{ .Values.databases.keycloak.secret.name }}
   existingSecretKey: "password"
+service:
+  sessionAffinity: "ClientIP"
+  sessionAffinityConfig:
+    clientIP:
+      timeoutSeconds: 3600
 proxy:
   enabled: true
   mode: xforwarded
