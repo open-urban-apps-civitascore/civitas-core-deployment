@@ -10,6 +10,7 @@ Before requesting review, ensure your changes follow the security guidelines:
 - [ ] [DevOps/Infrastructure Security Guidelines](../../docs/deplyoment-standards.md#security--code-review)
 - [ ] [SSDLC Requirements](../../../documentation/docs_v2/Development/Development%20Process/SSDLC_Distilled.md)
 - [ ] CI security checks pass
+- [ ] [Security test suite](https://gitlab.com/civitas-connect/civitas-core/civitas-core-v2/civitas-core-development/-/tree/main/security/security-tests?ref_type=heads) is up to date
 
 To ensure our deployments meet the required standards, please verify the following checklist before merging any changes:
 
