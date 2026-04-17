@@ -35,6 +35,7 @@ To ensure our deployments meet the required standards, please verify the followi
 - [ ] PodDisruptionBudget configured (where accessible): at least 1 pod available
 - [ ] Graceful shutdown configured (where accessible): `terminationGracePeriodSeconds` + `preStop` hook
 - [ ] Health probes configured (where accessible): startup, readiness, liveness for long-running apps (exclude jobs/init containers)
+- [ ] use serviceaccounts only of necessary (`automountServiceAccountToken: false` if possible)
 - [ ] RBAC/ServiceAccount with least privilege (if applicable)
 - [ ] NetworkPolicy with default-deny and minimal allowed traffic (where accessible)
 - [ ] Named ports in Services (where accessible)
