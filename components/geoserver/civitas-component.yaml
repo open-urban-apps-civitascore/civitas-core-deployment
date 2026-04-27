@@ -1,0 +1,4 @@
+---
+component: geoserver
+parts:
+  - name: geoserver

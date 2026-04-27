@@ -1,0 +1,6 @@
+---
+geoserver:
+  geoserver:
+    repository: TODO
+    chart: TODO
+    version: TODO
