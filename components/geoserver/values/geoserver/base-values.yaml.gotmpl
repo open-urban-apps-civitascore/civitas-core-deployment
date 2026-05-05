@@ -10,4 +10,97 @@
 # - [ ] Named ports
 # - [ ] Ingress with TLS
 
-# TODO: set helm values for geoserver here
+additionalVolumes: &additional-volumes
+  cache:
+    emptyDir: {}
+
+additionalVolumeMounts: &additional-volume-mounts
+  /mnt/cache:
+    name: 'cache'
+
+env: &env-override
+  PG_PASSWORD:
+    type: secret
+    name: '{{ .Values.databases.geoserver.secret.name }}'
+    key: 'password'
+  RABBITMQ_HOST:
+    value: 'gs-cloud-pgconfig-rabbitmq'
+  RABBITMQ_USER:
+    value: 'geoserver'
+  RABBITMQ_PASSWORD:
+    type: secret
+    name: 'geoserver-rabbitmq-admin'
+    key: 'rabbitmq-password'
+  SPRING_PROFILES_ACTIVE:
+    value: standalone,pgconfig
+  GEOWEBCACHE_CACHE_DIR:
+    value: '/mnt/cache'
+  JAVA_OPTS:
+    value: '$(JAVA_OPTS_DEFAULT) -XshowSettings:system'
+  PGCONFIG_HOST:
+    value: {{ .Values.databases.geoserver.host }}
+  PGCONFIG_PORT:
+    value: "{{ .Values.databases.geoserver.port }}"
+  PGCONFIG_DATABASE:
+    value: {{ .Values.databases.geoserver.name }}
+  PGCONFIG_SCHEMA:
+    value: public
+  PGCONFIG_USERNAME:
+    value: {{ .Values.databases.geoserver.user }}
+  PGCONFIG_PASSWORD:
+    type: secret
+    name: '{{ .Values.databases.geoserver.secret.name }}'
+    key: 'password'
+  PGCONFIG_MAXCONNECTIONS:
+    value: '10'
+
+additional-stuff: &additional-stuff
+  volumes:
+    <<: *additional-volumes
+  containers:
+    spring:
+      env:
+        <<: *env-override
+      volumeMounts:
+        <<: *additional-volume-mounts
+
+global:
+  profile: standalone,pgconfig
+  image:
+    pullPolicy: IfNotPresent
+geoserver:
+  ingress:
+    enabled: true
+    ingressClassName: {{ $global.ingress.ingressClass }}
+    hostGroups:
+      host1:
+        tls:
+          enabled: true
+        hosts:
+          - geoserver.civitas.test
+  services:
+    gateway:
+      ingress:
+        enabled: true
+      <<: *additional-stuff
+    webui:
+      <<: *additional-stuff
+    rest:
+      replicaCount: 1
+      <<: *additional-stuff
+    wms:
+      replicaCount: 1
+      <<: *additional-stuff
+    wcs:
+      replicaCount: 1
+      <<: *additional-stuff
+    wfs:
+      replicaCount: 1
+      <<: *additional-stuff
+    gwc:
+      replicaCount: 0
+      <<: *additional-stuff
+    wps:
+      enabled: true
+      replicaCount: 1
+      <<: *additional-stuff

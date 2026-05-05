@@ -1,6 +1,10 @@
 ---
 geoserver:
+  rabbitmq:
+    repository: https://charts.bitnami.com/bitnami
+    chart: bitnami/rabbitmq
+    version: '16.0.14'
   geoserver:
-    repository: TODO
-    chart: TODO
-    version: TODO
+    repository: https://camptocamp.github.io/helm-geoserver-cloud
+    chart: geoservercloud/geoservercloud
+    version: '2.5.6'

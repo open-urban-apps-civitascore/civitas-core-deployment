@@ -1,5 +1,8 @@
 ---
 geoserver:
+  rabbitmq:
+    enabled: true
+    namespace: {{ include "civitas.namespace" (dict "global" .Values.global "suffix" "geoserver") }}
   geoserver:
     enabled: true
     namespace: {{ include "civitas.namespace" (dict "global" .Values.global "suffix" "geoserver") }}

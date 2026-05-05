@@ -1,0 +1,11 @@
+---
+geoserver:
+  name: 'geoserver'
+  embedded: true # set to false, if an external database is used
+  user: 'geoserver'
+  secret:
+    name: 'db-geoserver'
+    key: 'password'
+    generate: true # indicates that this value should be generated
+  host: 'postgres-cluster-rw' # set to external hostname, if an external database is used
+  port: 5432
