@@ -2,13 +2,13 @@
 {{- $this := .Values.geoserver.geoserver }}
 {{- $global := .Values.global }}
 # Checklist:
-# - [ ] Containers run as non-root with `readOnlyRootFilesystem`
-# - [ ] Health probes
+# - [x] Containers run as non-root with `readOnlyRootFilesystem`
+# - [x] Health probes -> default
 # - [ ] Graceful shutdown
 # - [ ] Standard labels
-# - [ ] ServiceAccount with least privilege where required
-# - [ ] Named ports
-# - [ ] Ingress with TLS
+# - [x] ServiceAccount with least privilege where required
+# - [x] Named ports -> default
+# - [x] Ingress with TLS -> ingress disabled
 
 additionalVolumes: &additional-volumes
   cache:
@@ -53,6 +53,8 @@ env: &env-override
     key: 'password'
   PGCONFIG_MAXCONNECTIONS:
     value: '10'
+  GEOSERVER_WEB_GLOBALSERVICES:
+    value: 'false'
 
 additional-stuff: &additional-stuff
   volumes:
@@ -70,18 +72,18 @@ global:
     pullPolicy: IfNotPresent
 geoserver:
   ingress:
-    enabled: true
-    ingressClassName: {{ $global.ingress.ingressClass }}
-    hostGroups:
-      host1:
-        tls:
-          enabled: true
-        hosts:
-          - geoserver.civitas.test
+    enabled: false
+  securityContext:
+    {{ .Values.securityDefaults.securityContext | toYaml | nindent 4 }}
+  podSecurityContext:
+    {{ .Values.securityDefaults.podSecurityContext | toYaml | nindent 4 }}
+  serviceAccount:
+    create: true
+    name: geoserver
   services:
     gateway:
       ingress:
-        enabled: true
+        enabled: false
       <<: *additional-stuff
     webui:
       <<: *additional-stuff
@@ -98,6 +100,7 @@ geoserver:
       replicaCount: 1
       <<: *additional-stuff
     gwc:
+      enabled: false
       replicaCount: 0
       <<: *additional-stuff
     wps:
