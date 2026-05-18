@@ -9,3 +9,15 @@ geoserver:
     generate: true # indicates that this value should be generated
   host: 'postgres-cluster-rw' # set to external hostname, if an external database is used
   port: 5432
+geodata:
+  name: 'geodata'
+  embedded: true
+  user: 'geodata'
+  secret:
+    name: 'db-geodata'
+    key: 'password'
+    generate: true
+  host: 'postgres-cluster-rw'
+  port: 5432
+  extensions:
+    - name: postgis
