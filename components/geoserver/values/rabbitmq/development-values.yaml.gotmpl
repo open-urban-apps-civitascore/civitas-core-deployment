@@ -1,9 +1,18 @@
 ---
-{{- $this := .Values.geoserver.geoserver }}
+{{- $this := .Values.geoserver.rabbitmq }}
 {{- $global := .Values.global }}
 # Checklist:
-# - [ ] Minimal Resources
-# - [ ] Minimal storage
-# - [ ] 1 Replica
+# - [x] Minimal Resources
+# - [x] Minimal storage
+# - [x] 1 Replica -> default
 
-# TODO: set helm values for geoserver here
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 250m
+    memory: 256Mi
+
+persistence:
+  size: 1Gi

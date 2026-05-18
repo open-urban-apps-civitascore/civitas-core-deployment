@@ -1,24 +1,29 @@
-enabled: true
+---
+{{- $this := .Values.geoserver.rabbitmq }}
+{{- $global := .Values.global }}
+# Checklist:
+# - [x] Containers run as non-root with `readOnlyRootFilesystem` -> default
+# - [c] Health probes
+# - [ ] Graceful shutdown -> ignore for now, implement later
+# - [ ] Standard labels -> ignore for now, implement later
+# - [x] ServiceAccount with least privilege where required -> SA is created by default
+# - [x] Named ports
+# - [x] Ingress with TLS -> not required
+
 global:
   security:
     allowInsecureImages: true
 
 image:
-  registry: docker.io
-  repository: bitnamilegacy/rabbitmq  # TODO: pin
-# TODO: set resources in profiles
-resources:
-  limits:
-    cpu: 2
-    memory: 2Gi
-  requests:
-    cpu: 0.1
-    memory: 512Mi
+  registry: {{ .Values.images.geoserver.rabbitmq.registry }}
+  repository: {{ .Values.images.geoserver.rabbitmq.repository }}
+  tag: {{ .Values.images.geoserver.rabbitmq.tag }}
+
 # set auth secret
 auth:
   username: geoserver
-  password: password
-  erlangCookie: cookie
-# TODO: enable persistence?
+  existingPasswordSecret: geoserver-rabbitmq-admin
+
 persistence:
-  enabled: false
+  enabled: true
+  storageClass: {{ .Values.global.storage.storageClass.rwo }}

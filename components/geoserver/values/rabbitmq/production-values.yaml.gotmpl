@@ -1,11 +1,26 @@
 ---
-{{- $this := .Values.geoserver.geoserver }}
+{{- $this := .Values.geoserver.rabbitmq }}
 {{- $global := .Values.global }}
 # Checklist:
-# - [ ] Resources (requests and limits)
-# - [ ] Larger Storage
-# - [ ] 2+ Replicas or HorizontalPodAutoscaler
-# - [ ] Rolling updates `maxUnavailable: 0`, `maxSurge: 25%`
-# - [ ] PodDisruptionBudget (at least `minAvailable: 1`)
+# - [x] Resources (requests and limits)
+# - [x] Larger Storage
+# - [x] 2+ Replicas or HorizontalPodAutoscaler
+# - [x] Rolling updates `maxUnavailable: 0`, `maxSurge: 25%` -> StatefulSet
+# - [x] PodDisruptionBudget (at least `minAvailable: 1`)
 
-# TODO: set helm values for geoserver here
+replicaCount: 2
+
+resources:
+  requests:
+    cpu: 500m
+    memory: 512Mi
+  limits:
+    cpu: 2
+    memory: 2Gi
+
+persistence:
+  size: 20Gi
+
+pdb:
+  create: true
+  minAvailable: 1

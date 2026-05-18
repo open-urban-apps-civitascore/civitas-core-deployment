@@ -1,2 +1,6 @@
 ---
-geoserver: {}
+geoserver:
+  rabbitmq:
+    registry: docker.io
+    repository: bitnamilegacy/rabbitmq
+    tag: 4.1.3

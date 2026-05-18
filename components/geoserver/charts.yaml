@@ -1,6 +1,7 @@
 ---
 geoserver:
   rabbitmq:
+    # TODO: find alternative to bitnami chart + image
     repository: https://charts.bitnami.com/bitnami
     chart: bitnami/rabbitmq
     version: '16.0.14'
