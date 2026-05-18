@@ -1,0 +1,16 @@
+---
+# rest->DB (in postgres)
+# wcs->DB (in postgres)
+# wms->DB (in postgres)
+# webui->rabbitmq
+geoserver-rabbitmq:
+  podSelector:
+    app.kubernetes.io/instance: geoserver-rabbitmq
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/instance: geoserver-geoserver
+              app.kubernetes.io/component: webui

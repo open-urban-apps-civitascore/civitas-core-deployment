@@ -24,7 +24,7 @@ env: &env-override
     name: '{{ .Values.databases.geoserver.secret.name }}'
     key: 'password'
   RABBITMQ_HOST:
-    value: 'gs-cloud-pgconfig-rabbitmq'
+    value: 'geoserver-rabbitmq'
   RABBITMQ_USER:
     value: 'geoserver'
   RABBITMQ_PASSWORD:

@@ -27,3 +27,6 @@ auth:
 persistence:
   enabled: true
   storageClass: {{ .Values.global.storage.storageClass.rwo }}
+
+networkPolicy:
+  enabled: false  # handled separately by civitas/core
