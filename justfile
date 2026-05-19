@@ -1,5 +1,7 @@
 # .DEFAULT_GOAL := help
 
+set dotenv-load
+
 # MINIKUBE_IP := $(shell minikube ip)
 marker := 'LOCAL_CIVITAS_HOSTS'
 hosts := 'idm.civitas.test portal.civitas.test'
@@ -154,6 +156,21 @@ template-component environment='local' component='':
 [group('helpers')]
 apisix-password:
 	@kubectl --context minikube get secret -n dev apisix-admin-credentials -o jsonpath='{.data.admin}' | base64 -d && echo
+
+# Seed baseline platform data into the current cluster (kubectl context) or into the cluster behind the provided kubeconfig. The keycloak URL is required (no default — depends on the target cluster). The seed input defaults to the standard civitas baseline export. Other tunables (AUTH_USER, AUTH_PASSWORD, NAMESPACE, …) are still read from the top-level `.env` (loaded automatically via `set dotenv-load`). Job + credentials Secret are cleaned up after the run.
+[group('deployment')]
+seed keycloak-url kubeconfig='' seed-input='exports/1bf03aa3-3d9a-4291-8589-b888aa684c05.json':
+	#!/usr/bin/env bash
+	set -euo pipefail
+	export KEYCLOAK_URL="{{keycloak-url}}"
+	export SEED_INPUT="{{seed-input}}"
+	args=()
+	if [ -n "{{kubeconfig}}" ]; then
+		args+=(--kubeconfig "{{kubeconfig}}")
+	elif [ -n "${KUBECONFIG:-}" ]; then
+		args+=(--kubeconfig "${KUBECONFIG}")
+	fi
+	exec ./scripts/ci/seed-platform-data.sh "${args[@]}"
 
 # Deploy to local minikube or k3d cluster with Linkerd service mesh
 [group('deployment')]

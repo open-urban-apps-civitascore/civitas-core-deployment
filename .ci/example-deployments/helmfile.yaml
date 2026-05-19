@@ -10,6 +10,8 @@ environments:
     values: []
   staging:
     values: []
+  smoke-test:
+    values: []
 ---
 helmfiles:
   - path: '../helmfile-root.yaml.gotmpl'
@@ -19,3 +21,4 @@ helmfiles:
           - local
           - production
           - staging
+          - smoke-test
