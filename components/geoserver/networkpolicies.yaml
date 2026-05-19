@@ -3,7 +3,8 @@
 # wcs->DB (in postgres)
 # wms->DB (in postgres)
 # webui->rabbitmq
-geoserver-rabbitmq:
+# others might be necessary in the future, but this seems to be the minimum for now.
+geoserverRabbitmq:
   podSelector:
     app.kubernetes.io/instance: geoserver-rabbitmq
   policyTypes:
