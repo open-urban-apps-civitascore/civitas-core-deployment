@@ -19,10 +19,21 @@ config-adapter-egress:
     # DNS resolution (required for all service lookups)
     - to:
         - namespaceSelector: {}
+          podSelector:
+            matchExpressions:
+              - key: k8s-app
+                operator: In
+                values:
+                  - kube-dns
+                  - vcluster-kube-dns
       ports:
         - port: 53
           protocol: UDP
         - port: 53
+          protocol: TCP
+        - port: 1053
+          protocol: UDP
+        - port: 1053
           protocol: TCP
 
     # Keycloak (for client management and auth)

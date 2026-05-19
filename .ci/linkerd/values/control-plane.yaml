@@ -1,0 +1,6 @@
+---
+# Linkerd control plane values for ephemeral vcluster environments
+controllerReplicas: 1
+
+proxy:
+  nativeSidecar: true

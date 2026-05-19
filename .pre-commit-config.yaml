@@ -68,7 +68,7 @@ repos:
     hooks:
       - id: helmfile-lint
         name: Validate Helmfile
-        entry: helmfile lint -f deployment/helmfile.yaml -e default
+        entry: helmfile lint -f deployment/helmfile.yaml -e local
         language: system
         # TODO: re-add pass_filenames when helmfile supports it
         # files: 'deployment/helmfile\.ya?ml\.gotmpl$'
