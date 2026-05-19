@@ -84,20 +84,60 @@ geoserver:
     gateway:
       ingress:
         enabled: false
+      containers:
+        spring:
+          image:
+            repository: {{ .Values.images.geoserver.gateway.repository }}
+            tag: {{ .Values.images.geoserver.gateway.tag }}
       <<: *additional-attributes
     webui:
+      containers:
+        spring:
+          image:
+            repository: {{ .Values.images.geoserver.webui.repository }}
+            tag: {{ .Values.images.geoserver.webui.tag }}
       <<: *additional-attributes
     rest:
+      containers:
+        spring:
+          image:
+            repository: {{ .Values.images.geoserver.rest.repository }}
+            tag: {{ .Values.images.geoserver.rest.tag }}
       <<: *additional-attributes
     wms:
+      containers:
+        spring:
+          image:
+            repository: {{ .Values.images.geoserver.wms.repository }}
+            tag: {{ .Values.images.geoserver.wms.tag }}
       <<: *additional-attributes
     wcs:
+      containers:
+        spring:
+          image:
+            repository: {{ .Values.images.geoserver.wcs.repository }}
+            tag: {{ .Values.images.geoserver.wcs.tag }}
       <<: *additional-attributes
     wfs:
+      containers:
+        spring:
+          image:
+            repository: {{ .Values.images.geoserver.wfs.repository }}
+            tag: {{ .Values.images.geoserver.wfs.tag }}
       <<: *additional-attributes
     gwc:
+      containers:
+        spring:
+          image:
+            repository: {{ .Values.images.geoserver.gwc.repository }}
+            tag: {{ .Values.images.geoserver.gwc.tag }}
       # for now disabled. Can be enabled if we want to use the GWC service, but is currently not required
       enabled: false
       <<: *additional-attributes
     wps:
+      containers:
+        spring:
+          image:
+            repository: {{ .Values.images.geoserver.wps.repository }}
+            tag: {{ .Values.images.geoserver.wps.tag }}
       <<: *additional-attributes

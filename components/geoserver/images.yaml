@@ -4,3 +4,27 @@ geoserver:
     registry: docker.io
     repository: bitnamilegacy/rabbitmq
     tag: 4.1.3
+  gateway:
+    repository: geoservercloud/geoserver-cloud-gateway
+    tag: 2.8.2.3
+  webui:
+    repository: geoservercloud/geoserver-cloud-webui
+    tag: 2.8.2.3
+  rest:
+    repository: geoservercloud/geoserver-cloud-rest
+    tag: 2.8.2.3
+  wms:
+    repository: geoservercloud/geoserver-cloud-wms
+    tag: 2.8.2.3
+  wcs:
+    repository: geoservercloud/geoserver-cloud-wcs
+    tag: 2.8.2.3
+  wfs:
+    repository: geoservercloud/geoserver-cloud-wfs
+    tag: 2.8.2.3
+  gwc:
+    repository: geoservercloud/geoserver-cloud-gwc
+    tag: 2.8.2.3
+  wps:
+    repository: geoservercloud/geoserver-cloud-wps
+    tag: 2.8.2.3
