@@ -56,7 +56,7 @@ env: &env-override
   GEOSERVER_WEB_GLOBALSERVICES:
     value: 'false'
 
-additional-stuff: &additional-stuff
+additional-attributes: &additional-attributes
   volumes:
     <<: *additional-volumes
   containers:
@@ -84,26 +84,20 @@ geoserver:
     gateway:
       ingress:
         enabled: false
-      <<: *additional-stuff
+      <<: *additional-attributes
     webui:
-      <<: *additional-stuff
+      <<: *additional-attributes
     rest:
-      replicaCount: 1
-      <<: *additional-stuff
+      <<: *additional-attributes
     wms:
-      replicaCount: 1
-      <<: *additional-stuff
+      <<: *additional-attributes
     wcs:
-      replicaCount: 1
-      <<: *additional-stuff
+      <<: *additional-attributes
     wfs:
-      replicaCount: 1
-      <<: *additional-stuff
+      <<: *additional-attributes
     gwc:
+      # for now disabled. Can be enabled if we want to use the GWC service, but is currently not required
       enabled: false
-      replicaCount: 0
-      <<: *additional-stuff
+      <<: *additional-attributes
     wps:
-      enabled: true
-      replicaCount: 1
-      <<: *additional-stuff
+      <<: *additional-attributes
