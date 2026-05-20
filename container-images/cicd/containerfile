@@ -38,6 +38,8 @@ COPY --from=fetcher /tmp/helmfile /usr/local/bin/helmfile
 COPY --from=fetcher /tmp/kubectl /usr/local/bin/kubectl
 
 # Install any additional dependencies needed for CI/CD tasks
+# - openssl: required by scripts/ci/seed-platform-data.sh to generate
+#   ephemeral auth passwords (`openssl rand -base64 ...`)
 RUN apk add --no-cache --update \
   git \
   python3 \
@@ -45,7 +47,8 @@ RUN apk add --no-cache --update \
   nodejs \
   npm \
   bash \
-  curl
+  curl \
+  openssl
 
 # Install pre-commit
 RUN pip install --break-system-packages pre-commit
