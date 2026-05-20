@@ -43,7 +43,7 @@ setup-version:
 
 pre-commit:
   stage: lint
-  image: registry.gitlab.com/civitas-connect/civitas-core/civitas-core-v2/civitas-core-deployment/cicd:a1aebd6
+  image: registry.gitlab.com/civitas-connect/civitas-core/civitas-core-v2/civitas-core-deployment/cicd:53f3c18a
   script:
     - cp -r defaults/deployment deployment
     - helmfile fetch -f deployment/helmfile.yaml -e default
@@ -53,7 +53,7 @@ pre-commit:
 
 .deploy-base:
   stage: deploy
-  image: registry.gitlab.com/civitas-connect/civitas-core/civitas-core-v2/civitas-core-deployment/cicd:a1aebd6
+  image: registry.gitlab.com/civitas-connect/civitas-core/civitas-core-v2/civitas-core-deployment/cicd:53f3c18a
   before_script:
     # Setup kubeconfig
     - mkdir -p ~/.kube
