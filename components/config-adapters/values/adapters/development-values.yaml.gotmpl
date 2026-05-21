@@ -1,0 +1,17 @@
+---
+{{- $this := .Values.configAdapters.adapters }}
+{{- $global := .Values.global }}
+# Checklist:
+# - [x] Minimal Resources
+# - [x] Minimal storage -> not applicable
+# - [x] 1 Replica
+
+replicaCount: 1
+
+resources:
+  requests:
+    memory: '256Mi'
+    cpu: '100m'
+  limits:
+    memory: '512Mi'
+    cpu: '500m'

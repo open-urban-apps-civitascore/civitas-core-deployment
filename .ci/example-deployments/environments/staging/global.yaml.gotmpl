@@ -1,0 +1,9 @@
+---
+global:
+  domain: staging.dev.civitas2.fw-web.space
+  profile: production
+  instanceSlug: staging
+  ingress:
+    enabled: true
+    clusterIssuer: 'letsencrypt-prod'
+    ingressClass: 'nginx'

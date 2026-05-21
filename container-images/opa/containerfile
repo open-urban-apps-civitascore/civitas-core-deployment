@@ -1,0 +1,23 @@
+FROM alpine:3.23.3 AS fetcher
+
+ARG TARGETARCH
+
+# TODO: Add renovate definitions for these versions
+# https://docs.renovatebot.com/modules/datasource/github-releases/
+ENV OPA_VERSION=v1.14.0
+
+# Install dependencies
+RUN apk update && \
+	apk add --no-cache \
+	curl
+
+# FETCH opa
+RUN curl -fL "https://github.com/open-policy-agent/opa/releases/download/${OPA_VERSION}/opa_linux_${TARGETARCH}_static" -o /tmp/opa
+RUN chmod +x /tmp/opa
+
+FROM alpine:3.23.3 AS opa
+
+ARG TARGETARCH
+
+# Get binaries from fetcher stage
+COPY --from=fetcher /tmp/opa /usr/local/bin/opa

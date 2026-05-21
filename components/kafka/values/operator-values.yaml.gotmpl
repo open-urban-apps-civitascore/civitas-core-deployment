@@ -1,11 +1,15 @@
 ---
-{{- $this := .Values.kafka.operator -}}
-{{- $global := .Values.global -}}
+{{- $this := .Values.kafka.operator }}
+{{- $global := .Values.global }}
 
 {{- if ne $this.namespace .Values.kafka.cluster.namespace  }}
 watchNamespaces:
   - {{ .Values.kafka.cluster.namespace }}
 {{ end }}
+
+
+annotations:
+  config.linkerd.io/skip-outbound-ports: "8443,9090,9091"
 
 labels:
   app.kubernetes.io/name: strimzi-kafka-operator
@@ -26,3 +30,11 @@ securityContext:
   runAsNonRoot: true
   seccompProfile:
     type: RuntimeDefault
+
+resources:
+  limits:
+    memory: 1Gi
+    cpu: 1000m
+  requests:
+    memory: 512Mi
+    cpu: 100m

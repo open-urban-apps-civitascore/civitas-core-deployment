@@ -1,0 +1,48 @@
+---
+config-adapter-allow-linkerd:
+  podSelector:
+    app.kubernetes.io/instance: config-adapters-adapters
+    app.kubernetes.io/name: config-adapter
+  policyTypes:
+    - Ingress
+  ingress:
+    - ports:
+        - port: 4143
+          protocol: TCP
+        - port: 4190
+          protocol: TCP
+        - port: 4191
+          protocol: TCP
+
+# Egress: Linkerd control plane and proxy communication
+config-adapter-linkerd-egress:
+  podSelector:
+    app.kubernetes.io/instance: config-adapters-adapters
+    app.kubernetes.io/name: config-adapter
+  policyTypes:
+    - Egress
+  egress:
+    # Linkerd control plane (required for service mesh mTLS/identity,
+    # destination lookups and policy fetching).
+    - to:
+        - namespaceSelector: {}
+          podSelector:
+            matchLabels:
+              linkerd.io/control-plane-ns: linkerd
+      ports:
+        - port: 8080 # linkerd-identity
+          protocol: TCP
+        - port: 8086 # linkerd-destination
+          protocol: TCP
+        - port: 8090 # linkerd-policy
+          protocol: TCP
+
+    # Linkerd proxy data plane (required for all meshed service-to-service communication)
+    - ports:
+        - port: 4143
+          protocol: TCP
+
+    # Linkerd proxy admin port (same pod, no namespace restriction)
+    - ports:
+        - port: 4191
+          protocol: TCP

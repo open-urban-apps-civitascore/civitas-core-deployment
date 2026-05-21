@@ -1,0 +1,116 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "authz.fullname" . }}-opa
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "authz.opa.labels" . | nindent 4 }}
+  {{- with .Values.opa.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  {{- if not .Values.opa.autoscaling.enabled }}
+  replicas: {{ .Values.opa.replicaCount | default 1 }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "authz.opa.selectorLabels" . | nindent 6 }}
+  {{- with .Values.opa.strategy }}
+  strategy:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  template:
+    metadata:
+      labels:
+        {{- include "authz.opa.selectorLabels" . | nindent 8 }}
+        {{- with .Values.opa.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- with .Values.opa.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    spec:
+      {{- with .Values.opa.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.opa.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if .Values.opa.serviceAccount.create }}
+      serviceAccountName: {{ include "authz.fullname" . }}-opa
+      {{- end }}
+      containers:
+      - name: opa
+        image: "{{ .Values.opa.image.repository }}:{{ .Values.opa.image.tag }}"
+        imagePullPolicy: {{ .Values.opa.image.pullPolicy | default "IfNotPresent" }}
+        ports:
+        - name: http
+          containerPort: {{ .Values.opa.service.port | default 8181 }}
+          protocol: TCP
+        {{- with .Values.opa.env }}
+        env:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+        {{- if .Values.opa.args }}
+        args:
+          {{- toYaml .Values.opa.args | nindent 10 }}
+        {{- end }}
+        {{- with .Values.opa.startupProbe }}
+        startupProbe:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+        {{- with .Values.opa.livenessProbe }}
+        livenessProbe:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+        {{- with .Values.opa.readinessProbe }}
+        readinessProbe:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+        {{- with .Values.opa.resources }}
+        resources:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+        {{- with .Values.opa.containerSecurityContext }}
+        securityContext:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+        volumeMounts:
+        - name: opa-config
+          mountPath: /data/config.json
+          subPath: opa-config.json
+          readOnly: true
+        - name: tmp
+          mountPath: /tmp
+        {{- with .Values.opa.extraVolumeMounts }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      volumes:
+      - name: opa-config
+        configMap:
+          name: {{ include "authz.fullname" . }}-opa-config
+      - name: tmp
+        emptyDir: {}
+      {{- with .Values.opa.volumes }}
+      {{- toYaml . | nindent 6 }}
+      {{- end }}
+      {{- with .Values.opa.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.opa.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.opa.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.opa.terminationGracePeriodSeconds }}
+      terminationGracePeriodSeconds: {{ . }}
+      {{- end }}

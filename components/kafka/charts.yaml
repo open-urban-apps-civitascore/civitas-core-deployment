@@ -1,7 +1,8 @@
 ---
 kafka:
   operator:
-    chart: oci://quay.io/strimzi-helm/strimzi-kafka-operator
+    repository: https://strimzi.io/charts/
+    chart: strimzi/strimzi-kafka-operator
     version: '0.48.0'
   cluster:
     chart: charts/kafka

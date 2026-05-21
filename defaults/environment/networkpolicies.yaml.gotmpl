@@ -1,0 +1,5 @@
+networkpolicies:
+  {{- include "civitas.configFiles" (dict "components" .Values.components "file" "networkpolicies.yaml") }}
+  {{- if and (.Values.global.serviceMesh.enable | default false) (eq (.Values.global.serviceMesh.type | default "") "linkerd") }}
+  {{- include "civitas.configFiles" (dict "components" .Values.components "file" "networkpolicies-linkerd.yaml") }}
+  {{- end }}

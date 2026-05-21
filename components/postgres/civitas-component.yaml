@@ -7,3 +7,6 @@ parts:
   - name: cluster
     needs:
       - postgres.operator
+  - name: databases
+    needs:
+      - postgres.cluster

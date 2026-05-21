@@ -1,0 +1,147 @@
+---
+{{- $this := .Values.apisix.apisix }}
+{{- $global := .Values.global }}
+# Checklist:
+# - [ ] Containers run as non-root with `readOnlyRootFilesystem`
+# - [x] Health probes -> enabled by default in chart
+# - [x] Graceful shutdown -> handled by chart
+# - [ ] Standard labels
+# - [x] ServiceAccount with least privilege where required
+# - [x] Named ports -> handled by chart
+# - [ ] Ingress with TLS -> not applicable, APISIX is the gateway itself
+
+fullnameOverride: apisix
+
+# Container images
+image:
+  repository: {{ .Values.images.apisix.apisix.gateway.repository }}
+  tag: {{ .Values.images.apisix.apisix.gateway.tag }}
+  pullPolicy: IfNotPresent
+
+service:
+  type: "ClusterIP"
+  externalTrafficPolicy: null
+
+serviceAccount:
+  create: true
+
+rbac:
+  create: true
+
+podSecurityContext:
+  {{ .Values.securityDefaults.podSecurityContext | toYaml | nindent 2 }}
+
+securityContext:
+  {{ .Values.securityDefaults.securityContext | toYaml | nindent 2 }}
+
+# External etcd configuration with RBAC
+etcd:
+  enabled: false
+
+externalEtcd:
+  host:
+    - http://etcd-etcd-client.{{ .Values.etcd.etcd.namespace }}.svc.cluster.local:2379
+  user: "apisix"
+  existingSecret: "etcd-apisix-password"
+  secretPasswordKey: "apisix-password"
+
+# Config to ensure functionality with read-only filesystem
+# Ensures that /usr/local/apisix/conf and /tmp are writable, while also preserving
+# the default configuration by copying it in an init container.
+{{- $writableVolumes := dict
+  "conf" "/usr/local/apisix/conf"
+  "tmp" "/tmp"
+  "body-tmp" "/usr/local/apisix/client_body_temp"
+  "proxy-tmp" "/usr/local/apisix/proxy_temp"
+  "fastcgi-tmp" "/usr/local/apisix/fastcgi_temp"
+  "uwsgi-tmp" "/usr/local/apisix/uwsgi_temp"
+  "scgi-tmp" "/usr/local/apisix/scgi_temp"
+  "logs" "/usr/local/apisix/logs"
+}}
+
+extraVolumes:
+{{- range $name, $path := $writableVolumes }}
+  - name: apisix-{{ $name }}-writable
+    emptyDir: { }
+{{- end }}
+
+extraVolumeMounts:
+{{- range $name, $path := $writableVolumes }}
+  - name: apisix-{{ $name }}-writable
+    mountPath: {{ $path }}
+{{- end }}
+
+extraInitContainers:
+  - name: copy-apisix-conf
+    image: {{ .Values.images.apisix.apisix.gateway.repository }}:{{ .Values.images.apisix.apisix.gateway.tag }}
+    imagePullPolicy: IfNotPresent
+    command: ["/bin/sh", "-c"]
+    args:
+      - cp -r /usr/local/apisix/conf/* /mnt/apisix-conf/ ;
+    volumeMounts:
+      - name: apisix-conf-writable
+        mountPath: /mnt/apisix-conf
+    securityContext:
+      {{ .Values.securityDefaults.securityContext | toYaml | nindent 8 }}
+
+# APISIX Gateway configuration
+apisix:
+  prometheus:
+    enabled: {{ $global.metrics.enabled }}
+  admin:
+    enabled: true
+    allow:
+      ipList:
+        - 0.0.0.0/0 # TODO: configure dynamically to listen on service ip
+    ingress:
+      enabled: false
+    credentials:
+      secretName: apisix-admin-credentials
+      secretAdminKey: admin
+      secretViewerKey: viewer
+  trustedAddresses:
+    - 127.0.0.1
+    - 10.0.0.0/8
+    - 172.16.0.0/12
+    - 192.168.0.0/16
+  nginx:
+    configurationSnippet:
+      httpEnd: |
+        proxy_buffer_size 32k;
+        proxy_buffers 4 32k;
+        client_header_buffer_size 16k;
+        large_client_header_buffers 4 16k;
+ingress:
+  enabled: true
+  className: {{ $global.ingress.ingressClass }}
+  annotations:
+    ingress.kubernetes.io/affinity: cookie
+    cert-manager.io/cluster-issuer: {{ $global.ingress.clusterIssuer }}
+    nginx.ingress.kubernetes.io/proxy-buffer-size: "16k"
+    nginx.ingress.kubernetes.io/proxy-buffers-number: "4"
+    nginx.ingress.kubernetes.io/proxy-busy-buffers-size: "24k"
+  hosts:
+  {{- range $component, $config := .Values.routes }}
+    {{- if hasKey $config "subDomain" }}
+    - host: {{ $config.subDomain }}.{{ $global.domain }}
+      paths:
+        - '/'
+    {{- end }}
+  {{- end }}
+  tls:
+    - secretName: apisix-tls
+      hosts:
+      {{- range $component, $config := .Values.routes }}
+        {{- if hasKey $config "subDomain" }}
+        - {{ $config.subDomain }}.{{ $global.domain }}
+        {{- end }}
+      {{- end }}
+
+# Ingress Controller
+ingress-controller:
+  enabled: false
+
+# Metrics
+metrics:
+  serviceMonitor:
+    enabled: {{ $global.metrics.enabled }}

@@ -1,6 +1,11 @@
 ---
-{{- $this := .Values.kafka.cluster -}}
-{{- $global := .Values.global -}}
+{{- $this := .Values.kafka.cluster }}
+{{- $global := .Values.global }}
+
+# Service Mesh configuration (passed from global values)
+customServiceMesh:
+  enable: {{ $global.serviceMesh.enable | default false }}
+  type: {{ $global.serviceMesh.type | default "" | quote }}
 
 # TODO: Enable TLS and configure certs for production use
 kafka:
@@ -9,3 +14,13 @@ kafka:
     port: {{ $this.bootstrapPort }}
     type: internal
     tls: false
+
+topics:
+  - name: "kafkasql-journal"
+    partitions: 1
+    replicas: 1
+    config:
+      retention.ms: "-1"
+      retention.bytes: "-1"
+      cleanup.policy: delete
+

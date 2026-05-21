@@ -1,0 +1,25 @@
+---
+global:
+  # The DNS domain for all services
+  # e.g. this would build the keycloak domain: idm.civitas.test
+  #
+  # PIPELINE_SLUG is injected by the GitLab job:
+  #   * Branch pipelines: $CI_COMMIT_REF_SLUG
+  #   * MR pipelines:     mr-$CI_MERGE_REQUEST_IID
+  domain: {{ requiredEnv "PIPELINE_SLUG" }}.dev.civitas2.fw-web.space
+
+  # Unique identifier for this deployment instance (used as namespace and keycloak realm)
+  instanceSlug: civitas
+
+  # Email of the initial user with admin rights
+  initialUserEmail: {{ env "GITLAB_USER_EMAIL" | default "admin@civitas.test" }}
+
+  # Deployment profile: "development" or "production"
+  # Controls resource limits, replica counts, scaling
+  profile: development
+
+  ingress:
+    enabled: true
+    # Use your available cluster issuer for production, e.g. 'letsencrypt-prod'
+    clusterIssuer: 'letsencrypt-prod'
+    ingressClass: 'nginx'

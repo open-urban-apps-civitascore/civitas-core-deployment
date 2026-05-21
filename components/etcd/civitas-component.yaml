@@ -1,0 +1,4 @@
+---
+component: etcd
+parts:
+  - name: etcd

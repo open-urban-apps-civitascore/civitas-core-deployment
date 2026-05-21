@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "title": "Helm values schema for Keycloak clients (root map)",
+  "description": "Root object is a map of Keycloak clients keyed by clientId. Each entry may define helper fields and/or rawValues overrides.",
+  "type": "object",
+  "additionalProperties": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "subdomain": {
+        "description": "If set, used to build rootUrl/baseUrl/redirectUris/webOrigins. Defaults to the clientId key.",
+        "type": "string",
+        "minLength": 1
+      },
+      "redirectPath": {
+        "description": "If set, appended to redirectUris URL. Defaults to '/*'.",
+        "type": "string",
+        "minLength": 1
+      },
+      "name": {
+        "description": "Human-friendly client name. Defaults to the clientId key.",
+        "type": "string"
+      },
+      "description": {
+        "description": "Client description. Defaults to empty string.",
+        "type": "string"
+      },
+      "rawValues": {
+        "description": "Free-form overrides merged into the computed client defaults using mergeOverwrite.",
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "clientId": { "type": "string" },
+          "name": { "type": "string" },
+          "description": { "type": "string" },
+          "enabled": { "type": "boolean" },
+          "protocol": { "type": "string" },
+
+          "publicClient": { "type": "boolean" },
+          "bearerOnly": { "type": "boolean" },
+          "secret": { "type": "string" },
+
+          "rootUrl": { "type": "string" },
+          "baseUrl": { "type": "string" },
+
+          "standardFlowEnabled": { "type": "boolean" },
+          "implicitFlowEnabled": { "type": "boolean" },
+          "directAccessGrantsEnabled": { "type": "boolean" },
+          "serviceAccountsEnabled": { "type": "boolean" },
+          "authorizationServicesEnabled": { "type": "boolean" },
+
+          "redirectUris": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "webOrigins": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+
+          "defaultClientScopes": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "optionalClientScopes": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+
+          "attributes": {
+            "type": "object",
+            "additionalProperties": {
+              "type": ["string", "number", "boolean", "null", "object", "array"]
+            }
+          }
+        }
+      }
+    }
+  }
+}

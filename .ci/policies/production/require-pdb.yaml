@@ -1,0 +1,31 @@
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: require-pdb
+  annotations:
+    policies.kyverno.io/title: Require PodDisruptionBudget
+    policies.kyverno.io/category: Best Practices
+    policies.kyverno.io/severity: medium
+    policies.kyverno.io/minversion: 1.6.0
+    policies.kyverno.io/subject: Deployment
+    policies.kyverno.io/description: >-
+      PodDisruptionBudgets are required for production workloads to ensure high availability
+      during voluntary disruptions like node maintenance or cluster upgrades. This policy
+      validates that Deployments have an associated PodDisruptionBudget with at least
+      minAvailable: 1.
+spec:
+  validationFailureAction: Audit
+  background: true
+  rules:
+    - name: validate-pdb-min-available
+      match:
+        any:
+          - resources:
+              kinds:
+                - PodDisruptionBudget
+      validate:
+        message: 'PodDisruptionBudget must have minAvailable >= 1.'
+        pattern:
+          spec:
+            minAvailable: '>=1'

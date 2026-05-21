@@ -1,3 +1,4 @@
+---
 kafka:
   operator:
     enabled: true
@@ -11,3 +12,4 @@ kafka:
     enabled: true
     namespace: {{ include "civitas.namespace" (dict "global" .Values.global "suffix" "kafka") }}
     subdomain: kafka-ui
+    pathPrefix: /

@@ -1,0 +1,11 @@
+---
+redpanda-connect:
+  podSelector:
+    app.kubernetes.io/instance: redpanda-connect-connect
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: config-adapter

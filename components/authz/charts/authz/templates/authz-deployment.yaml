@@ -1,0 +1,136 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "authz.fullname" . }}-authz
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "authz.authz.labels" . | nindent 4 }}
+  {{- with .Values.authz.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  {{- if not .Values.authz.autoscaling.enabled }}
+  replicas: {{ .Values.authz.replicaCount | default 1 }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "authz.authz.selectorLabels" . | nindent 6 }}
+  {{- with .Values.authz.strategy }}
+  strategy:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  template:
+    metadata:
+      labels:
+        {{- include "authz.authz.selectorLabels" . | nindent 8 }}
+        {{- with .Values.authz.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- with .Values.authz.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    spec:
+      {{- with .Values.authz.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.authz.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if .Values.authz.serviceAccount.create }}
+      serviceAccountName: {{ include "authz.fullname" . }}-authz
+      {{- end }}
+      containers:
+      - name: authz
+        image: "{{ .Values.authz.image.repository }}:{{ .Values.authz.image.tag }}"
+        imagePullPolicy: {{ .Values.authz.image.pullPolicy | default "IfNotPresent" }}
+        ports:
+        - name: http
+          containerPort: {{ .Values.authz.service.port | default 8080 }}
+          protocol: TCP
+        env:
+          - name: DATABASE_URL
+            value: {{ .Values.authz.database.url }}
+          {{- if .Values.authz.database.credentialsSecret.usernameKey }}
+          - name: DATABASE_USERNAME
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.authz.database.credentialsSecret.name }}
+                key: {{ .Values.authz.database.credentialsSecret.usernameKey | default "username" }}
+          {{- else if .Values.authz.database.username }}
+          - name: DATABASE_USERNAME
+            value: {{ .Values.authz.database.username }}
+          {{- end }}
+          - name: DATABASE_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.authz.database.credentialsSecret.name }}
+                key: {{ .Values.authz.database.credentialsSecret.passwordKey | default "password" }}
+        {{- with .Values.authz.extraEnv }}
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+        {{- if .Values.authz.args }}
+        args:
+          {{- toYaml .Values.authz.args | nindent 10 }}
+        {{- end }}
+        {{- with .Values.authz.startupProbe }}
+        startupProbe:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+        {{- with .Values.authz.livenessProbe }}
+        livenessProbe:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+        {{- with .Values.authz.readinessProbe }}
+        readinessProbe:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+        {{- with .Values.authz.resources }}
+        resources:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+        {{- with .Values.authz.containerSecurityContext }}
+        securityContext:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+        volumeMounts:
+        {{- if .Values.authz.config }}
+        - name: authz-config
+          mountPath: /config
+          readOnly: true
+        {{- end }}
+        - name: tmp
+          mountPath: /tmp
+        {{- with .Values.authz.volumeMounts }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      volumes:
+      {{- if .Values.authz.config }}
+      - name: authz-config
+        configMap:
+          name: {{ include "authz.fullname" . }}-authz-config
+      {{- end }}
+      - name: tmp
+        emptyDir: {}
+      {{- with .Values.authz.volumes }}
+      {{- toYaml . | nindent 6 }}
+      {{- end }}
+      {{- with .Values.authz.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.authz.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.authz.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.authz.terminationGracePeriodSeconds }}
+      terminationGracePeriodSeconds: {{ . }}
+      {{- end }}

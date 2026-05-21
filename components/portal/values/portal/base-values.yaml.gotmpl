@@ -1,0 +1,68 @@
+---
+{{- $this := .Values.portal.portal }}
+{{- $global := .Values.global }}
+# Checklist:
+# - [x] Containers run as non-root with `readOnlyRootFilesystem` ->  default in base chart
+# - [x] Health probes -> default in base chart
+# - [ ] Graceful shutdown
+# - [ ] Standard labels
+# - [x] ServiceAccount with least privilege where required -> default
+# - [x] Named ports -> default in base chart
+# - [x] Ingress with TLS
+
+backend:
+  enabled: true
+  image:
+    repository: {{ .Values.images.portal.backend.repository }}
+    tag: {{ .Values.images.portal.backend.tag }}
+  trustStore:
+    enabled: false
+    secretName: ""
+    certKey: "tls.crt"
+
+frontend:
+  enabled: true
+  image:
+    repository: {{ .Values.images.portal.frontend.repository }}
+    tag: {{ .Values.images.portal.frontend.tag }}
+
+{{- $keycloakHost := printf "%s.%s" (default "" .Values.keycloak.app.subdomain) $global.domain | trimPrefix "." }}
+{{- $keycloakPath := .Values.keycloak.app.pathPrefix | trimSuffix "/" }}
+{{- $keycloakUrl := printf "https://%s%s" $keycloakHost $keycloakPath }}
+{{- $realmName := $global.instanceSlug }}
+
+keycloak:
+  authServerUrl: {{ $keycloakUrl }}
+  realm: {{ $realmName }}
+
+kafka:
+  bootstrapServers: "{{ .Values.kafka.cluster.bootstrapService }}:{{ .Values.kafka.cluster.bootstrapPort }}"
+
+{{- $host := printf "%s.%s" (default "" $this.subdomain) $global.domain | trimPrefix "." }}
+
+server:
+  url: https://{{ $host }}
+
+apisix:
+  serviceUrl: "http://apisix-gateway.{{ .Values.apisix.apisix.namespace }}.svc.cluster.local"
+
+modelAtlas:
+  url: "http://model-atlas-model-atlas.{{ .Values.modelAtlas.modelAtlas.namespace }}.svc.cluster.local:8080"
+
+ingress:
+  enabled: false
+
+database:
+  host: {{ .Values.databases.portal.host }}
+  port: {{ .Values.databases.portal.port }}
+  name: {{ .Values.databases.portal.name }}
+  owner: {{ .Values.databases.portal.user }}
+  secret:
+    name: {{ .Values.databases.portal.secret.name }}
+    passwordKey: password
+
+networkPolicy:
+  enabled: false
+
+initialUser:
+  email: {{ $global.initialUserEmail }}

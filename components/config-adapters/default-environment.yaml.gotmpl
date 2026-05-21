@@ -1,0 +1,5 @@
+---
+configAdapters:
+  adapters:
+    enabled: true
+    namespace: {{ include "civitas.namespace" (dict "global" .Values.global "suffix" "config-adapters") }}

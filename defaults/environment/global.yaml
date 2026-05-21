@@ -1,22 +1,70 @@
 ---
 global:
+  # The DNS domain for all services
+  # e.g. this would build the keycloak domain: idm.civitas.test
   domain: civitas.test
+
+  # Unique identifier for this deployment instance (used as namespace and keycloak realm)
   instanceSlug: dev
+
+  # Email of the initial user with admin rights
+  initialUserEmail: admin@civitas.test
+
+  # Deployment profile: "development" or "production"
+  # Controls resource limits, replica counts, scaling
   profile: development
+
+  # Whether Helmfile should create the namespace automatically
   createNamespaces: true
+
+  # Namespace strategy:
+  #   true  = all components in a single namespace (e.g. "dev")
+  #   false = each component in its own namespace (e.g. "dev-postgres", "dev-keycloak"; currently not supported)
   singleNamespace: true
+
+  # Service mesh configuration
+  serviceMesh:
+    enable: true
+    type: linkerd
+    # Auto-inject Linkerd sidecars into namespaces
+    patchNamespaces: true
+
   ingress:
-    enabled: true
+    # Use your available cluster issuer for production, e.g. 'letsencrypt-prod'
     clusterIssuer: 'selfsigned-ca'
     ingressClass: 'nginx'
+
+  # Storage class mappings (leave empty to use cluster defaults)
   storage:
     storageClass:
+      # ReadWriteOnce (databases)
       rwo: ''
+      # ReadWriteMany (shared volumes, currently not used)
       rwx: ''
+      # Local storage
       loc: ''
+
+  # Prometheus metrics scraping
   metrics:
     enabled: false
+
+# List of components to deploy (order matters for dependencies)
+# To "disable" a component, remove it from the list.
+# To add custom components/addons, add them to the list.
+# This is not under the "global" key, but its own root key!
 components:
+  - prepare
+  - secrets
+  - networkpolicies
   - postgres
+  - etcd
   - kafka
   - keycloak
+  - authz
+  - apisix
+  - apicurio
+  - frost
+  - model-atlas
+  - redpanda-connect
+  - config-adapters
+  - portal

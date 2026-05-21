@@ -1,8 +1,8 @@
 ---
 # Changes here will be overwritten by Copier.
-_commit: 85645bc
-_src_path: /home/julian/projects/civitas/civitas-2/template-component
+_commit: 331b26b
+_src_path: ..
 componentName: Keycloak
 componentSlug: keycloak
-releases: db,app,config-cli
+releases: app,config
 shortDescription: Central identity management of the platform

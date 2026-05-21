@@ -1,2 +1,2 @@
 databases:
-  {{- readFile "../../components/keycloak/databases.yaml.gotmpl" | nindent 2 }}
+  {{ include "civitas.configFiles" (dict "components" .Values.components "file" "databases.yaml") }}

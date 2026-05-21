@@ -1,0 +1,4 @@
+---
+configAdapters:
+  adapters:
+    chart: charts/config-adapter

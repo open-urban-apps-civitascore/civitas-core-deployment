@@ -1,8 +1,5 @@
 ---
 keycloak:
-  db:
-    enabled: true
-    namespace: {{ include "civitas.namespace" (dict "global" .Values.global "suffix" "keycloak") }}
   app:
     enabled: true
     namespace: {{ include "civitas.namespace" (dict "global" .Values.global "suffix" "keycloak") }}
@@ -14,7 +11,10 @@ keycloak:
       secret:
         name: "keycloak-admin-user"
         passwordKey: "password"
-  config-cli:
+  config:
+    enabled: true
+    namespace: {{ include "civitas.namespace" (dict "global" .Values.global "suffix" "keycloak") }}
+  configUserCreation:
     enabled: true
     namespace: {{ include "civitas.namespace" (dict "global" .Values.global "suffix" "keycloak") }}
 

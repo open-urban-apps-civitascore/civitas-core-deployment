@@ -1,0 +1,14 @@
+---
+apisix-allow-linkerd:
+  podSelector:
+    app.kubernetes.io/name: apisix
+  policyTypes:
+    - Ingress
+  ingress:
+    - ports:
+        - port: 4143
+          protocol: TCP
+        - port: 4190
+          protocol: TCP
+        - port: 4191
+          protocol: TCP

@@ -1,0 +1,43 @@
+---
+portal-frontend-allow-linkerd:
+  podSelector:
+    app.kubernetes.io/instance: portal-portal
+    app.kubernetes.io/name: portal
+    app.kubernetes.io/component: frontend
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: apisix
+      ports:
+        - port: 4143
+          protocol: TCP
+        - port: 4190
+          protocol: TCP
+        - port: 4191
+          protocol: TCP
+
+portal-backend-allow-linkerd:
+  podSelector:
+    app.kubernetes.io/instance: portal-portal
+    app.kubernetes.io/name: portal
+    app.kubernetes.io/component: backend
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: apisix
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: portal
+      ports:
+        - port: 4143
+          protocol: TCP
+        - port: 4190
+          protocol: TCP
+        - port: 4191
+          protocol: TCP

@@ -1,0 +1,43 @@
+# Helmfile for Linkerd installation inside vcluster
+# Usage: helmfile -f .ci/linkerd/helmfile.yaml.gotmpl sync
+#
+# Installs Linkerd CRDs and control plane with auto-generated certificates.
+# This is intended for ephemeral environments (e.g. smoke-test vclusters).
+#
+# Required environment variables (set by CI before running this helmfile):
+#   LINKERD_TRUST_ANCHOR_PEM  - Trust anchor CA certificate (PEM)
+#   LINKERD_ISSUER_CRT_PEM    - Issuer certificate (PEM)
+#   LINKERD_ISSUER_KEY_PEM    - Issuer private key (PEM)
+
+repositories:
+  - name: linkerd-edge
+    url: https://helm.linkerd.io/edge
+
+releases:
+  # Linkerd CRDs (must be installed before the control plane)
+  - name: linkerd-crds
+    namespace: linkerd
+    createNamespace: true
+    chart: linkerd-edge/linkerd-crds
+    version: 2025.4.2
+    wait: true
+    waitForJobs: true
+
+  # Linkerd control plane
+  - name: linkerd-control-plane
+    namespace: linkerd
+    chart: linkerd-edge/linkerd-control-plane
+    version: 2025.4.2
+    needs:
+      - linkerd/linkerd-crds
+    wait: true
+    waitForJobs: true
+    values:
+      - values/control-plane.yaml
+    set:
+      - name: identityTrustAnchorsPEM
+        value: {{ requiredEnv "LINKERD_TRUST_ANCHOR_PEM" | quote }}
+      - name: identity.issuer.tls.crtPEM
+        value: {{ requiredEnv "LINKERD_ISSUER_CRT_PEM" | quote }}
+      - name: identity.issuer.tls.keyPEM
+        value: {{ requiredEnv "LINKERD_ISSUER_KEY_PEM" | quote }}

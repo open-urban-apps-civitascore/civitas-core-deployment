@@ -1,0 +1,10 @@
+---
+apisix:
+  apisix:
+    enabled: true
+    namespace: {{ include "civitas.namespace" (dict "global" .Values.global "suffix" "apisix") }}
+    subdomain: "apisix"
+    pathPrefix: "/"
+  configuration:
+    enabled: true
+    namespace: {{ include "civitas.namespace" (dict "global" .Values.global "suffix" "apisix") }}

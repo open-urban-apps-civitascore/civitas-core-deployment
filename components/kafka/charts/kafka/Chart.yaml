@@ -2,6 +2,7 @@
 apiVersion: v2
 name: kafka
 description: Helm chart to provision a production-ready Apache Kafka cluster using Strimzi custom resources
+icon: https://gitlab.com/uploads/-/system/group/avatar/78954426/CIVITASCORE_Icon.png?width=128
 
 # A chart can be either an 'application' or a 'library' chart.
 #

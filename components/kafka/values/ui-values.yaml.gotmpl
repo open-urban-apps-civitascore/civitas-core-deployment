@@ -1,6 +1,6 @@
 ---
-{{- $this := .Values.kafka.ui -}}
-{{- $global := .Values.global -}}
+{{- $this := .Values.kafka.ui }}
+{{- $global := .Values.global }}
 
 yamlApplicationConfig:
   kafka:
@@ -9,14 +9,4 @@ yamlApplicationConfig:
         bootstrapServers: {{ .Values.kafka.cluster.bootstrapService }}:{{ .Values.kafka.cluster.bootstrapPort }}
 
 ingress:
-  enabled: {{ $global.ingress.enabled }}
-  annotations:
-    cert-manager.io/cluster-issuer: {{ $global.ingress.clusterIssuer }}
-  {{- if index $this "subdomain" }}
-  host: {{ $this.subdomain }}.{{ $global.domain }}
-  path: '/'
-  {{- else }}
-  host: {{ $global.domain }}
-  path: '{{ $this.pathPrefix }}'
-  {{- end }}
-  ingressClassName: {{ $global.ingress.ingressClass }}
+  enabled: false

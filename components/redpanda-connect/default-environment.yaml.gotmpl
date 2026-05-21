@@ -1,0 +1,8 @@
+---
+redpandaConnect:
+  streamsconfig:
+    enabled: true
+    namespace: {{ include "civitas.namespace" (dict "global" .Values.global "suffix" "redpanda-connect") }}
+  connect:
+    enabled: true
+    namespace: {{ include "civitas.namespace" (dict "global" .Values.global "suffix" "redpanda-connect") }}

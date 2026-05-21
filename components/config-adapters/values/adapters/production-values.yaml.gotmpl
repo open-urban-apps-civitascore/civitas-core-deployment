@@ -1,0 +1,25 @@
+---
+{{- $this := .Values.configAdapters.adapters }}
+{{- $global := .Values.global }}
+# Checklist:
+# - [x] Resources (requests and limits)
+# - [x] Larger Storage -> not applicable
+# - [ ] 2+ Replicas or HorizontalPodAutoscaler
+# - [ ] Rolling updates `maxUnavailable: 0`, `maxSurge: 25%`
+# - [ ] PodDisruptionBudget (at least `minAvailable: 1`)  # TODO: add PDBs to charts
+
+# TODO: Add more replicas later. Currently every config adapter gets all messages - They must be handled only once.
+
+replicaCount: 1
+
+resources:
+  requests:
+    memory: '500Mi'
+    cpu: '500m'
+  limits:
+    memory: '1Gi'
+    cpu: '1000m'
+
+# TODO: Set to recreate, not always just run one instance, other
+updateStrategy:
+  type: Recreate

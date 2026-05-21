@@ -12,3 +12,6 @@ postgres:
       s3:
         accessKey: ""
         secretKey: ""
+  databases:
+    enabled: true
+    namespace: {{ include "civitas.namespace" (dict "global" .Values.global "suffix" "postgres") }}

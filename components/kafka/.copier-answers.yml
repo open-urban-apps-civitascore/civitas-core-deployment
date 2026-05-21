@@ -1,9 +1,8 @@
 ---
 # Changes here will be overwritten by Copier.
-_commit: a904809
-_src_path: /home/julian/projects/civitas/civitas-2/template-component
+_commit: 8969ae2
+_src_path: ..
 componentName: Kafka
 componentSlug: kafka
-helmChartName: oci://quay.io/strimzi-helm/strimzi-kafka-operator
-helmRepository: https://kafbat.github.io/helm-charts
+releases: operator,cluster,ui
 shortDescription: Asynchronous central message broker for interservice communication

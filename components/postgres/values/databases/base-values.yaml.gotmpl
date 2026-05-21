@@ -1,0 +1,17 @@
+---
+{{- $this := .Values.postgres.databases -}}
+{{- $global := .Values.global }}
+
+cluster:
+  name: {{ .Values.postgres.cluster.name }}
+
+databases:
+{{- range $component, $config := .Values.databases }}
+  {{- if eq $config.embedded true }}
+  {{ $component }}:
+    name: "{{ $config.name }}"
+    user: "{{ $config.user }}"
+    extensions: {{ index $config "extensions" | toYaml | nindent 6 }}
+    additionalRoles: {{ index $config "additionalRoles" | toYaml | nindent 6 }}
+  {{- end }}
+{{- end }}

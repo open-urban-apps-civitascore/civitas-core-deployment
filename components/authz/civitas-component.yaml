@@ -1,0 +1,4 @@
+---
+component: authz
+parts:
+  - name: authz

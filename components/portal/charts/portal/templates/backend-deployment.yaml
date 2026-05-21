@@ -1,0 +1,188 @@
+{{- if .Values.backend.enabled }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "portal.fullname" . }}-backend
+  labels:
+    {{- include "portal.backend.labels" . | nindent 4 }}
+  {{- with .Values.backend.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  {{- if not .Values.autoscaling.backend.enabled }}
+  replicas: {{ .Values.backend.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "portal.backend.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "portal.backend.selectorLabels" . | nindent 8 }}
+    spec:
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      {{- $trustStoreConfig := .Values.backend.trustStore | default dict }}
+      {{- $trustStoreSecret := lookup "v1" "Secret" .Release.Namespace ($trustStoreConfig.secretName | default "") }}
+      {{- if and ($trustStoreConfig.enabled | default false) $trustStoreSecret }}
+      initContainers:
+        - name: init-truststore
+          image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag }}"
+          command: ['sh', '-c']
+          args:
+            - |
+              cp $JAVA_HOME/lib/security/cacerts /truststore/cacerts
+              keytool -importcert -noprompt -trustcacerts \
+                -alias custom-ca \
+                -file /ca-cert/{{ $trustStoreConfig.certKey | default "ca.crt" }} \
+                -keystore /truststore/cacerts \
+                -storepass changeit
+          volumeMounts:
+            - name: truststore
+              mountPath: /truststore
+            - name: ca-cert
+              mountPath: /ca-cert
+              readOnly: true
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+      {{- end }}
+      containers:
+        - name: backend
+          image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag }}"
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          env:
+            # Database configuration
+            - name: SPRING_DATASOURCE_URL
+              value: "jdbc:postgresql://{{ .Values.database.host }}:{{ .Values.database.port }}/{{ .Values.database.name }}"
+            - name: SPRING_DATASOURCE_USERNAME
+              value: {{ .Values.database.owner }}
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.database.secret.name }}
+                  key: {{ .Values.database.secret.passwordKey }}
+            # Keycloak configuration
+            - name: KEYCLOAK_AUTH_SERVER_URL
+              value: {{ .Values.keycloak.authServerUrl }}
+            - name: KEYCLOAK_REALM
+              value: {{ .Values.keycloak.realm }}
+            - name: KEYCLOAK_ISSUER_URI
+              value: {{ .Values.keycloak.authServerUrl }}
+            - name: KEYCLOAK_TARGET_REALM
+              value: {{ .Values.keycloak.realm }}
+            # JWT configuration
+            - name: SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWS_ALGORITHMS
+              value: ES256
+            # Spring Boot configuration
+            - name: SPRING_PROFILES_ACTIVE
+              value: postgres,init
+            - name: LOGGING_LEVEL_ROOT
+              value: {{ .Values.backend.env.loggingLevelRoot }}
+            - name: SERVER_PORT
+              value: "8080"
+            - name: MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE
+              value: health,info,metrics
+            # Kafka configuration
+            - name: KAFKA_BOOTSTRAP_SERVERS
+              value: {{ .Values.kafka.bootstrapServers | quote }}
+            - name: KAFKA_ENABLED
+              value: "true"
+            # Model Atlas
+            - name: MODEL_ATLAS_BASE_URL
+              value: {{ .Values.modelAtlas.url }}
+            - name: MODEL_ATLAS_SCOPE
+              value: civitas
+            - name: SPRING_KAFKA_PRODUCER_PROPERTIES_COMPRESSION_TYPE
+              value: lz4
+            # Crypto configuration
+            - name: CIVITAS_MASTER_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: portal-backend-crypto
+                  key: civitas-master-key
+            - name: INIT_GROUPS_0_NAME
+              value: Tenant Admins
+            - name: INIT_GROUPS_0_ROLENAME
+              value: Tenant Admin
+            - name: INIT_GROUPS_0_DESCRIPTION
+              value: Users with full access to tenant management
+            - name: INIT_GROUPS_1_NAME
+              value: Data Owner
+            - name: INIT_GROUPS_1_SCOPETYPE
+              value: TENANT
+            - name: INIT_GROUPS_1_ROLENAME
+              value: Data Owner
+            - name: INIT_GROUPS_1_DESCRIPTION
+              value: Users with full access to data
+            - name: INIT_USERS_0_FIRSTNAME
+              value: Tenant
+            - name: INIT_USERS_0_LASTNAME
+              value: Admin
+            - name: INIT_USERS_0_EMAIL
+              value: {{ .Values.initialUser.email }}
+            - name: INIT_USERS_0_GROUPS_0
+              value: Tenant Admins
+            {{- if .Values.initialUser.isFullAdmin }}
+            - name: INIT_USERS_0_GROUPS_1
+              value: Data Owner
+            {{- end }}
+            {{- if and ($trustStoreConfig.enabled | default false) $trustStoreSecret }}
+            - name: JAVA_TOOL_OPTIONS
+              value: "-Djavax.net.ssl.trustStore=/truststore/cacerts -Djavax.net.ssl.trustStorePassword=changeit"
+            {{- end }}
+          startupProbe:
+            httpGet:
+              path: /v1/actuator/health
+              port: http
+              scheme: HTTP
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 30
+          livenessProbe:
+            httpGet:
+              path: /v1/actuator/health/liveness
+              port: http
+              scheme: HTTP
+            initialDelaySeconds: 0
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /v1/actuator/health/readiness
+              port: http
+              scheme: HTTP
+            initialDelaySeconds: 0
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          resources:
+            {{- toYaml .Values.backend.resources | nindent 12 }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            {{- if and ($trustStoreConfig.enabled | default false) $trustStoreSecret }}
+            - name: truststore
+              mountPath: /truststore
+              readOnly: true
+            {{- end }}
+      volumes:
+        - name: tmp
+          emptyDir: {}
+        {{- if and ($trustStoreConfig.enabled | default false) $trustStoreSecret }}
+        - name: truststore
+          emptyDir: {}
+        - name: ca-cert
+          secret:
+            secretName: {{ $trustStoreConfig.secretName }}
+        {{- end }}
+{{- end }}

@@ -1,0 +1,67 @@
+---
+registry:
+  enabled: true
+  app:
+    image:
+      repository: quay.io/apicurio/apicurio-registry
+      tag: '3.1.3'
+      pullPolicy: IfNotPresent
+    features:
+      resourceDeleteEnabled: false
+      versionMutabilityEnabled: false
+    storage:
+      type: kafkasql
+      kafkasql:
+        bootstrapServers: 'kafka-cluster-kafka-bootstrap:9092'
+        auth:
+          enabled: false
+          mechanism: 'PLAIN'
+          clientIdRef:
+            name: apicurio-kafka-client
+            key: id
+          clientSecretRef:
+            name: apicurio-kafka-client
+            key: secret
+    service:
+      type: ClusterIP
+      port: 8080
+    ingress:
+      enabled: true
+      host: 'apicurio.civitas.test'
+    auth:
+      enabled: false
+      authServerUrl: 'https://keycloak.civitas.test/auth/realms/civitas'
+      appClientId: 'apicurioRegistry'
+      uiClientId: 'apicurioUI'
+      redirectUri: 'https://apicurio.civitas.test/auth/callback'
+      # yamllint disable rule:line-length
+      logoutUrl: 'https://keycloak.civitas.test/auth/realms/civitas/protocol/openid-connect/logout?redirect_uri=https://apicurio.civitas.test'
+      authz:
+        enabled: false
+        ownerOnlyEnabled: false
+        groupAccessEnabled: false
+        readAccessEnabled: false
+        roles:
+          source: token
+          admin: sr-admin
+          developer: sr-developer
+          readOnly: sr-readonly
+    replicas: 1
+    podDisruptionBudget:
+      enabled: false
+
+  ui:
+    enabled: true
+    image:
+      repository: quay.io/apicurio/apicurio-registry-ui
+      tag: '3.1.3'
+      pullPolicy: IfNotPresent
+    service:
+      type: ClusterIP
+      port: 8080
+    ingress:
+      enabled: true
+      host: 'apicurio-ui.civitas.test'
+    replicas: 2
+    podDisruptionBudget:
+      enabled: false

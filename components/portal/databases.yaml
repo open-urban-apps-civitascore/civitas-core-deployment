@@ -1,0 +1,17 @@
+---
+portal:
+  name: 'portal'
+  embedded: true
+  user: 'portal'
+  secret:
+    name: 'db-portal'
+    key: 'password'
+    generate: true
+  host: 'postgres-cluster-rw'
+  port: 5432
+  additionalRoles:
+    - name: 'authz'
+      type: 'readonly'
+      credentialsSecret:
+        name: 'db-authz-readonly'
+        passwordKey: 'password'

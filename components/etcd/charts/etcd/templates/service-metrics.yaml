@@ -1,0 +1,23 @@
+{{- if .Values.metrics.enabled -}}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "etcd.fullname" . }}-metrics
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "etcd.labels" . | nindent 4 }}
+  {{- with .Values.service.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  type: ClusterIP
+  ports:
+    - name: metrics
+      port: 2381
+      targetPort: metrics
+      protocol: TCP
+  selector:
+    {{- include "etcd.selectorLabels" . | nindent 4 }}
+{{- end }}

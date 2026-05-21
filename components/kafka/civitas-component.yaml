@@ -1,10 +1,9 @@
 ---
-component: 'kafka'
+component: kafka
 parts:
   - name: operator
     extraLabels:
       operator: 'true'
-      myLabel: 'true'
   - name: cluster
     needs:
       - kafka.operator

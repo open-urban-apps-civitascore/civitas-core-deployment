@@ -1,0 +1,98 @@
+---
+{{- $this := .Values.apicurio.apicurio }}
+{{- $global := .Values.global }}
+
+registry:
+  enabled: true
+  app:
+    image:
+      repository: {{ .Values.images.apicurio.registry.repository }}
+      tag: {{.Values.images.apicurio.registry.tag }}
+      pullPolicy: IfNotPresent
+    features:
+      resourceDeleteEnabled: false
+      versionMutabilityEnabled: false
+    storage:
+      type: kafkasql
+      kafkasql:
+        bootstrapServers: "{{ .Values.kafka.cluster.bootstrapService }}:{{ .Values.kafka.cluster.bootstrapPort }}"
+{{/*#        auth:*/}}
+{{/*#          # TODO: Set to true when Kafka is ready*/}}
+{{/*#          enabled: false*/}}
+{{/*#          mechanism: "PLAIN"*/}}
+{{/*#          clientIdRef:*/}}
+{{/*#            name: {{ .Values.apicurio.kafka.auth.idSecret.name }}*/}}
+{{/*#            key: {{ .Values.apicurio.kafka.auth.idSecret.key }}*/}}
+{{/*#          clientSecretRef:*/}}
+{{/*#            name: {{ .Values.apicurio.kafka.auth.secretSecret.name }}*/}}
+{{/*#            key: {{ .Values.apicurio.kafka.auth.secretSecret.key }}*/}}
+    service:
+      type: ClusterIP
+      port: 8080
+    ingress:
+      enabled: false
+    auth:
+      enabled: false
+
+    startupProbe:
+      failureThreshold: 30
+      httpGet:
+        path: /health/ready
+        port: http
+        scheme: HTTP
+      initialDelaySeconds: 10
+      periodSeconds: 5
+      successThreshold: 1
+      timeoutSeconds: 3
+    livenessProbe:
+      failureThreshold: 3
+      httpGet:
+        path: /health/live
+        port: http
+        scheme: HTTP
+      initialDelaySeconds: 60
+      periodSeconds: 10
+      successThreshold: 1
+      timeoutSeconds: 5
+    readinessProbe:
+      failureThreshold: 3
+      httpGet:
+        path: /health/ready
+        port: http
+        scheme: HTTP
+      initialDelaySeconds: 30
+      periodSeconds: 10
+      successThreshold: 1
+      timeoutSeconds: 5
+    env:
+      - name: QUARKUS_LOG_LEVEL
+        value: INFO
+      - name: QUARKUS_LOG_CATEGORY__IO_APICURIO__LEVEL
+        value: INFO
+      - name: REGISTRY_KAFKASQL_TOPIC_AUTO_CREATE
+        value: "false"
+
+  ui:
+    enabled: {{ .Values.apicurio.ui.enabled }}
+    image:
+      repository: {{ .Values.images.apicurio.ui.repository }}
+      tag: {{ .Values.images.apicurio.ui.tag }}
+      pullPolicy: IfNotPresent
+    service:
+      type: ClusterIP
+      port: 8080
+    ingress:
+      enabled: false
+      ingressClassName: {{ $global.ingress.ingressClass }}
+      annotations:
+        cert-manager.io/cluster-issuer: {{ $global.ingress.clusterIssuer }}
+      {{- $hostUi := printf "%s.%s" (default "" .Values.apicurio.ui.subdomain) $global.domain | trimPrefix "." }}
+      host: {{ $hostUi }}
+      tls:
+        - hosts:
+            - {{ $hostUi }}
+          secretName: {{ $hostUi }}-tls
+    replicas: 1
+    podDisruptionBudget:
+      enabled: false
+

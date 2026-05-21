@@ -1,0 +1,151 @@
+{{- if .Values.auth.enabled }}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "etcd.fullname" . }}-auth-init
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "etcd.labels" . | nindent 4 }}
+    app.kubernetes.io/component: auth-init
+  annotations:
+    helm.sh/hook: post-install,post-upgrade
+    helm.sh/hook-weight: "5"
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+spec:
+  ttlSecondsAfterFinished: 30
+  backoffLimit: {{ .Values.auth.initJob.backoffLimit }}
+  activeDeadlineSeconds: {{ .Values.auth.initJob.activeDeadlineSeconds }}
+  template:
+    metadata:
+      labels:
+        {{- include "etcd.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: auth-init
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "etcd.serviceAccountName" . }}
+      restartPolicy: OnFailure
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: auth-init
+          image: {{ .Values.auth.initJob.image.repository }}:{{ .Values.auth.initJob.image.tag }}
+          imagePullPolicy: {{ .Values.auth.initJob.image.pullPolicy }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          env:
+            - name: ETCD_ENDPOINT
+              value: "http://{{ include "etcd.fullname" . }}-0.{{ include "etcd.fullname" . }}-headless.{{ .Release.Namespace }}.svc.cluster.local:{{ include "etcd.clientPort" . }}"
+            {{- if .Values.auth.rbac.rootPasswordSecret }}
+            - name: ETCD_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.auth.rbac.rootPasswordSecret.name }}
+                  key: {{ .Values.auth.rbac.rootPasswordSecret.key }}
+            {{- end }}
+          command:
+            - /bin/sh
+            - -ec
+            - |
+              # Wait for etcd to be ready
+              echo "Waiting for etcd ($ETCD_ENDPOINT) to be ready..."
+              AUTH_ENABLED=false
+              AUTH_FLAGS=""
+              ETCD_READY=false
+              for i in $(seq 1 30); do
+                HEALTH_OUTPUT=$(etcdctl --endpoints=$ETCD_ENDPOINT endpoint health 2>&1 || true)
+                if echo "$HEALTH_OUTPUT" | grep -q "$ETCD_ENDPOINT is healthy"; then
+                  ETCD_READY=true
+                  echo "etcd is ready (no authentication)!"
+                  break
+                elif echo "$HEALTH_OUTPUT" | grep -q "etcdserver: user name is empty"; then
+                  ETCD_READY=true
+                  AUTH_ENABLED=true
+                  AUTH_FLAGS="--user root --password $ETCD_ROOT_PASSWORD"
+                  echo "etcd is ready (authentication already enabled)!"
+                  break
+                fi
+                echo "Waiting... ($i/30)"
+                echo "$HEALTH_OUTPUT"
+                sleep 2
+              done
+
+              if [ "$ETCD_READY" = "false" ]; then
+                echo "ERROR: etcd did not become ready within timeout period"
+                exit 1
+              fi
+
+              {{- if .Values.auth.rbac.roles }}
+              # Create custom roles
+              echo "Creating custom roles..."
+              {{- range .Values.auth.rbac.roles }}
+              {{- $roleName := .name }}
+              echo "Creating role: {{ $roleName }}"
+              etcdctl --endpoints=$ETCD_ENDPOINT $AUTH_FLAGS role add {{ $roleName }} || true
+
+              {{- range .permissions }}
+              {{- if .prefix }}
+              echo "Granting {{ .permission }} permission on prefix {{ .key }} to role {{ $roleName }}"
+              etcdctl --endpoints=$ETCD_ENDPOINT $AUTH_FLAGS role grant-permission {{ $roleName }} {{ .permission }} {{ .key }} --prefix=true || true
+              {{- else }}
+              echo "Granting {{ .permission }} permission on key {{ .key }} to role {{ $roleName }}"
+              etcdctl --endpoints=$ETCD_ENDPOINT $AUTH_FLAGS role grant-permission {{ $roleName }} {{ .permission }} {{ .key }} || true
+              {{- end }}
+              {{- end }}
+              {{- end }}
+              {{- end }}
+
+              # Create root user (only if auth not already enabled)
+              if [ "$AUTH_ENABLED" = "false" ]; then
+                echo "Creating root user..."
+                echo "etcdctl --endpoints=$ETCD_ENDPOINT user add root --interactive=false"
+                echo "$ETCD_ROOT_PASSWORD" | etcdctl --endpoints=$ETCD_ENDPOINT user add root --interactive=false || true
+
+                # Grant root role to root user
+                etcdctl --endpoints=$ETCD_ENDPOINT user grant-role root root || true
+              fi
+
+              {{- range .Values.auth.rbac.users }}
+              # Create user: {{ .username }}
+              echo "Creating user {{ .username }}..."
+              echo "$(cat /etc/etcd-secrets/{{ .username }}/{{ .passwordSecret.key }})" | \
+                etcdctl --endpoints=$ETCD_ENDPOINT $AUTH_FLAGS user add {{ .username }} --interactive=false || true
+
+              # Grant role to user
+              etcdctl --endpoints=$ETCD_ENDPOINT $AUTH_FLAGS user grant-role {{ .username }} {{ .role }} || true
+              {{- end }}
+
+              # Enable authentication (only if not already enabled)
+              if [ "$AUTH_ENABLED" = "false" ]; then
+                echo "Enabling authentication..."
+                etcdctl --endpoints=$ETCD_ENDPOINT auth enable || true
+              else
+                echo "Authentication already enabled, skipping enable step"
+              fi
+
+              echo "Authentication setup complete!"
+          resources:
+            {{- toYaml .Values.auth.initJob.resources | nindent 12 }}
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            {{- range .Values.auth.rbac.users }}
+            - name: {{ .username }}-password
+              mountPath: /etc/etcd-secrets/{{ .username }}
+              readOnly: true
+            {{- end }}
+      volumes:
+        - name: tmp
+          emptyDir: {}
+        {{- range .Values.auth.rbac.users }}
+        - name: {{ .username }}-password
+          secret:
+            secretName: {{ .passwordSecret.name }}
+            items:
+              - key: {{ .passwordSecret.key }}
+                path: {{ .passwordSecret.key }}
+        {{- end }}
+{{- end }}

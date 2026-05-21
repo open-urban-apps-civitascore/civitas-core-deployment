@@ -68,14 +68,22 @@ repos:
     hooks:
       - id: helmfile-lint
         name: Validate Helmfile
-        entry: bash -c 'helmfile -f $1 lint' --
+        entry: helmfile lint -f deployment/helmfile.yaml -e local
         language: system
-        files: 'helmfile\.d/.*\.yaml\.gotmpl$'
-        pass_filenames: true
+        # TODO: re-add pass_filenames when helmfile supports it
+        # files: 'deployment/helmfile\.ya?ml\.gotmpl$'
+        # pass_filenames: true
 
       - id: helmfile-template
         name: Render Helmfile
-        entry: helmfile template -e default
+        # TODO: clean up entry to use pass_filenames again
+        entry: sh -c "helmfile template -f deployment/helmfile.yaml > /dev/null"
         language: system
-        pass_filenames: false
-        files: 'helmfile\.d/.*\.yaml'
+        # pass_filenames: true
+        # files: 'deployment/helmfile\.ya?ml$'
+
+      # TODO: Fix policy checking
+      # - id: check-policies
+      #   name: Check Policies
+      #   entry: make verify-policies
+      #   language: system

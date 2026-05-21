@@ -1,0 +1,20 @@
+---
+{{- $this := .Values.postgres.cluster -}}
+{{- $global := .Values.global }}
+# - [x] Minimal Resources
+# - [x] Minimal storage
+# - [x] 1 Replica
+
+cluster:
+  instances: 1
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+  storage:
+    size: 1Gi

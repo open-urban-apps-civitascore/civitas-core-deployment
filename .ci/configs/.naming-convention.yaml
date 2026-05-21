@@ -36,9 +36,17 @@ exclude-patterns:
   - 'charts/.*/templates/NOTES.txt'
   - 'charts/.*/templates/_helpers.tpl'
   - 'charts/.*/.helmignore' # ignore duplicate warning
+  - 'deployment/'
   # GitLab merge_request_templates directory uses underscores by convention
   - '.*\.gitlab/merge_request_templates.*'
   # Exclude gitlab-ci-local build directory
   - '.*\.gitlab-ci-local/.*'
   # Exclude template with jinja2 syntax
   - '.*template-component/.*'
+  # Community standard files (uppercase by convention)
+  - 'CONTRIBUTION_GUIDE\.md$'
+  - 'CONTRIBUTORS\.md$'
+  - 'CODE_OF_CONDUCT\.md$'
+  - 'SECURITY\.md$'
+  - 'TRADEMARK\.md$'
+  - 'README-de\.md$'

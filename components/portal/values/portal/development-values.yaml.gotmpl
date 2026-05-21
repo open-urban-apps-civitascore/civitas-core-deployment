@@ -1,0 +1,35 @@
+---
+{{- $this := .Values.portal.portal }}
+{{- $global := .Values.global }}
+# Checklist:
+# - [x] Minimal Resources
+# - [x] Minimal storage -> not applicable
+# - [x] 1 Replica
+
+backend:
+  replicaCount: 1
+  trustStore:
+    enabled: true
+    secretName: "custom-ca-cert"
+    certKey: "ca.crt"
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 750m
+      memory: 768Mi
+
+frontend:
+  replicaCount: 1
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 250m
+      memory: 256Mi
+
+initialUser:
+  # development profile only: full admin is enabled for convenience; outside development, tenant admins should not receive all data roles by default to preserve governance and require explicit role assignment
+  isFullAdmin: true

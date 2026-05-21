@@ -1,0 +1,25 @@
+---
+config-adapter:
+  name: Config Adapter
+  description: CIVITAS Config Adapter service account for realm administration (user management, role management, etc.)
+  subdomain: config-adapter
+  redirectPath: /
+  rawValues:
+    publicClient: true
+    standardFlowEnabled: false
+    implicitFlowEnabled: false
+    # directAccessGrantsEnabled enables the Resource Owner Password Credentials grant,
+    # which is required by the config-adapter (KEYCLOAK_USERNAME + KEYCLOAK_PASSWORD + KEYCLOAK_CLIENT_ID)
+    directAccessGrantsEnabled: true
+    serviceAccountsEnabled: false
+    authorizationServicesEnabled: false
+    redirectUris: []
+    webOrigins: []
+    defaultClientScopes:
+      - basic
+      - email
+      - profile
+      - roles
+    optionalClientScopes: []
+    attributes:
+      use.refresh.tokens: 'false'
