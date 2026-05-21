@@ -2,11 +2,11 @@
 postgres:
   operator:
     repository: https://cloudnative-pg.github.io/charts
-    chart: cloudnative-pg
+    chart: cnpg/cloudnative-pg
     version: '0.26.0'
   cluster:
     repository: https://cloudnative-pg.github.io/charts
-    chart: cluster
+    chart: cnpg/cluster
     version: '0.3.1'
   databases:
     chart: charts/databases
