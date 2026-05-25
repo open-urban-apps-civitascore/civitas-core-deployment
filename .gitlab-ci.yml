@@ -24,7 +24,7 @@ stages:
   - report
   - deploy
 
-.cicd-image: &cicd_image
+.cicd-image: &cicd_image >-
   registry.gitlab.com/civitas-connect/civitas-core/civitas-core-v2/civitas-core-deployment/cicd:v2.0-beta-13-g53f3c18
 
 setup-version:
