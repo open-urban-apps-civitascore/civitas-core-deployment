@@ -33,6 +33,10 @@ registry:
       enabled: false
     auth:
       enabled: false
+    securityContext:
+      {{ .Values.securityDefaults.securityContext | toYaml | nindent 6 }}
+    podSecurityContext:
+      {{ .Values.securityDefaults.podSecurityContext | toYaml | nindent 6 }}
 
     startupProbe:
       failureThreshold: 30
@@ -95,4 +99,8 @@ registry:
     replicas: 1
     podDisruptionBudget:
       enabled: false
+    securityContext:
+      {{ .Values.securityDefaults.securityContext | toYaml | nindent 6 }}
+    podSecurityContext:
+      {{ .Values.securityDefaults.podSecurityContext | toYaml | nindent 6 }}
 

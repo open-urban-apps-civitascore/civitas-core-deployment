@@ -172,6 +172,7 @@ registry:
     podLabels: {}
 
     # Security contexts
+    podSecurityContext: {}
     securityContext: {}
     containerSecurityContext: {}
 
