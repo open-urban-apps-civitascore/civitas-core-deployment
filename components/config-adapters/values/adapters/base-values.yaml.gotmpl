@@ -73,6 +73,8 @@ env:
   {{- $apisixHost := printf "%s.%s" (default "" .Values.apisix.apisix.subdomain) $global.domain | trimPrefix "." }}
   {{- $apisixPath := .Values.apisix.apisix.pathPrefix }}
   {{- $apisixUrl := printf "http://%s%s" "apisix-admin:9180" $apisixPath }}
+  {{- $apisixDataHost := printf "apisix-gateway.%s.svc.cluster.local:9080" .Values.apisix.apisix.namespace }}
+  {{- $apisixDataPublicUrl := printf "https://api.%s" $global.domain }}
   - name: APISIX_ADMIN_URL
     value: {{ $apisixUrl | quote }}
   - name: APISIX_ADMIN_KEY
@@ -80,6 +82,10 @@ env:
       secretKeyRef:
         name: "apisix-admin-credentials"
         key: "admin"
+  - name: APISIX_DATA_HOST
+    value: {{ $apisixDataHost | quote }}
+  - name: APISIX_DATA_PUBLIC_URL
+    value: {{ $apisixDataPublicUrl | quote }}
   - name: APISIX_TOPICS
     value: "de.civitascore.api.backend.created,de.civitascore.api.backend.updated,de.civitascore.api.backend.deleted,de.civitascore.api.route.created,de.civitascore.api.route.updated,de.civitascore.api.route.deleted"
 

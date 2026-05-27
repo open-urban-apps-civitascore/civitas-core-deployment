@@ -1,0 +1,7 @@
+---
+frost-server:
+  name: frost-server
+  description: 'FROST-Server API'
+  upstream: portal-portal-frontend:3000
+  subDomain: api
+  uri: '/v1/*'

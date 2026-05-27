@@ -117,6 +117,8 @@ spec:
             {{- end }}
             {{- if hasKey $config "subDomain" }},
             "host": "{{ $config.subDomain }}.'${DOMAIN}'"
+            {{- else if hasKey $config "host" }},
+            "host": "{{ $config.host }}.{{ $root.Release.Namespace }}.svc.cluster.local"
             {{- end }}
           }' || exit 1
 {{- end }}
