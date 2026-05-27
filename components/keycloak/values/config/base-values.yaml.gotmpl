@@ -71,11 +71,18 @@ extraEnv:
         name: keycloak-smtp
         key: password
   {{- range $clientId, $client := .Values.keycloakClients }}
+  {{- $rawValues := index $client "rawValues" | default dict }}
+  {{- $isPublicClient := false }}
+  {{- if hasKey $rawValues "publicClient" }}
+  {{- $isPublicClient = index $rawValues "publicClient" }}
+  {{- end }}
+  {{- if not $isPublicClient }}
   - name: CLIENT_SECRET_{{ $clientId | upper | replace "-" "_" }}
     valueFrom:
       secretKeyRef:
         name: {{ printf "keycloak-client-%s" $clientId }}
         key: client-secret
+  {{- end }}
   {{- end }}
   - name: CONFIG_ADAPTER_PASSWORD
     valueFrom:
@@ -325,6 +332,11 @@ config:
         {{- range (index $client "additionalRedirectPaths" | default list) }}
         {{- $redirectUris = append $redirectUris (printf "https://%s.%s%s" $subdomain $global.domain .) }}
         {{- end }}
+        {{- $rawValues := index $client "rawValues" | default dict }}
+        {{- $isPublicClient := false }}
+        {{- if hasKey $rawValues "publicClient" }}
+        {{- $isPublicClient = index $rawValues "publicClient" }}
+        {{- end }}
         {{- $clientDefaults := dict
           "clientId" $clientId
           "name" ($client.name | default $clientId)
@@ -332,7 +344,6 @@ config:
           "enabled" true
           "protocol" "openid-connect"
           "publicClient" false
-          "secret" (printf "$(CLIENT_SECRET_%s)" ($clientId | upper | replace "-" "_"))
           "rootUrl" (printf "https://%s.%s" $subdomain $global.domain)
           "baseUrl" (printf "https://%s.%s" $subdomain $global.domain)
           "bearerOnly" false
@@ -341,13 +352,17 @@ config:
           "directAccessGrantsEnabled" true
           "serviceAccountsEnabled" false
           "authorizationServicesEnabled" false
-          "redirectUris" $redirectUris
           "webOrigins" (list (printf "https://%s.%s" $subdomain $global.domain))
           "defaultClientScopes" (list "basic" "email" "profile" "roles" "web-origins")
           "optionalClientScopes" (list "address" "phone" "offline_access" "microprofile-jwt")
-          "attributes" (dict "post.logout.redirect.uris" "+" "pkce.code.challenge.method" "S256")
         }}
-        {{- $rawValues := index $client "rawValues" | default dict }}
+        {{- if not $isPublicClient }}
+        {{- $_ := set $clientDefaults "secret" (printf "$(CLIENT_SECRET_%s)" ($clientId | upper | replace "-" "_")) }}
+        {{- $_ := set $clientDefaults "redirectUris" $redirectUris }}
+        {{- $_ := set $clientDefaults "attributes" (dict "post.logout.redirect.uris" "+" "pkce.code.challenge.method" "S256") }}
+        {{- else }}
+        {{- $_ := set $clientDefaults "attributes" (dict "post.logout.redirect.uris" "+") }}
+        {{- end }}
         {{- $finalClient := mergeOverwrite $clientDefaults ($rawValues | default dict) }}
         - {{ $finalClient | toYaml | nindent 10 }}
         {{- end }}

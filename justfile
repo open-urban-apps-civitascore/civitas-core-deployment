@@ -4,7 +4,7 @@ set dotenv-load
 
 # MINIKUBE_IP := $(shell minikube ip)
 marker := 'LOCAL_CIVITAS_HOSTS'
-hosts := 'idm.civitas.test portal.civitas.test'
+hosts := 'idm.civitas.test portal.civitas.test api.civitas.test'
 
 default:
 	@just --list
@@ -281,3 +281,190 @@ install-dependencies:
 [macos]
 install-dependencies:
 	echo "Please check https://docs.core.civitasconnect.digital/docs_v2/Development/Deployment/local-deployment for required dependencies and adjust your system accordingly."
+
+# Get Admin Credentials
+[group('helpers')]
+get-admin-credentials:
+    NS=$(yq '.global.instanceSlug' defaults/environment/global.yaml); \
+    APISIX_PASSWORD=$(kubectl get secret -n "$NS" apisix-admin-credentials -o jsonpath='{.data.admin}' | base64 -d && echo); \
+    KEYCLOAK_USERNAME=$(yq '.global.initialUserEmail' defaults/environment/global.yaml | cut -d '@' -f 1); \
+    KEYCLOAK_PASSWORD=$(kubectl get secret -n "$NS" keycloak-admin-user -o jsonpath='{.data.password}' | base64 -d && echo); \
+    POSTGRES_USER=$(kubectl get secret -n "$NS" postgres-cluster-superuser -o jsonpath='{.data.username}' | base64 -d && echo); \
+    POSTGRES_PASSWORD=$(kubectl get secret -n "$NS" postgres-cluster-superuser -o jsonpath='{.data.password}' | base64 -d && echo); \
+    TESTUSER_USERNAME="test@$(yq '.global.domain' defaults/environment/global.yaml)"; \
+    TESTUSER_PASSWORD="TestTest1234!"; \
+    echo "APISix Admin Password: $APISIX_PASSWORD"; \
+    echo "Keycloak Admin Username: $KEYCLOAK_USERNAME"; \
+    echo "Keycloak Admin Password: $KEYCLOAK_PASSWORD"; \
+    echo "Postgres User: $POSTGRES_USER"; \
+    echo "Postgres Password: $POSTGRES_PASSWORD"; \
+    echo "Test User Username: $TESTUSER_USERNAME"; \
+    echo "Test User Password: $TESTUSER_PASSWORD"; \
+    if kubectl get secret -n "$NS" devicemanagement-db-credentials >/dev/null 2>&1; then \
+        DEVICEMGMT_USER=$(kubectl get secret -n "$NS" devicemanagement-db-credentials -o jsonpath='{.data.username}' | base64 -d && echo); \
+        DEVICEMGMT_PASSWORD=$(kubectl get secret -n "$NS" devicemanagement-db-credentials -o jsonpath='{.data.password}' | base64 -d && echo); \
+        echo "Device-Management DB User: $DEVICEMGMT_USER"; \
+        echo "Device-Management DB Password: $DEVICEMGMT_PASSWORD"; \
+    fi
+
+# Create device-management database and import test data
+[group('helpers')]
+create-device-management-db:
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    # Read configuration from global.yaml
+    NS=$(yq '.global.instanceSlug' defaults/environment/global.yaml)
+
+    echo "Creating device-management database in namespace: $NS"
+
+    # Get postgres credentials
+    POSTGRES_USER=$(kubectl get secret -n "$NS" postgres-cluster-superuser -o jsonpath='{.data.username}' | base64 -d)
+    POSTGRES_PASSWORD=$(kubectl get secret -n "$NS" postgres-cluster-superuser -o jsonpath='{.data.password}' | base64 -d)
+
+    # Get postgres pod name
+    POD=$(kubectl get pods -n "$NS" -l cnpg.io/cluster=postgres-cluster -o jsonpath='{.items[0].metadata.name}')
+
+    if [ -z "$POD" ]; then
+        echo "ERROR: Postgres pod not found in namespace $NS"
+        exit 1
+    fi
+
+    echo "Using Postgres pod: $POD"
+
+    # Generate password for devicemanagement user
+    DB_PASSWORD=$(openssl rand -base64 32)
+
+    # Create user and database
+    echo "Creating database user 'devicemanagement'..."
+    kubectl exec -n "$NS" "$POD" -c postgres -- psql -U "$POSTGRES_USER" -c "CREATE USER devicemanagement WITH PASSWORD '$DB_PASSWORD';" 2>/dev/null || echo "User 'devicemanagement' may already exist"
+
+    echo "Creating database 'device-management' with owner 'devicemanagement'..."
+    kubectl exec -n "$NS" "$POD" -c postgres -- psql -U "$POSTGRES_USER" -c "CREATE DATABASE \"device-management\" WITH OWNER devicemanagement;" 2>/dev/null || echo "Database 'device-management' may already exist"
+
+    # Grant necessary permissions
+    echo "Granting permissions..."
+    kubectl exec -n "$NS" "$POD" -c postgres -- psql -U "$POSTGRES_USER" -d "device-management" -c "REVOKE ALL ON DATABASE \"device-management\" FROM PUBLIC;"
+    kubectl exec -n "$NS" "$POD" -c postgres -- psql -U "$POSTGRES_USER" -d "device-management" -c "GRANT ALL ON DATABASE \"device-management\" TO devicemanagement;"
+    kubectl exec -n "$NS" "$POD" -c postgres -- psql -U "$POSTGRES_USER" -d "device-management" -c "GRANT ALL ON SCHEMA public TO devicemanagement;"
+
+    # Import SQL file
+    echo "Importing tests/02-device-management.sql..."
+    cat tests/02-device-management.sql | kubectl exec -i -n "$NS" "$POD" -c postgres -- psql -U "$POSTGRES_USER" -d "device-management"
+
+    # Change ownership of all objects in public schema to devicemanagement user
+    echo "Updating ownership of tables, views, and sequences..."
+    kubectl exec -n "$NS" "$POD" -c postgres -- psql -U "$POSTGRES_USER" -d "device-management" -c "
+        DO \$\$
+        DECLARE
+            r RECORD;
+        BEGIN
+            -- Transfer table ownership
+            FOR r IN SELECT tablename FROM pg_tables WHERE schemaname = 'public'
+            LOOP
+                EXECUTE 'ALTER TABLE public.' || quote_ident(r.tablename) || ' OWNER TO devicemanagement';
+            END LOOP;
+
+            -- Transfer view ownership
+            FOR r IN SELECT viewname FROM pg_views WHERE schemaname = 'public'
+            LOOP
+                EXECUTE 'ALTER VIEW public.' || quote_ident(r.viewname) || ' OWNER TO devicemanagement';
+            END LOOP;
+
+            -- Transfer sequence ownership
+            FOR r IN SELECT sequence_name FROM information_schema.sequences WHERE sequence_schema = 'public'
+            LOOP
+                EXECUTE 'ALTER SEQUENCE public.' || quote_ident(r.sequence_name) || ' OWNER TO devicemanagement';
+            END LOOP;
+        END
+        \$\$;"
+
+    # Create Kubernetes secret with credentials
+    echo "Creating Kubernetes secret 'devicemanagement-db-credentials'..."
+    kubectl create secret generic devicemanagement-db-credentials \
+        --from-literal=username=devicemanagement \
+        --from-literal=password="$DB_PASSWORD" \
+        --from-literal=database=device-management \
+        --from-literal=host=postgres-cluster-rw \
+        --from-literal=port=5432 \
+        -n "$NS" \
+        --dry-run=client -o yaml | kubectl apply -f -
+
+    echo "✓ Database 'device-management' created and SQL imported successfully!"
+    echo "  Database: device-management"
+    echo "  User: devicemanagement"
+    echo "  Password stored in secret: devicemanagement-db-credentials"
+
+# Create test user in Keycloak
+[group('helpers')]
+create-test-user:
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    # Read configuration from global.yaml
+    NS=$(yq '.global.instanceSlug' defaults/environment/global.yaml)
+    DOMAIN=$(yq '.global.domain' defaults/environment/global.yaml)
+    REALM="$NS"
+    TEST_EMAIL="test@$DOMAIN"
+    TEST_PASSWORD="TestTest1234!"
+
+    echo "Creating test user: $TEST_EMAIL in realm: $REALM"
+
+    # Get
+    ADMIN_USER=$(yq '.global.initialUserEmail' defaults/environment/global.yaml | cut -d '@' -f 1)
+    ADMIN_PASSWORD=$(kubectl get secret -n "$NS" keycloak-admin-user -o jsonpath='{.data.password}' | base64 -d)
+
+    # Get Keycloak pod name
+    POD=$(kubectl get pods -n "$NS" -l app.kubernetes.io/name=keycloakx -o jsonpath='{.items[0].metadata.name}')
+
+    if [ -z "$POD" ]; then
+        echo "ERROR: Keycloak pod not found in namespace $NS"
+        exit 1
+    fi
+
+    echo "Using Keycloak pod: $POD"
+
+    # Create user using kcadm.sh
+    kubectl exec -n "$NS" "$POD" -- bash -c "
+        /opt/keycloak/bin/kcadm.sh config credentials \
+            --server http://localhost:8080 \
+            --realm master \
+            --user '$ADMIN_USER' \
+            --password '$ADMIN_PASSWORD' >/dev/null 2>&1
+
+        # Check if user already exists
+        USER_ID=\$(/opt/keycloak/bin/kcadm.sh get users -r '$REALM' -q username=test --fields id --format csv --noquotes 2>/dev/null | head -n1)
+
+        if [ -n \"\$USER_ID\" ] && [ \"\$USER_ID\" != \"id\" ]; then
+            echo 'User test already exists, updating...'
+            /opt/keycloak/bin/kcadm.sh update users/\$USER_ID -r '$REALM' \
+                -s enabled=true \
+                -s emailVerified=true \
+                -s firstName=Surname \
+                -s lastName=Lastname \
+                -s email='$TEST_EMAIL'
+
+            /opt/keycloak/bin/kcadm.sh set-password -r '$REALM' \
+                --userid \$USER_ID \
+                --new-password '$TEST_PASSWORD'
+        else
+            echo 'Creating new user...'
+            /opt/keycloak/bin/kcadm.sh create users -r '$REALM' \
+                -s username=test \
+                -s enabled=true \
+                -s emailVerified=true \
+                -s firstName=Surname \
+                -s lastName=Lastname \
+                -s email='$TEST_EMAIL'
+
+            /opt/keycloak/bin/kcadm.sh set-password -r '$REALM' \
+                --username test \
+                --new-password '$TEST_PASSWORD'
+        fi
+    "
+
+    echo "✓ Test user created/updated successfully!"
+    echo "  Username: test"
+    echo "  Email: $TEST_EMAIL"
+    echo "  Password: $TEST_PASSWORD"
+    echo "  Realm: $REALM"
