@@ -43,8 +43,10 @@ kafka:
 server:
   url: https://{{ $host }}
 
+{{- $publicApiUrl := printf "https://api.%s" $global.domain }}
 apisix:
   serviceUrl: "http://apisix-gateway.{{ .Values.apisix.apisix.namespace }}.svc.cluster.local"
+  apiUrl: {{ $publicApiUrl | quote }}
 
 modelAtlas:
   url: "http://model-atlas-model-atlas.{{ .Values.modelAtlas.modelAtlas.namespace }}.svc.cluster.local:8080"
