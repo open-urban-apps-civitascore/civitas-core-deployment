@@ -119,6 +119,17 @@ env:
         name: "portal-backend-crypto"
         key: "civitas-master-key"
 
+  # Flowable configuration
+  - name: FLOWABLE_JDBC_URL
+    value: jdbc:postgresql://{{ .Values.databases.flowable.host }}:{{ .Values.databases.flowable.port }}/{{ .Values.databases.flowable.name }}
+  - name: FLOWABLE_JDBC_USERNAME
+    value: {{ .Values.databases.flowable.user }}
+  - name: FLOWABLE_JDBC_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        name: "db-flowable"
+        key: "password"
+
   # Health check configuration
   - name: HEALTHCHECK_PORT
     value: "8080"
