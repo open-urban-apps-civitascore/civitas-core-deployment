@@ -366,6 +366,14 @@ config:
         {{- $finalClient := mergeOverwrite $clientDefaults ($rawValues | default dict) }}
         - {{ $finalClient | toYaml | nindent 10 }}
         {{- end }}
+      roles:
+        client:
+          {{- range $clientId, $client := .Values.keycloakClients }}
+          {{- if index $client "roles" }}
+          {{ $clientId }}:
+            {{- index $client "roles" | toYaml | nindent 12 }}
+          {{- end }}
+          {{- end }}
       # TR-03187 AUT-2: Custom browser flow with optional MFA (conditional on user config)
       # If a user has TOTP or WebAuthn configured, they are prompted. Otherwise login proceeds without MFA.
       authenticationFlows:
