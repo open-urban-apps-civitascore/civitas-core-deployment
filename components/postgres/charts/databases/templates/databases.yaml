@@ -4,8 +4,9 @@
 apiVersion: postgresql.cnpg.io/v1
 kind: Database
 metadata:
-  # postgres database names should be lowercase and snake_case, because sql is case-insensitive and "-" is not a valid character in a database name
-  # kubernetes names on the other hand must follow RFC 1123 DNS label rules, which are lowercase and hyphen-separated
+  # postgres database names should be lowercase and snake_case, because sql is case-insensitive and "-" is not a valid character in a database name.
+  # kubernetes names on the other hand must follow RFC 1123 DNS label rules, which are lowercase and hyphen-separated.
+  # because of this, metadata.name is different to spec.name
   name: {{ $config.name | replace "_" "-" }}
   labels:
     {{- include "database.labels" $root | nindent 6 }}
