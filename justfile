@@ -14,6 +14,11 @@ default:
 validate:
 	pre-commit run --all-files;
 
+# Run the Robot/Java system-test PoC
+[group('test & lint')]
+system-tests:
+	bash tests/system/run-system-tests.sh
+
 # Sync a specific component in an environment
 [group('deployment')]
 sync-component environment='local' component='':

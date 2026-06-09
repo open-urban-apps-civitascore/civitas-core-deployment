@@ -169,6 +169,17 @@ else
   ' _ "${KC_ADMIN_PASSWORD}" "${KEYCLOAK_REALM}" "${AUTH_USER}" "${AUTH_PASSWORD}"
 fi
 
+if [ -n "${AUTH_DOTENV_FILE:-}" ]; then
+  mkdir -p "$(dirname "${AUTH_DOTENV_FILE}")"
+  cat > "${AUTH_DOTENV_FILE}" <<EOF
+AUTH_USER=${AUTH_USER}
+AUTH_PASSWORD=${AUTH_PASSWORD}
+KEYCLOAK_URL=${KEYCLOAK_URL}
+KEYCLOAK_REALM=${KEYCLOAK_REALM}
+EOF
+  echo "Auth dotenv written to ${AUTH_DOTENV_FILE}"
+fi
+
 # -----------------------------------------------------------------------------
 # 2. Stash credentials in a short-lived Secret consumed by the Job.
 #    The secret keys (AUTH_EMAIL / AUTH_PASSWORD) match the env-var names the

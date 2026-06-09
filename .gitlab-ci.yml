@@ -51,6 +51,21 @@ pre-commit:
   rules:
     - when: always
 
+system-tests-poc:
+  stage: report
+  image: registry.gitlab.com/civitas-connect/civitas-core/civitas-core-v2/civitas-core-deployment/cicd:a1aebd6
+  allow_failure: true
+  when: manual
+  before_script:
+    - apk add --no-cache openjdk21-jdk maven
+    - python3 -m pip install --break-system-packages robotframework
+  script:
+    - bash tests/system/run-system-tests.sh
+  artifacts:
+    when: always
+    paths:
+      - tests/system/results/
+
 .deploy-base:
   stage: deploy
   image: registry.gitlab.com/civitas-connect/civitas-core/civitas-core-v2/civitas-core-deployment/cicd:a1aebd6
@@ -201,10 +216,55 @@ deploy-smoke-test-mr:
     API_BASE_URL: http://apisix-gateway.civitas.svc.cluster.local/v1
     SEED_IMAGE: registry.gitlab.com/civitas-connect/civitas-core/docker-images/seed-platform-data:1.0.0
     SEED_INPUT: exports/1bf03aa3-3d9a-4291-8589-b888aa684c05.json
+    AUTH_DOTENV_FILE: seed-data-auth.env
   script:
     - ./scripts/ci/fetch-vcluster-kubeconfig.sh
     - export AUTH_USER="${GITLAB_USER_EMAIL:-admin@civitas.test}"
     - ./scripts/ci/seed-platform-data.sh
+  artifacts:
+    reports:
+      dotenv: seed-data-auth.env
+
+.system-tests-smoke-test-base:
+  stage: report
+  image: registry.gitlab.com/civitas-connect/civitas-core/civitas-core-v2/civitas-core-deployment/cicd:a1aebd6
+  variables:
+    PIPELINE_SLUG: ""
+    SMOKE_TEST_DOMAIN: ${PIPELINE_SLUG}.${SMOKE_TEST_BASE_DOMAIN}
+    API_BASE_URL: https://api.${PIPELINE_SLUG}.${SMOKE_TEST_BASE_DOMAIN}/v1
+    KEYCLOAK_URL: https://idm.${PIPELINE_SLUG}.${SMOKE_TEST_BASE_DOMAIN}
+    KEYCLOAK_REALM: civitas
+    KEYCLOAK_CLIENT_ID: portal-frontend
+    FROST_BASE_URL: http://frost-frost-frost-server-http.frost/FROST-Server/v1.1
+  script:
+    - bash tests/system/run-system-tests.sh
+  before_script:
+    - apk add --no-cache openjdk21-jdk maven
+    - python3 -m pip install --break-system-packages robotframework
+
+system-tests-smoke-test-branch:
+  extends: .system-tests-smoke-test-base
+  needs:
+    - job: seed-data-smoke-test-branch
+      artifacts: true
+  variables:
+    PIPELINE_SLUG: $CI_COMMIT_REF_SLUG
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      when: never
+    - if: '$CI_COMMIT_BRANCH =~ /^(main|staging|develop)$/'
+      when: never
+    - if: '$CI_COMMIT_BRANCH'
+
+system-tests-smoke-test-mr:
+  extends: .system-tests-smoke-test-base
+  needs:
+    - job: seed-data-smoke-test-mr
+      artifacts: true
+  variables:
+    PIPELINE_SLUG: mr-$CI_MERGE_REQUEST_IID
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
 
 seed-data-smoke-test-branch:
   extends: .seed-data-smoke-test-base
