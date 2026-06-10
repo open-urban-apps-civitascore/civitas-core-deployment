@@ -19,7 +19,6 @@ metadata:
       StatefulSets and DaemonSets are excluded: DaemonSets run one pod per node by
       design, and StatefulSet replica counts depend on the specific workload requirements.
 spec:
-  validationFailureAction: Audit
   background: true
   rules:
     - name: require-minimum-replicas
@@ -29,6 +28,7 @@ spec:
               kinds:
                 - Deployment
       validate:
+        failureAction: Audit
         message: >-
           Deployments must have at least 2 replicas for high availability. If this
           Deployment is managed by an HPA, this warning can be ignored.

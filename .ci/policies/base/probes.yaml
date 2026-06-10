@@ -20,7 +20,6 @@ metadata:
       are recommended for slow-starting containers but are not enforced here.
       Jobs and init containers are excluded from this policy.
 spec:
-  validationFailureAction: Audit
   background: true
   rules:
     - name: require-at-least-one-probe
@@ -32,6 +31,7 @@ spec:
                 - DaemonSet
                 - StatefulSet
       validate:
+        failureAction: Audit
         message: >-
           Every container must define at least one health probe (readinessProbe or livenessProbe).
         deny:
@@ -51,6 +51,7 @@ spec:
                 - DaemonSet
                 - StatefulSet
       validate:
+        failureAction: Audit
         message: >-
           Liveness and readiness probes must not be identical. They serve different purposes:
           readiness controls traffic routing, liveness triggers container restarts.

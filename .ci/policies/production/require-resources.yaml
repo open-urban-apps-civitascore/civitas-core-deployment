@@ -17,7 +17,6 @@ metadata:
       exhausting node resources. Ephemeral containers are excluded as they are used
       for debugging and are not subject to production resource requirements.
 spec:
-  validationFailureAction: Audit
   background: true
   rules:
     - name: validate-resources
@@ -32,6 +31,7 @@ spec:
             operator: NotEquals
             value: DELETE
       validate:
+        failureAction: Audit
         message: 'All containers must have CPU and memory requests and limits defined.'
         foreach:
           - list: request.object.spec.[initContainers, containers][]

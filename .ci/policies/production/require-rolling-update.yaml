@@ -19,7 +19,6 @@ metadata:
       explicitly set for Deployments. Both integer and percentage-string values are
       accepted for `maxSurge` (e.g. `1` or `"25%"`).
 spec:
-  validationFailureAction: Audit
   background: true
   rules:
     - name: require-rolling-update-deployment
@@ -29,6 +28,7 @@ spec:
               kinds:
                 - Deployment
       validate:
+        failureAction: Audit
         message: >-
           Deployments must use RollingUpdate strategy with maxUnavailable: 0 and a
           non-zero maxSurge (e.g. 1 or 25%) to ensure zero-downtime rollouts.
@@ -47,6 +47,7 @@ spec:
               kinds:
                 - StatefulSet
       validate:
+        failureAction: Audit
         message: >-
           StatefulSets must use RollingUpdate strategy with maxUnavailable: 0
           to ensure zero-downtime rollouts.

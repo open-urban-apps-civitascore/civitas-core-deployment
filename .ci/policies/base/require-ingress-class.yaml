@@ -20,7 +20,6 @@ metadata:
       this policy targets Kubernetes 1.18+ where `spec.ingressClassName` is the
       canonical field.
 spec:
-  validationFailureAction: Audit
   background: true
   rules:
     - name: require-ingress-class-name
@@ -30,6 +29,7 @@ spec:
               kinds:
                 - Ingress
       validate:
+        failureAction: Audit
         message: >-
           Ingress must set spec.ingressClassName explicitly. Relying on the cluster
           default may result in the Ingress being unhandled.
