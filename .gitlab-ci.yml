@@ -41,10 +41,22 @@ setup-version:
       # https://docs.gitlab.com/ci/yaml/artifacts_reports/#artifactsreportsdotenv
       dotenv: version.env
 
+# Bitnami (and other) charts are served as OCI artifacts from Docker Hub, so
+# unauthenticated helmfile fetches count against the Docker Hub rate limit.
+# Helm has its own credential store — a plain `docker login` does not help here.
+.helm-docker-hub-login: &helm-docker-hub-login
+  - |
+    if [ -n "$DOCKER_HUB_USER" ] && [ -n "$DOCKER_HUB_TOKEN" ]; then
+      echo "$DOCKER_HUB_TOKEN" | helm registry login registry-1.docker.io -u "$DOCKER_HUB_USER" --password-stdin
+    else
+      echo "DOCKER_HUB_USER/DOCKER_HUB_TOKEN not set, skipping Docker Hub registry login (unauthenticated chart pulls)"
+    fi
+
 pre-commit:
   stage: lint
   image: registry.gitlab.com/civitas-connect/civitas-core/civitas-core-v2/civitas-core-deployment/cicd:a1aebd6
   script:
+    - *helm-docker-hub-login
     - cp -r defaults/deployment deployment
     - helmfile fetch -f deployment/helmfile.yaml -e default
     - pre-commit run --all-files
@@ -87,6 +99,8 @@ validate-renovate-config:
     # Verify connectivity
     - kubectl cluster-info
     - kubectl get nodes
+
+    - *helm-docker-hub-login
 
     - cp -r .ci/example-deployments deployment
 
@@ -311,6 +325,12 @@ build-container-image:
     - docker buildx create --use --driver docker-container --name multiarch buildx-context
     - docker buildx inspect --bootstrap
     - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
+    - |
+      if [ -n "$DOCKER_HUB_USER" ] && [ -n "$DOCKER_HUB_TOKEN" ]; then
+        echo "$DOCKER_HUB_TOKEN" | docker login -u "$DOCKER_HUB_USER" --password-stdin docker.io
+      else
+        echo "DOCKER_HUB_USER/DOCKER_HUB_TOKEN not set, skipping Docker Hub login (unauthenticated pulls)"
+      fi
   script:
     - |
       export SCAN_IMAGE_TAG=$CI_REGISTRY_IMAGE/$IMAGE:${REVISION}-scan
