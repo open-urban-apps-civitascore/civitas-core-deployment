@@ -186,7 +186,7 @@ export CLUSTER_IP=${CLUSTER_IP:-127.0.0.1} # Default to 127.0.0.1
 for arg in "$@"; do
   if [[ "$arg" == "minikube" || "$arg" == "-m" ]]; then
     echo_green_nl "Setting up Minikube with driver $DRIVER..."
-    docker context use default
+    select_docker_context
     minikube start --driver=$DRIVER --no-vtx-check --cpus $CPUS --memory $MEMORY
 
     # convert windows paths to linux pathes for use with WSL
@@ -209,7 +209,7 @@ for arg in "$@"; do
         export KUBECONTEXT=k3d-civitas-local
     else
       echo_green_nl "Setting up k3s cluster..."
-      docker context use default
+      select_docker_context
       k3d cluster create --config k3d-civitas-local.yaml
       k3d kubeconfig merge -a -d
 
@@ -244,7 +244,7 @@ if [ -z "$INGRESS_RELEASE_EXISTS" ] || [ "$FORCE_UPGRADE" = true ] || [ "$FORCE_
   echo_green_nl "Enabling Nginx Ingress..."
   helm upgrade --namespace ingress-nginx --install --create-namespace --set controller.config.annotations-risk-level=Critical --set controller.config.enable-annotation-validation=false --set controller.publishService.enabled=true  --set controller.config.proxy-buffer-size="64k" --set controller.config.proxy-buffers="4 64k" --set controller.config.proxy-busy-buffers-size="128k" ingress-nginx ingress-nginx/ingress-nginx
   echo_green_nl "Waiting for Nginx Ingress to be ready..."
-  kubectl --kubeconfig ${KUBECONFIG} --context ${KUBECONTEXT} wait --namespace ingress-nginx --for=condition=ready pod --selector=app.kubernetes.io/name=ingress-nginx,app.kubernetes.io/component=controller --timeout=600s
+  wait_for_ready_pod ingress-nginx "app.kubernetes.io/name=ingress-nginx,app.kubernetes.io/component=controller" 600s
 else
   echo_green_nl "Nginx Ingress already enabled. Skipping upgrade."
 fi
@@ -255,7 +255,7 @@ if [ -z "$METALLB_RELEASE_EXISTS" ] || [ "$FORCE_UPGRADE" = true ] || [ "$FORCE_
   echo_green_nl "Enabling MetalLB for IP range ${YELLOW}$CLUSTER_IP ${GREEN}- ${YELLOW}$IP_RANGE_STOP${GREEN}..."
   helm upgrade --namespace metallb-system --install --create-namespace metallb metallb/metallb
   echo_green_nl "Waiting for MetalLB to be ready..."
-  kubectl --kubeconfig ${KUBECONFIG} --context ${KUBECONTEXT} wait --namespace metallb-system --for=condition=Ready pod --selector=app.kubernetes.io/component=controller --timeout=600s
+  wait_for_ready_pod metallb-system "app.kubernetes.io/component=controller" 600s
   echo_green_nl "Configuring MetalLB..."
   envsubst < metallb-template.yaml | kubectl --kubeconfig ${KUBECONFIG} --context ${KUBECONTEXT} apply -f -
 
@@ -316,7 +316,7 @@ for arg in "$@"; do
     envsubst < portainer-template.yaml | kubectl --kubeconfig ${KUBECONFIG} --context ${KUBECONTEXT} apply -f -
 
     echo_green_nl "Waiting for portainer service to be ready..."
-    kubectl --kubeconfig ${KUBECONFIG} --context ${KUBECONTEXT} wait --namespace portainer --for=condition=ready pod --selector=app.kubernetes.io/name=portainer --timeout=600s
+    wait_for_ready_pod portainer "app.kubernetes.io/name=portainer" 600s
   fi
 done
 
