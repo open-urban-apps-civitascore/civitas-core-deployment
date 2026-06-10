@@ -2,11 +2,11 @@ FROM alpine:3.23.3 AS fetcher
 
 ARG TARGETARCH
 
-# RENOVATE: packageName=helm/helm
+# renovate: datasource=github-releases depName=helm/helm
 ENV HELM_VERSION=v4.1.0
-# RENOVATE: packageName=helmfile/helmfile
+# renovate: datasource=github-releases depName=helmfile/helmfile
 ENV HELMFILE_VERSION=v1.2.3
-# RENOVATE: packageName=kubernetes/kubectl
+# renovate: datasource=github-tags depName=kubernetes/kubernetes
 ENV KUBECTL_VERSION=v1.35.0
 
 # Install dependencies

@@ -41,15 +41,50 @@ setup-version:
       # https://docs.gitlab.com/ci/yaml/artifacts_reports/#artifactsreportsdotenv
       dotenv: version.env
 
+# Bitnami (and other) charts are served as OCI artifacts from Docker Hub, so
+# unauthenticated helmfile fetches count against the Docker Hub rate limit.
+# Helm has its own credential store — a plain `docker login` does not help here.
+.helm-docker-hub-login: &helm-docker-hub-login
+  - |
+    if [ -n "$DOCKER_HUB_USER" ] && [ -n "$DOCKER_HUB_TOKEN" ]; then
+      echo "$DOCKER_HUB_TOKEN" | helm registry login registry-1.docker.io -u "$DOCKER_HUB_USER" --password-stdin
+    else
+      echo "DOCKER_HUB_USER/DOCKER_HUB_TOKEN not set, skipping Docker Hub registry login (unauthenticated chart pulls)"
+    fi
+
 pre-commit:
   stage: lint
   image: registry.gitlab.com/civitas-connect/civitas-core/civitas-core-v2/civitas-core-deployment/cicd:a1aebd6
   script:
+    - *helm-docker-hub-login
     - cp -r defaults/deployment deployment
     - helmfile fetch -f deployment/helmfile.yaml -e default
     - pre-commit run --all-files
   rules:
     - when: always
+
+validate-renovate-config:
+  stage: lint
+  # Pinned validator version; the gitlabci manager keeps this tag up to date.
+  # Ideally keep the major version in sync with the Renovate instance that
+  # actually runs against this repo (renovate-integration).
+  image:
+    name: ghcr.io/renovatebot/renovate:43.218.0
+    entrypoint: ['']
+  needs: []
+  rules:
+    # Safety net on integration and default branch
+    - if: $CI_COMMIT_BRANCH == "staging"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    # Run on MR when renovate config (or this job) changes
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      changes:
+        - renovate.json
+        - .gitlab-ci.yml
+  script:
+    # No file argument on purpose: auto-discovery validates renovate.json as
+    # repo config (stricter than the global-config mode used for explicit args)
+    - renovate-config-validator --strict
 
 .deploy-base:
   stage: deploy
@@ -64,6 +99,8 @@ pre-commit:
     # Verify connectivity
     - kubectl cluster-info
     - kubectl get nodes
+
+    - *helm-docker-hub-login
 
     - cp -r .ci/example-deployments deployment
 
@@ -288,6 +325,12 @@ build-container-image:
     - docker buildx create --use --driver docker-container --name multiarch buildx-context
     - docker buildx inspect --bootstrap
     - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
+    - |
+      if [ -n "$DOCKER_HUB_USER" ] && [ -n "$DOCKER_HUB_TOKEN" ]; then
+        echo "$DOCKER_HUB_TOKEN" | docker login -u "$DOCKER_HUB_USER" --password-stdin docker.io
+      else
+        echo "DOCKER_HUB_USER/DOCKER_HUB_TOKEN not set, skipping Docker Hub login (unauthenticated pulls)"
+      fi
   script:
     - |
       export SCAN_IMAGE_TAG=$CI_REGISTRY_IMAGE/$IMAGE:${REVISION}-scan
