@@ -74,6 +74,11 @@
       "addLabels": ["docker"]
     },
     {
+      "description": "Label tool versions pinned via renovate comments (GitHub releases/tags in containerfiles)",
+      "matchDatasources": ["github-releases", "github-tags"],
+      "addLabels": ["github"]
+    },
+    {
       "description": "Automerge minor/patch updates of Civitas Core Platform images; requires a passing MR pipeline",
       "matchDatasources": ["docker"],
       "matchPackageNames": [
