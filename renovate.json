@@ -1,62 +1,91 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["config:base"],
-  "enabledManagers": ["regex"],
+  "extends": [
+    "config:recommended",
+    ":configMigration",
+    "customManagers:dockerfileVersions",
+    "gitlab>civitas-connect/civitas-core/renovate-integration//renovate.json#main"
+  ],
+  "enabledManagers": ["custom.regex", "dockerfile", "gitlabci"],
+  "labels": ["renovate", "v::2", "team devops"],
+  "prConcurrentLimit": 10,
+  "prHourlyLimit": 5,
+  "osvVulnerabilityAlerts": true,
+  "vulnerabilityAlerts": {
+    "labels": ["renovate", "security", "v::2", "team devops"]
+  },
+  "separateMajorMinor": true,
+  "separateMultipleMajor": true,
   "customManagers": [
     {
       "customType": "regex",
-      "description": "Helm charts from HTTP(S) repos in components/**/charts.yaml",
-      "fileMatch": ["^components/.+/charts\\.yaml$"],
+      "description": "Helm charts from HTTP(S) repos in components/**/charts.yaml; the helmfile repository alias is stripped because chart names in the repo index do not contain it",
+      "managerFilePatterns": ["/^components/.+/charts\\.yaml$/"],
       "matchStrings": [
-        "repository:\\s*(?<registryUrl>https?://[^\\s]+)\\s*\\n\\s*chart:\\s*(?<depName>[^\\s]+)\\s*\\n\\s*version:\\s*['\\\"]?(?<currentValue>[^'\\\"\\n]+)['\\\"]?"
+        "repository:\\s*['\"]?(?<registryUrl>https?://[^\\s'\"]+)['\"]?\\s*\\n\\s*chart:\\s*['\"]?(?:[^\\s/'\"]+/)?(?<depName>[^\\s/'\"]+)['\"]?\\s*\\n\\s*version:\\s*['\"]?(?<currentValue>[^'\"\\n]+)['\"]?"
       ],
-      "datasourceTemplate": "helm",
-      "depNameTemplate": "{{depName}}",
-      "registryUrlTemplate": "{{registryUrl}}"
+      "datasourceTemplate": "helm"
     },
     {
       "customType": "regex",
-      "description": "OCI Helm charts in components/**/charts.yaml (handled as docker tags)",
-      "fileMatch": ["^components/.+/charts\\.yaml$"],
+      "description": "OCI Helm charts in components/**/charts.yaml (resolved as docker tags)",
+      "managerFilePatterns": ["/^components/.+/charts\\.yaml$/"],
       "matchStrings": [
-        "chart:\\s*oci://(?<registryHost>[^/]+)/(?<imageName>[^\\s]+)\\s*\\n\\s*version:\\s*['\\\"]?(?<currentValue>[^'\\\"\\n]+)['\\\"]?"
+        "chart:\\s*['\"]?oci://(?<depName>[^\\s'\"]+)['\"]?\\s*\\n\\s*version:\\s*['\"]?(?<currentValue>[^'\"\\n]+)['\"]?"
       ],
       "datasourceTemplate": "docker",
-      "depNameTemplate": "{{registryHost}}/{{imageName}}"
+      "versioningTemplate": "semver"
     },
     {
       "customType": "regex",
-      "description": "Container images in components/**/images.yaml",
-      "fileMatch": ["^components/.+/images\\.yaml$"],
+      "description": "Container images in components/**/images.yaml; tag must directly follow repository",
+      "managerFilePatterns": ["/^components/.+/images\\.yaml$/"],
       "matchStrings": [
-        "repository:\\s*['\\\"]?(?<imageName>[^'\\\"\\n]+)['\\\"]?\\s*tag:\\s*['\\\"]?(?<currentValue>[^'\\\"\\n]+)['\\\"]?"
+        "repository:\\s*['\"]?(?<depName>[^\\s'\"]+)['\"]?\\s*\\n\\s*tag:\\s*['\"]?(?<currentValue>[^'\"\\n]+)['\"]?"
       ],
-      "datasourceTemplate": "docker",
-      "depNameTemplate": "{{imageName}}"
-    },
-    {
-      "customType": "regex",
-      "description": "Container images in Dockerfiles with RENOVATE comment",
-      "fileMatch": ["container-images/**/*"],
-      "matchStrings": [
-        "#\\s*RENOVATE:\\s*packageName=(?<depName>[\\w.-]+\\/[\\w.-]+)\\s*\\nENV\\s+[A-Z0-9_]+_VERSION=(?<currentValue>v?[0-9][^\\s]*)"
-      ],
-      "datasourceTemplate": "github-releases"
+      "datasourceTemplate": "docker"
     }
   ],
   "packageRules": [
     {
-      "matchDatasources": ["helm", "docker"],
-      "groupName": "Helm chart updates",
-      "separateMinorPatch": true
+      "description": "Label update type: major",
+      "matchUpdateTypes": ["major"],
+      "addLabels": ["major"]
     },
     {
+      "description": "Label update type: minor",
+      "matchUpdateTypes": ["minor"],
+      "addLabels": ["minor"]
+    },
+    {
+      "description": "Label update type: patch",
+      "matchUpdateTypes": ["patch"],
+      "addLabels": ["patch"]
+    },
+    {
+      "description": "Label Helm chart updates (incl. OCI charts, which use the docker datasource)",
+      "matchFileNames": ["components/**/charts.yaml"],
+      "addLabels": ["helm"]
+    },
+    {
+      "description": "Label container image updates (component images, base images, CI images)",
+      "matchDatasources": ["docker"],
+      "matchFileNames": [
+        "components/**/images.yaml",
+        "container-images/**",
+        ".gitlab-ci.yml"
+      ],
+      "addLabels": ["docker"]
+    },
+    {
+      "description": "Automerge minor/patch updates of Civitas Core Platform images; requires a passing MR pipeline",
       "matchDatasources": ["docker"],
       "matchPackageNames": [
-        "^registry.gitlab.com/civitas-connect/civitas-core/civitas-core-v2/civitas-core-platform/.+$"
+        "registry.gitlab.com/civitas-connect/civitas-core/civitas-core-v2/civitas-core-platform/**"
       ],
-      "groupName": "Civitas Core Platform updates",
-      "autoMerge": true
+      "matchUpdateTypes": ["minor", "patch"],
+      "dependencyDashboardApproval": false,
+      "automerge": true
     }
   ]
 }

@@ -51,6 +51,29 @@ pre-commit:
   rules:
     - when: always
 
+validate-renovate-config:
+  stage: lint
+  # Pinned validator version; the gitlabci manager keeps this tag up to date.
+  # Ideally keep the major version in sync with the Renovate instance that
+  # actually runs against this repo (renovate-integration).
+  image:
+    name: ghcr.io/renovatebot/renovate:43.218.0
+    entrypoint: ['']
+  needs: []
+  rules:
+    # Safety net on integration and default branch
+    - if: $CI_COMMIT_BRANCH == "staging"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    # Run on MR when renovate config (or this job) changes
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      changes:
+        - renovate.json
+        - .gitlab-ci.yml
+  script:
+    # No file argument on purpose: auto-discovery validates renovate.json as
+    # repo config (stricter than the global-config mode used for explicit args)
+    - renovate-config-validator --strict
+
 .deploy-base:
   stage: deploy
   image: registry.gitlab.com/civitas-connect/civitas-core/civitas-core-v2/civitas-core-deployment/cicd:a1aebd6
