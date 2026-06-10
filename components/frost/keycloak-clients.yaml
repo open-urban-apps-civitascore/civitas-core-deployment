@@ -1,0 +1,23 @@
+---
+api-access:
+  name: api-access
+  description: “Shared public client for password-based API access”
+  subdomain: api
+  redirectPath: /
+  rawValues:
+    publicClient: true
+    standardFlowEnabled: false
+    implicitFlowEnabled: false
+    directAccessGrantsEnabled: true
+    serviceAccountsEnabled: false
+    authorizationServicesEnabled: false
+    redirectUris: []
+    webOrigins: []
+    defaultClientScopes:
+      - basic
+      - email
+      - profile
+      - roles
+    optionalClientScopes: []
+    attributes:
+      use.refresh.tokens: 'false'

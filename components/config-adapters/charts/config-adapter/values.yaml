@@ -90,13 +90,3 @@ nodeSelector: {}
 tolerations: []
 
 affinity: {}
-
-networkPolicy:
-  enabled: true
-
-updateStrategy: {}
-
-# Custom Service Mesh configuration
-customServiceMesh:
-  enable: false
-  type: ''

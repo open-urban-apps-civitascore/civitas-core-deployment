@@ -1,2 +1,5 @@
 ---
-postgres: {}
+postgres:
+  cluster:
+    repository: ghcr.io/cloudnative-pg/postgis
+    tag: 16-3.4

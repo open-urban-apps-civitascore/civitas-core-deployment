@@ -30,7 +30,7 @@ image:
 env:
   # Adapter configuration
   - name: ADAPTERS
-    value: "apisix,keycloak"
+    value: "apisix,keycloak,frost,redpanda"
   - name: EVENTHANDLER_NAME
     value: "kafka"
 
@@ -40,31 +40,41 @@ env:
   - name: KAFKA_GROUP_ID
     value: config-adapter-group
 
-  # Keycloak configuration
-  {{- $keycloakHost := printf "%s.%s" (default "" .Values.keycloak.app.subdomain) $global.domain | trimPrefix "." }}
-  {{- $keycloakPath := .Values.keycloak.app.pathPrefix -}}
-  {{- $keycloakUrl := printf "https://%s%s" $keycloakHost $keycloakPath -}}
+  # Keycloak configuration — uses dedicated config-adapter client with password grant
+  {{- $keycloakUrl := printf "http://keycloak-app-keycloakx-http.%s.svc.cluster.local:80" .Values.keycloak.app.namespace -}}
   {{- $realmName := $global.instanceSlug }}
   - name: KEYCLOAK_URL
     value: {{ $keycloakUrl | quote }}
   - name: KEYCLOAK_REALM
     value: {{ $realmName | quote }}
   - name: KEYCLOAK_USERNAME
-    value: "admin"  # TODO: custom service account
+    value: "config-adapter@internal.local"
   - name: KEYCLOAK_PASSWORD
     valueFrom:
       secretKeyRef:
-        name: "keycloak-admin-user"
+        name: "config-adapter-keycloak-user"
         key: "password"
   - name: KEYCLOAK_CLIENT_ID
-    value: "admin-cli"
+    value: "config-adapter"
+  - name: KEYCLOAK_INVITATION_CLIENT_ID
+    value: "portal-frontend"
+  - name: KEYCLOAK_INVITATION_REDIRECT_URI
+    value: "https://portal.{{ $global.domain }}/"
+  # Keycloak Topics:
+  # User Events (7): user.created, user.updated, user.deleted, user.locked, user.unlocked, user.password.changed, user.password.reset
+  # Realm Events (3): realm.created, realm.updated, realm.deleted
+  # Client Events (3): client.created, client.updated, client.deleted
+  # Role Events (3): role.created, role.updated, role.deleted
+  # Group Events (3): group.created, group.updated, group.deleted
   - name: KEYCLOAK_TOPICS
-    value: "de.civitascore.idm.user.created,de.civitascore.idm.user.updated,de.civitascore.idm.realm.created"
+    value: "de.civitascore.idm.user.created,de.civitascore.idm.user.updated,de.civitascore.idm.user.deleted,de.civitascore.idm.user.locked,de.civitascore.idm.user.unlocked,de.civitascore.idm.user.password.changed,de.civitascore.idm.user.password.reset,de.civitascore.idm.realm.created,de.civitascore.idm.realm.updated,de.civitascore.idm.realm.deleted,de.civitascore.idm.client.created,de.civitascore.idm.client.updated,de.civitascore.idm.client.deleted,de.civitascore.idm.role.created,de.civitascore.idm.role.updated,de.civitascore.idm.role.deleted,de.civitascore.idm.group.created,de.civitascore.idm.group.updated,de.civitascore.idm.group.deleted"
 
   # APISIX configuration
   {{- $apisixHost := printf "%s.%s" (default "" .Values.apisix.apisix.subdomain) $global.domain | trimPrefix "." }}
   {{- $apisixPath := .Values.apisix.apisix.pathPrefix }}
-  {{- $apisixUrl := printf "https://%s%s" $apisixHost $apisixPath }}
+  {{- $apisixUrl := printf "http://%s%s" "apisix-admin:9180" $apisixPath }}
+  {{- $apisixDataHost := printf "apisix-gateway.%s.svc.cluster.local:9080" .Values.apisix.apisix.namespace }}
+  {{- $apisixDataPublicUrl := printf "https://api.%s" $global.domain }}
   - name: APISIX_ADMIN_URL
     value: {{ $apisixUrl | quote }}
   - name: APISIX_ADMIN_KEY
@@ -72,8 +82,53 @@ env:
       secretKeyRef:
         name: "apisix-admin-credentials"
         key: "admin"
+  - name: APISIX_DATA_HOST
+    value: {{ $apisixDataHost | quote }}
+  - name: APISIX_DATA_PUBLIC_URL
+    value: {{ $apisixDataPublicUrl | quote }}
   - name: APISIX_TOPICS
-    value: "de.civitascore.api.backend.created,de.civitascore.api.backend.updated,de.civitascore.api.backend.deleted"
+    value: "de.civitascore.api.backend.created,de.civitascore.api.backend.updated,de.civitascore.api.backend.deleted,de.civitascore.api.route.created,de.civitascore.api.route.updated,de.civitascore.api.route.deleted"
+
+  # FROST configuration (accessed via linkerd service mesh, basic auth)
+  {{- $frostUrl := printf "http://frost-frost-frost-server-http.%s/FROST-Server/v1.1" .Values.frost.frost.namespace }}
+  # TODO: only FROST_BASE should be required, but we keep FROST_URL for backward compatibility for now, should be removed in future
+  - name: FROST_URL
+    value: {{ $frostUrl | quote }}
+  - name: FROST_PUBLIC_URL
+    value: {{ $frostUrl | quote }}
+  - name: FROST_BASE
+    value: {{ $frostUrl | quote }}
+  - name: FROST_BASIC_AUTH_USERNAME
+    value: "admin"
+  - name: FROST_BASIC_AUTH_PASSWORD
+    value: "admin"
+  - name: FROST_TOPICS
+    value: "de.civitascore.data.thing.created,de.civitascore.data.thing.updated,de.civitascore.data.thing.deleted,de.civitascore.data.location.created,de.civitascore.data.location.updated,de.civitascore.data.location.deleted,de.civitascore.data.sensor.created,de.civitascore.data.sensor.updated,de.civitascore.data.sensor.deleted,de.civitascore.data.observedproperty.created,de.civitascore.data.observedproperty.updated,de.civitascore.data.observedproperty.deleted,de.civitascore.data.datastream.created,de.civitascore.data.datastream.updated,de.civitascore.data.datastream.deleted,de.civitascore.data.project.created,de.civitascore.data.project.updated,de.civitascore.data.project.deleted"
+
+  # Redpanda configuration
+  {{- $redpandaUrl := printf "http://redpanda-connect-connect.%s:80" .Values.redpandaConnect.connect.namespace }}
+  - name: REDPANDA_URL
+    value: {{ $redpandaUrl | quote }}
+  - name: REDPANDA_TOPICS
+    value: "de.civitascore.data.pipeline.created,de.civitascore.data.pipeline.updated,de.civitascore.data.pipeline.deleted"
+
+  # Crypto configuration (shared with portal backend)
+  - name: CIVITAS_MASTER_KEY
+    valueFrom:
+      secretKeyRef:
+        name: "portal-backend-crypto"
+        key: "civitas-master-key"
+
+  # Flowable configuration
+  - name: FLOWABLE_JDBC_URL
+    value: jdbc:postgresql://{{ .Values.databases.flowable.host }}:{{ .Values.databases.flowable.port }}/{{ .Values.databases.flowable.name }}
+  - name: FLOWABLE_JDBC_USERNAME
+    value: {{ .Values.databases.flowable.user }}
+  - name: FLOWABLE_JDBC_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        name: "db-flowable"
+        key: "password"
 
   # Health check configuration
   - name: HEALTHCHECK_PORT

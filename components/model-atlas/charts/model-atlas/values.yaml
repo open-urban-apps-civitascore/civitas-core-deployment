@@ -47,11 +47,11 @@ securityContext:
       - ALL
   readOnlyRootFilesystem: true
 
-env:
-  - name: APICURIO_HOST
-    value: 'apicurio-registry'
-  - name: APICURIO_PORT
-    value: '8080'
+apicurio:
+  host: apicurio-registry
+  port: 8080
+
+env: []
 
 service:
   type: ClusterIP
@@ -161,6 +161,3 @@ nodeSelector: {}
 tolerations: []
 
 affinity: {}
-
-networkPolicy:
-  enabled: false

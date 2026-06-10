@@ -33,6 +33,10 @@ registry:
       enabled: false
     auth:
       enabled: false
+    securityContext:
+      {{ .Values.securityDefaults.securityContext | toYaml | nindent 6 }}
+    podSecurityContext:
+      {{ .Values.securityDefaults.podSecurityContext | toYaml | nindent 6 }}
 
     startupProbe:
       failureThreshold: 30
@@ -82,7 +86,7 @@ registry:
       type: ClusterIP
       port: 8080
     ingress:
-      enabled: {{ $global.ingress.enabled }}
+      enabled: false
       ingressClassName: {{ $global.ingress.ingressClass }}
       annotations:
         cert-manager.io/cluster-issuer: {{ $global.ingress.clusterIssuer }}
@@ -95,6 +99,8 @@ registry:
     replicas: 1
     podDisruptionBudget:
       enabled: false
+    securityContext:
+      {{ .Values.securityDefaults.securityContext | toYaml | nindent 6 }}
+    podSecurityContext:
+      {{ .Values.securityDefaults.podSecurityContext | toYaml | nindent 6 }}
 
-networkPolicy:
-  enabled: true

@@ -1,0 +1,11 @@
+---
+geoserver:
+  rabbitmq:
+    # TODO: find alternative to bitnami chart + image
+    repository: https://charts.bitnami.com/bitnami
+    chart: bitnami/rabbitmq
+    version: '16.0.14'
+  geoserver:
+    repository: https://camptocamp.github.io/helm-geoserver-cloud
+    chart: geoservercloud/geoservercloud
+    version: '2.5.6'

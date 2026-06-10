@@ -49,10 +49,15 @@ spec:
             - name: http
               containerPort: {{ .Values.service.port }}
               protocol: TCP
-          {{- with .Values.env }}
           env:
+            # Apicurio configuration
+            - name: APICURIO_HOST
+              value: {{ .Values.apicurio.host }}
+            - name: APICURIO_PORT
+              value: {{ .Values.apicurio.port | quote }}
+            {{- with .Values.env }}
             {{- toYaml . | nindent 12 }}
-          {{- end }}
+            {{- end }}
           {{- if .Values.startupProbe }}
           startupProbe:
             {{- toYaml .Values.startupProbe | nindent 12 }}

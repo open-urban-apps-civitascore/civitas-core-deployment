@@ -10,11 +10,11 @@
 # - [ ] Named ports
 # - [ ] Ingress with TLS
 
-{{/*containerSecurityContext:*/}}
-{{/*  {{ .Values.securityDefaults.securityContext | toYaml | nindent 2 }}*/}}
+containerSecurityContext:
+  {{ .Values.securityDefaults.securityContext | toYaml | nindent 2 }}
 
-{{/*securityContext:*/}}
-{{/*  {{ .Values.securityDefaults.podSecurityContext | toYaml | nindent 2 }}*/}}
+securityContext:
+  {{ .Values.securityDefaults.podSecurityContext | toYaml | nindent 2 }}
 
 image:
   {{- with .Values.images.keycloak.configCli }}
@@ -26,11 +26,11 @@ job:
   resources:
     # resources are hardcoded since config-cli is a job which won't need more resources, even when the platform scales up
     limits:
-      cpu: "100m"
-      memory: "512Mi"
-    requests:
-      cpu:  "400m"
+      cpu: "400m"
       memory: "1024Mi"
+    requests:
+      cpu:  "100m"
+      memory: "512Mi"
 
 env:
   KEYCLOAK_AVAILABILITYCHECK_ENABLED: "true"
@@ -71,12 +71,24 @@ extraEnv:
         name: keycloak-smtp
         key: password
   {{- range $clientId, $client := .Values.keycloakClients }}
+  {{- $rawValues := index $client "rawValues" | default dict }}
+  {{- $isPublicClient := false }}
+  {{- if hasKey $rawValues "publicClient" }}
+  {{- $isPublicClient = index $rawValues "publicClient" }}
+  {{- end }}
+  {{- if not $isPublicClient }}
   - name: CLIENT_SECRET_{{ $clientId | upper | replace "-" "_" }}
     valueFrom:
       secretKeyRef:
         name: {{ printf "keycloak-client-%s" $clientId }}
         key: client-secret
   {{- end }}
+  {{- end }}
+  - name: CONFIG_ADAPTER_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        name: config-adapter-keycloak-user
+        key: password
 
 config:
   {{ $global.instanceSlug }}:
@@ -84,12 +96,14 @@ config:
       id: {{ $global.instanceSlug }}
       realm: "{{ $global.instanceSlug }}"
       notBefore: 0
-      defaultSignatureAlgorithm: RS256
+      # TR-03187 AR-11: Use ES256 for token signatures
+      defaultSignatureAlgorithm: ES256
       revokeRefreshToken: false
       refreshTokenMaxReuse: 0
       accessTokenLifespan: 300
       accessTokenLifespanForImplicitFlow: 900
-      ssoSessionIdleTimeout: 1800
+      # TR-03187 AR-6/W-8: 60min idle timeout
+      ssoSessionIdleTimeout: 3600
       ssoSessionMaxLifespan: 36000
       ssoSessionIdleTimeoutRememberMe: 0
       ssoSessionMaxLifespanRememberMe: 0
@@ -105,31 +119,38 @@ config:
       accessCodeLifespanLogin: 1800
       actionTokenGeneratedByAdminLifespan: 43200
       actionTokenGeneratedByUserLifespan: 300
+      # TR-03187 AR-11: Keycloak 26 defaults to Argon2id for password hashing — no config override needed
+      # TR-03187 AUT-9: Keycloak 26 account console requires password re-entry for sensitive profile changes (incl. email) by default
+      # TR-03187 AR-13: Certificate chain validation handled by Linkerd mTLS at infrastructure level — no realm config needed
       enabled: true
       sslRequired: external
       registrationAllowed: false
       registrationEmailAsUsername: true
-      rememberMe: true
+      rememberMe: false
       verifyEmail: true
       loginWithEmailAllowed: true
       duplicateEmailsAllowed: false
       resetPasswordAllowed: true
       editUsernameAllowed: true
-      bruteForceProtected: false
+      # TR-03187: Brute force protection enabled, lockout after 10 attempts
+      bruteForceProtected: true
       permanentLockout: false
       maxFailureWaitSeconds: 900
       minimumQuickLoginWaitSeconds: 60
       waitIncrementSeconds: 60
       quickLoginCheckMilliSeconds: 1000
       maxDeltaTimeSeconds: 43200
-      failureFactor: 30
+      failureFactor: 10
       defaultRoles:
         - offline_access
         - uma_authorization
+      # TR-03187 AUT-7: Password policy — min 12 chars, upper, lower, digit
+      passwordPolicy: "length(12) and upperCase(1) and lowerCase(1) and digits(1)"
       requiredCredentials:
         - password
       otpPolicyType: totp
-      otpPolicyAlgorithm: HmacSHA1
+      # TR-03187 AR-11: Use SHA256 for OTP
+      otpPolicyAlgorithm: HmacSHA256
       otpPolicyInitialCounter: 0
       otpPolicyDigits: 6
       otpPolicyLookAheadWindow: 1
@@ -169,14 +190,14 @@ config:
         strictTransportSecurity: max-age=31536000; includeSubDomains
       smtpServer:
         # TODO: This is a temporary solution. Find a better way to manage secrets in templates.
-        password: "${env:SMTP_PASSWORD}"
-        host: "${env:SMTP_HOST}"
-        port: "${env:SMTP_PORT}"
-        from: "${env:SMTP_FROM}"
-        user: "${env:SMTP_USER}"
-        starttls: true
-        auth: true
-        ssl: ""
+        password: "$(SMTP_PASSWORD)"
+        host: "$(SMTP_HOST)"
+        port: "$(SMTP_PORT)"
+        from: "$(SMTP_FROM)"
+        user: "$(SMTP_USER)"
+        starttls: "true"
+        auth: "true"
+        ssl: "false"
       loginTheme: keycloak
       accountTheme: keycloak
       adminTheme: keycloak
@@ -272,7 +293,8 @@ config:
         - de
         - en
       defaultLocale: en
-      browserFlow: browser
+      # TR-03187 AUT-2: Custom browser flow with conditional 2FA
+      browserFlow: custom browser
       registrationFlow: registration
       directGrantFlow: direct grant
       resetCredentialsFlow: reset credentials
@@ -284,10 +306,37 @@ config:
         clientSessionMaxLifespan: "0"
         clientOfflineSessionIdleTimeout: "0"
       userManagedAccessAllowed: false
+      # Dedicated service user for the config-adapter — granted realm-admin via realm-management client role
+      # username must equal email because registrationEmailAsUsername is enabled on this realm
+      users:
+        - username: config-adapter@internal.local
+          enabled: true
+          emailVerified: true
+          email: config-adapter@internal.local
+          firstName: Config
+          lastName: Adapter
+          requiredActions: []
+          credentials:
+            - type: password
+              value: "$(CONFIG_ADAPTER_PASSWORD)"
+              temporary: false
+          clientRoles:
+            realm-management:
+              - realm-admin
       clients:
         {{- range $clientId, $client := .Values.keycloakClients }}
         {{- $subdomain := $client.subdomain | default $clientId }}
         {{- $redirectPath := $client.redirectPath | default "/*" }}
+        {{- /* Build the redirect URI list: start with the primary redirectPath, then append any additionalRedirectPaths */}}
+        {{- $redirectUris := list (printf "https://%s.%s%s" $subdomain $global.domain $redirectPath) }}
+        {{- range (index $client "additionalRedirectPaths" | default list) }}
+        {{- $redirectUris = append $redirectUris (printf "https://%s.%s%s" $subdomain $global.domain .) }}
+        {{- end }}
+        {{- $rawValues := index $client "rawValues" | default dict }}
+        {{- $isPublicClient := false }}
+        {{- if hasKey $rawValues "publicClient" }}
+        {{- $isPublicClient = index $rawValues "publicClient" }}
+        {{- end }}
         {{- $clientDefaults := dict
           "clientId" $clientId
           "name" ($client.name | default $clientId)
@@ -295,7 +344,6 @@ config:
           "enabled" true
           "protocol" "openid-connect"
           "publicClient" false
-          "secret" (printf "$(CLIENT_SECRET_%s)" ($clientId | upper | replace "-" "_"))
           "rootUrl" (printf "https://%s.%s" $subdomain $global.domain)
           "baseUrl" (printf "https://%s.%s" $subdomain $global.domain)
           "bearerOnly" false
@@ -304,13 +352,117 @@ config:
           "directAccessGrantsEnabled" true
           "serviceAccountsEnabled" false
           "authorizationServicesEnabled" false
-          "redirectUris" (list (printf "https://%s.%s%s" $subdomain $global.domain $redirectPath))
           "webOrigins" (list (printf "https://%s.%s" $subdomain $global.domain))
-          "defaultClientScopes" (list "email" "profile" "roles" "web-origins")
+          "defaultClientScopes" (list "basic" "email" "profile" "roles" "web-origins")
           "optionalClientScopes" (list "address" "phone" "offline_access" "microprofile-jwt")
-          "attributes" (dict "post.logout.redirect.uris" "+" "pkce.code.challenge.method" "S256")
         }}
-        {{- $rawValues := index $client "rawValues" | default dict }}
+        {{- if not $isPublicClient }}
+        {{- $_ := set $clientDefaults "secret" (printf "$(CLIENT_SECRET_%s)" ($clientId | upper | replace "-" "_")) }}
+        {{- $_ := set $clientDefaults "redirectUris" $redirectUris }}
+        {{- $_ := set $clientDefaults "attributes" (dict "post.logout.redirect.uris" "+" "pkce.code.challenge.method" "S256") }}
+        {{- else }}
+        {{- $_ := set $clientDefaults "attributes" (dict "post.logout.redirect.uris" "+") }}
+        {{- end }}
         {{- $finalClient := mergeOverwrite $clientDefaults ($rawValues | default dict) }}
         - {{ $finalClient | toYaml | nindent 10 }}
         {{- end }}
+      roles:
+        client:
+          {{- range $clientId, $client := .Values.keycloakClients }}
+          {{- if index $client "roles" }}
+          {{ $clientId }}:
+            {{- index $client "roles" | toYaml | nindent 12 }}
+          {{- end }}
+          {{- end }}
+      # TR-03187 AUT-2: Custom browser flow with optional MFA (conditional on user config)
+      # If a user has TOTP or WebAuthn configured, they are prompted. Otherwise login proceeds without MFA.
+      authenticationFlows:
+        - alias: "custom browser"
+          description: "Custom browser flow with conditional 2FA per TR-03187"
+          providerId: "basic-flow"
+          topLevel: true
+          builtIn: false
+          authenticationExecutions:
+            - authenticator: "auth-cookie"
+              authenticatorFlow: false
+              requirement: "ALTERNATIVE"
+              priority: 10
+              userSetupAllowed: false
+              autheticatorFlow: false
+            - authenticator: "identity-provider-redirector"
+              authenticatorFlow: false
+              requirement: "ALTERNATIVE"
+              priority: 20
+              userSetupAllowed: false
+              autheticatorFlow: false
+            - authenticatorFlow: true
+              requirement: "ALTERNATIVE"
+              priority: 30
+              flowAlias: "custom browser forms"
+              userSetupAllowed: false
+              autheticatorFlow: true
+        - alias: "custom browser forms"
+          description: "Username/password + conditional 2FA"
+          providerId: "basic-flow"
+          topLevel: false
+          builtIn: false
+          authenticationExecutions:
+            - authenticator: "auth-username-password-form"
+              authenticatorFlow: false
+              requirement: "REQUIRED"
+              priority: 10
+              userSetupAllowed: false
+              autheticatorFlow: false
+            - authenticatorFlow: true
+              requirement: "CONDITIONAL"
+              priority: 20
+              flowAlias: "custom browser 2fa"
+              userSetupAllowed: false
+              autheticatorFlow: true
+        - alias: "custom browser 2fa"
+          description: "Conditional 2FA — prompts only if user has TOTP or WebAuthn configured"
+          providerId: "basic-flow"
+          topLevel: false
+          builtIn: false
+          authenticationExecutions:
+            - authenticator: "conditional-user-configured"
+              authenticatorFlow: false
+              requirement: "REQUIRED"
+              priority: 10
+              userSetupAllowed: false
+              autheticatorFlow: false
+            - authenticator: "auth-otp-form"
+              authenticatorFlow: false
+              requirement: "ALTERNATIVE"
+              priority: 20
+              userSetupAllowed: false
+              autheticatorFlow: false
+            - authenticator: "webauthn-authenticator"
+              authenticatorFlow: false
+              requirement: "ALTERNATIVE"
+              priority: 30
+              userSetupAllowed: false
+              autheticatorFlow: false
+  # TR-03187: Harden master realm — admin accounts are highest-value targets
+  master:
+    inline:
+      realm: master
+      # TR-03187 AR-11: Use ES256 for token signatures
+      defaultSignatureAlgorithm: ES256
+      # TR-03187: 30min idle timeout for admin sessions
+      ssoSessionIdleTimeout: 1800
+      ssoSessionMaxLifespan: 36000
+      rememberMe: false
+      # TR-03187: Brute force protection enabled, lockout after 10 attempts
+      bruteForceProtected: true
+      permanentLockout: false
+      maxFailureWaitSeconds: 900
+      minimumQuickLoginWaitSeconds: 60
+      waitIncrementSeconds: 60
+      quickLoginCheckMilliSeconds: 1000
+      maxDeltaTimeSeconds: 43200
+      failureFactor: 10
+      # TR-03187: Stricter password policy for admin accounts — 20 chars, upper, lower, digit, special
+      passwordPolicy: "length(20) and upperCase(1) and lowerCase(1) and digits(1) and specialChars(1)"
+      # TR-03187 AR-11: Use SHA256 for OTP
+      otpPolicyAlgorithm: HmacSHA256

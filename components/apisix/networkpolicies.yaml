@@ -1,0 +1,28 @@
+---
+apisix:
+  podSelector:
+    app.kubernetes.io/name: apisix
+  policyTypes:
+    - Ingress
+  ingress:
+    # Admin API (9180): only reachable from the config-adapter pod
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: config-adapter
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/component: apisix-static-configuration
+      ports:
+        - protocol: TCP
+          port: 9180
+
+    # Data plane (9080): the gateway's public HTTP entry point. End-user
+    # traffic enters via the cluster's ingress controller (nginx), which
+    # terminates TLS and forwards the request to this port.
+    - from:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+      ports:
+        - protocol: TCP
+          port: 9080

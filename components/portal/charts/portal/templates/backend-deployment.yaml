@@ -6,6 +6,10 @@ metadata:
   name: {{ include "portal.fullname" . }}-backend
   labels:
     {{- include "portal.backend.labels" . | nindent 4 }}
+  {{- with .Values.backend.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
 spec:
   {{- if not .Values.autoscaling.backend.enabled }}
   replicas: {{ .Values.backend.replicaCount }}
@@ -20,10 +24,34 @@ spec:
     spec:
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      {{- $trustStoreConfig := .Values.backend.trustStore | default dict }}
+      {{- $trustStoreSecret := lookup "v1" "Secret" .Release.Namespace ($trustStoreConfig.secretName | default "") }}
+      {{- if and ($trustStoreConfig.enabled | default false) $trustStoreSecret }}
+      initContainers:
+        - name: init-truststore
+          image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag }}"
+          command: ['sh', '-c']
+          args:
+            - |
+              cp $JAVA_HOME/lib/security/cacerts /truststore/cacerts
+              keytool -importcert -noprompt -trustcacerts \
+                -alias custom-ca \
+                -file /ca-cert/{{ $trustStoreConfig.certKey | default "ca.crt" }} \
+                -keystore /truststore/cacerts \
+                -storepass changeit
+          volumeMounts:
+            - name: truststore
+              mountPath: /truststore
+            - name: ca-cert
+              mountPath: /ca-cert
+              readOnly: true
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+      {{- end }}
       containers:
         - name: backend
           image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag }}"
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           ports:
             - name: http
               containerPort: 8080
@@ -40,7 +68,7 @@ spec:
                   name: {{ .Values.database.secret.name }}
                   key: {{ .Values.database.secret.passwordKey }}
             # Keycloak configuration
-            - name: KEYCLOAK_AUTHSERVERURL
+            - name: KEYCLOAK_AUTH_SERVER_URL
               value: {{ .Values.keycloak.authServerUrl }}
             - name: KEYCLOAK_REALM
               value: {{ .Values.keycloak.realm }}
@@ -48,9 +76,12 @@ spec:
               value: {{ .Values.keycloak.authServerUrl }}
             - name: KEYCLOAK_TARGET_REALM
               value: {{ .Values.keycloak.realm }}
+            # JWT configuration
+            - name: SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWS_ALGORITHMS
+              value: ES256
             # Spring Boot configuration
             - name: SPRING_PROFILES_ACTIVE
-              value: postgres
+              value: postgres,init
             - name: LOGGING_LEVEL_ROOT
               value: {{ .Values.backend.env.loggingLevelRoot }}
             - name: SERVER_PORT
@@ -60,9 +91,57 @@ spec:
             # Kafka configuration
             - name: KAFKA_BOOTSTRAP_SERVERS
               value: {{ .Values.kafka.bootstrapServers | quote }}
+            - name: KAFKA_ENABLED
+              value: "true"
+            # Model Atlas
+            - name: MODEL_ATLAS_BASE_URL
+              value: {{ .Values.modelAtlas.url }}
+            - name: MODEL_ATLAS_SCOPE
+              value: civitas
+            - name: SPRING_KAFKA_PRODUCER_PROPERTIES_COMPRESSION_TYPE
+              value: lz4
+            # Apisix
+            - name: CIVITAS_API_BASE_URL
+              value: {{ .Values.apisix.apiUrl | quote }}
+            # Crypto configuration
+            - name: CIVITAS_MASTER_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: portal-backend-crypto
+                  key: civitas-master-key
+            - name: INIT_GROUPS_0_NAME
+              value: Tenant Admins
+            - name: INIT_GROUPS_0_ROLENAME
+              value: Tenant Admin
+            - name: INIT_GROUPS_0_DESCRIPTION
+              value: Users with full access to tenant management
+            - name: INIT_GROUPS_1_NAME
+              value: Data Owner
+            - name: INIT_GROUPS_1_SCOPETYPE
+              value: TENANT
+            - name: INIT_GROUPS_1_ROLENAME
+              value: Data Owner
+            - name: INIT_GROUPS_1_DESCRIPTION
+              value: Users with full access to data
+            - name: INIT_USERS_0_FIRSTNAME
+              value: Tenant
+            - name: INIT_USERS_0_LASTNAME
+              value: Admin
+            - name: INIT_USERS_0_EMAIL
+              value: {{ .Values.initialUser.email }}
+            - name: INIT_USERS_0_GROUPS_0
+              value: Tenant Admins
+            {{- if .Values.initialUser.isFullAdmin }}
+            - name: INIT_USERS_0_GROUPS_1
+              value: Data Owner
+            {{- end }}
+            {{- if and ($trustStoreConfig.enabled | default false) $trustStoreSecret }}
+            - name: JAVA_TOOL_OPTIONS
+              value: "-Djavax.net.ssl.trustStore=/truststore/cacerts -Djavax.net.ssl.trustStorePassword=changeit"
+            {{- end }}
           startupProbe:
             httpGet:
-              path: /v2/actuator/health
+              path: /v1/actuator/health
               port: http
               scheme: HTTP
             initialDelaySeconds: 30
@@ -71,7 +150,7 @@ spec:
             failureThreshold: 30
           livenessProbe:
             httpGet:
-              path: /v2/actuator/health/liveness
+              path: /v1/actuator/health/liveness
               port: http
               scheme: HTTP
             initialDelaySeconds: 0
@@ -80,7 +159,7 @@ spec:
             failureThreshold: 3
           readinessProbe:
             httpGet:
-              path: /v2/actuator/health/readiness
+              path: /v1/actuator/health/readiness
               port: http
               scheme: HTTP
             initialDelaySeconds: 0
@@ -94,7 +173,19 @@ spec:
           volumeMounts:
             - name: tmp
               mountPath: /tmp
+            {{- if and ($trustStoreConfig.enabled | default false) $trustStoreSecret }}
+            - name: truststore
+              mountPath: /truststore
+              readOnly: true
+            {{- end }}
       volumes:
         - name: tmp
           emptyDir: {}
+        {{- if and ($trustStoreConfig.enabled | default false) $trustStoreSecret }}
+        - name: truststore
+          emptyDir: {}
+        - name: ca-cert
+          secret:
+            secretName: {{ $trustStoreConfig.secretName }}
+        {{- end }}
 {{- end }}

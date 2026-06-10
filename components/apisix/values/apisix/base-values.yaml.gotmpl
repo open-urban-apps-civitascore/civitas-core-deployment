@@ -18,6 +18,10 @@ image:
   tag: {{ .Values.images.apisix.apisix.gateway.tag }}
   pullPolicy: IfNotPresent
 
+service:
+  type: "ClusterIP"
+  externalTrafficPolicy: null
+
 serviceAccount:
   create: true
 
@@ -25,18 +29,10 @@ rbac:
   create: true
 
 podSecurityContext:
-  runAsNonRoot: true
-  runAsUser: 1000
-  fsGroup: 1000
-  seccompProfile:
-    type: RuntimeDefault
+  {{ .Values.securityDefaults.podSecurityContext | toYaml | nindent 2 }}
 
 securityContext:
-  allowPrivilegeEscalation: false
-  capabilities:
-    drop:
-      - ALL
-  readOnlyRootFilesystem: true
+  {{ .Values.securityDefaults.securityContext | toYaml | nindent 2 }}
 
 # External etcd configuration with RBAC
 etcd:
@@ -86,12 +82,7 @@ extraInitContainers:
       - name: apisix-conf-writable
         mountPath: /mnt/apisix-conf
     securityContext:
-      runAsNonRoot: true
-      runAsUser: 1000
-      capabilities:
-        drop:
-          - ALL
-      readOnlyRootFilesystem: true
+      {{ .Values.securityDefaults.securityContext | toYaml | nindent 8 }}
 
 # APISIX Gateway configuration
 apisix:
@@ -99,25 +90,52 @@ apisix:
     enabled: {{ $global.metrics.enabled }}
   admin:
     enabled: true
+    allow:
+      ipList:
+        - 0.0.0.0/0 # TODO: configure dynamically to listen on service ip
     ingress:
-      enabled: {{ $global.ingress.enabled }}
-      annotations:
-        kubernetes.io/ingress.class: {{ $global.ingress.ingressClass }}
-        cert-manager.io/cluster-issuer: {{ $global.ingress.clusterIssuer }}
-      {{- $host := printf "%s.%s" (default "" $this.subdomain) $global.domain | trimPrefix "." }}
-      hosts:
-        - host: {{ $host }}
-          paths:
-            - '{{ $this.pathPrefix }}'
-      className: {{ $global.ingress.ingressClass }}
-      tls:
-        - hosts:
-            - {{ $host }}
-          secretName: {{ $host }}-tls
+      enabled: false
     credentials:
       secretName: apisix-admin-credentials
       secretAdminKey: admin
       secretViewerKey: viewer
+  trustedAddresses:
+    - 127.0.0.1
+    - 10.0.0.0/8
+    - 172.16.0.0/12
+    - 192.168.0.0/16
+  nginx:
+    configurationSnippet:
+      httpEnd: |
+        proxy_buffer_size 32k;
+        proxy_buffers 4 32k;
+        client_header_buffer_size 16k;
+        large_client_header_buffers 4 16k;
+ingress:
+  enabled: true
+  className: {{ $global.ingress.ingressClass }}
+  annotations:
+    ingress.kubernetes.io/affinity: cookie
+    cert-manager.io/cluster-issuer: {{ $global.ingress.clusterIssuer }}
+    nginx.ingress.kubernetes.io/proxy-buffer-size: "16k"
+    nginx.ingress.kubernetes.io/proxy-buffers-number: "4"
+    nginx.ingress.kubernetes.io/proxy-busy-buffers-size: "24k"
+  hosts:
+  {{- range $component, $config := .Values.routes }}
+    {{- if hasKey $config "subDomain" }}
+    - host: {{ $config.subDomain }}.{{ $global.domain }}
+      paths:
+        - '/'
+    {{- end }}
+  {{- end }}
+  tls:
+    - secretName: apisix-tls
+      hosts:
+      {{- range $component, $config := .Values.routes }}
+        {{- if hasKey $config "subDomain" }}
+        - {{ $config.subDomain }}.{{ $global.domain }}
+        {{- end }}
+      {{- end }}
 
 # Ingress Controller
 ingress-controller:

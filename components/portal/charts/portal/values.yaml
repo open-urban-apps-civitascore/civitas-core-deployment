@@ -77,12 +77,18 @@ ingress:
 server:
   url: ''
 
+apisix:
+  serviceUrl: ''
+
 keycloak:
   authServerUrl: ''
   realm: ''
 
 kafka:
   bootstrapServers: ''
+
+modelAtlas:
+  url: ''
 
 database:
   host: ''
@@ -95,3 +101,7 @@ database:
 
 networkPolicy:
   enabled: false
+
+initialUser:
+  email: ''
+  isFullAdmin: false

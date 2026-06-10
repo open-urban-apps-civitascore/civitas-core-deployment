@@ -2,9 +2,8 @@ FROM alpine:3.23.3 AS fetcher
 
 ARG TARGETARCH
 
-# TODO: Add renovate definitions for these versions
-# https://docs.renovatebot.com/modules/datasource/github-releases/
-ENV OPA_VERSION=v1.13.1
+# renovate: datasource=github-releases depName=open-policy-agent/opa
+ENV OPA_VERSION=v1.14.0
 
 # Install dependencies
 RUN apk update && \

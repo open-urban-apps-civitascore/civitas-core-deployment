@@ -127,7 +127,7 @@ frost:
       - name: plugins_projects_enable
         value: "true"
 
-    serviceHost: {{ .Values.frost.frost.subdomain }}.{{ $global.domain }}
+    serviceHost: portal.{{ $global.domain }} # TODO: make dependend on portal subdomain
     serviceProtocol: https
     servicePort: 443
     defaultCount: false

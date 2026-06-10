@@ -1,0 +1,53 @@
+---
+portal-backend:
+  name: portal-backend
+  description: API for the Civitas Portal
+  plugins:
+    openid-connect:
+      client_id: apisix-validator
+      client_secret: '${APISIX_VALIDATOR_CLIENT_SECRET}'
+      discovery: http://keycloak-app-keycloakx-http.'${REALM}'.svc.cluster.local:80/realms/'${REALM}'/.well-known/openid-configuration # yamllint disable-line rule:line-length
+      bearer_only: true
+      ssl_verify: false
+      set_userinfo_header: true
+      introspection_endpoint: http://keycloak-app-keycloakx-http.'${REALM}'.svc.cluster.local:80/realms/'${REALM}'/protocol/openid-connect/token/introspect # yamllint disable-line rule:line-length
+      introspection_endpoint_auth_method: post
+    opa:
+      host: http://authz-authz-opa:8181
+      policy: civitas/authz/decision
+      with_route: true
+      with_service: true
+      with_consumer: false
+      send_headers_upstream:
+        - X-Allowed-Scope-Ids
+    serverless-pre-function:
+      phase: rewrite
+      functions:
+        - >-
+          return function()
+            ngx.req.clear_header("X-Userinfo")
+            ngx.req.clear_header("X-Access-Token")
+            ngx.req.clear_header("X-Allowed-Scope-Ids")
+          end
+    request-id:
+      include_in_response: true
+portal-bff:
+  name: portal-bff
+  description: Backend-for-Frontend for the Civitas Portal
+  plugins:
+    request-id:
+      include_in_response: true
+    serverless-pre-function:
+      phase: rewrite
+      functions:
+        - >-
+          return function()
+            ngx.req.clear_header("X-Userinfo")
+            ngx.req.clear_header("X-Access-Token")
+            ngx.req.clear_header("X-Allowed-Scope-Ids")
+          end
+    proxy-rewrite:
+      headers:
+        set:
+          X-Forwarded-Proto: https
+          X-Forwarded-Port: '443'

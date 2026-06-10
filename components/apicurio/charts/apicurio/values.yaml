@@ -172,6 +172,7 @@ registry:
     podLabels: {}
 
     # Security contexts
+    podSecurityContext: {}
     securityContext: {}
     containerSecurityContext: {}
 
@@ -259,6 +260,3 @@ registry:
 
     # Image pull secrets
     imagePullSecrets: []
-
-networkPolicy:
-  enabled: false
