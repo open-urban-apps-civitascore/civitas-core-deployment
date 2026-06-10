@@ -6,6 +6,7 @@ The setup is intentionally split into two layers:
 
 - `tests/system/java`: Java remote library that talks to the backend and gateway.
 - `tests/system/robot`: Robot suites that describe the open and restricted use cases in fine-grained steps.
+- `tests/system/TEST_LIBRARY.md`: initial English template for the GitLab-based test library with `TB-xxx` identifiers.
 
 ## Run locally
 

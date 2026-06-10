@@ -54,6 +54,10 @@ public class SystemTestKeywords {
     state.pipelineDescription = "Robot/Java system test proof of concept";
     state.dataSourceClientId = "civitas-saga-demo-" + state.runSuffix;
     state.namedApiSlug = "things";
+    state.modelAtlasUri = "http://civitas.org/model/SagaSensorModel/1.0.0";
+    state.modelName = "SagaSensorModel";
+    state.expectedGatewayThingName = "Test Sensor";
+    state.expectedGatewayThingDescription = "test";
     return state.runSuffix;
   }
 
@@ -76,7 +80,18 @@ public class SystemTestKeywords {
 
     JsonNode result = portalClient.postJson("/datastructures", body, state.accessToken, 201).json();
     state.dataStructureId = requiredText(result, "id", "dataStructure");
+    validateDataStructurePayload(result, "DRAFT", false);
     return state.dataStructureId;
+  }
+
+  @RobotKeyword("Verify Data Structure Snapshot")
+  @ArgumentNames({"expectedStatus=DRAFT", "expectVersionReference=false"})
+  public void verifyDataStructureSnapshot(String expectedStatus, String expectVersionReference) {
+    ensureDataStructureId();
+    JsonNode dataStructure = portalClient
+        .getJson("/datastructures/" + state.dataStructureId, state.accessToken, 200)
+        .json();
+    validateDataStructurePayload(dataStructure, expectedStatus, parseBoolean(expectVersionReference));
   }
 
   @RobotKeyword("Create Data Structure Version")
@@ -86,15 +101,28 @@ public class SystemTestKeywords {
     body.put("dataStructureVersionSource", "OWN");
     body.put("version", "1.0.0");
     body.put("description", "Initial release for the system test proof of concept");
-    body.put("modelAtlasUri", "http://civitas.org/model/SagaSensorModel/1.0.0");
-    body.put("modelName", "SagaSensorModel");
+    body.put("modelAtlasUri", state.modelAtlasUri);
+    body.put("modelName", state.modelName);
     body.put("model", readResource("/models/simple-model.xmi"));
     body.set("styles", mapper.createObjectNode());
 
     JsonNode result = portalClient.postJson(
         "/datastructures/" + state.dataStructureId + "/versions", body, state.accessToken, 201).json();
     state.dataStructureVersionId = requiredText(result, "id", "dataStructureVersion");
+    validateDataStructureVersionPayload(result);
     return state.dataStructureVersionId;
+  }
+
+  @RobotKeyword("Verify Data Structure Version Snapshot")
+  public void verifyDataStructureVersionSnapshot() {
+    ensureDataStructureVersionId();
+    JsonNode version = portalClient
+        .getJson(
+            "/datastructures/" + state.dataStructureId + "/versions/" + state.dataStructureVersionId,
+            state.accessToken,
+            200)
+        .json();
+    validateDataStructureVersionPayload(version);
   }
 
   @RobotKeyword("Release Data Structure Version")
@@ -137,7 +165,16 @@ public class SystemTestKeywords {
 
     JsonNode result = portalClient.postJson("/datasources", body, state.accessToken, 201).json();
     state.dataSourceId = requiredText(result, "id", "dataSource");
+    validateDataSourcePayload(result, "DRAFT", false);
     return state.dataSourceId;
+  }
+
+  @RobotKeyword("Verify Data Source Snapshot")
+  @ArgumentNames({"expectedStatus=DRAFT", "expectDataStructureVersion=false"})
+  public void verifyDataSourceSnapshot(String expectedStatus, String expectDataStructureVersion) {
+    ensureDataSourceId();
+    JsonNode dataSource = portalClient.getJson("/datasources/" + state.dataSourceId, state.accessToken, 200).json();
+    validateDataSourcePayload(dataSource, expectedStatus, parseBoolean(expectDataStructureVersion));
   }
 
   @RobotKeyword("Patch Data Source With Data Structure Version")
@@ -146,7 +183,12 @@ public class SystemTestKeywords {
     ensureDataStructureVersionId();
     ObjectNode body = mapper.createObjectNode();
     body.put("dataStructureVersionId", state.dataStructureVersionId);
-    portalClient.patchJson("/datasources/" + state.dataSourceId, body, state.accessToken, 200);
+    ApiResponse response = portalClient.patchJson("/datasources/" + state.dataSourceId, body, state.accessToken, 200);
+    JsonNode result = responseJsonOrFetch(
+        response,
+        () -> portalClient.getJson("/datasources/" + state.dataSourceId, state.accessToken, 200).json(),
+        "Patch datasource with data structure version");
+    validateDataSourcePayload(result, "DRAFT", true);
   }
 
   @RobotKeyword("Release Data Source")
@@ -172,7 +214,16 @@ public class SystemTestKeywords {
 
     JsonNode result = portalClient.postJson("/datasets", body, state.accessToken, 201).json();
     state.dataSetId = requiredText(result, "id", "dataSet");
+    validateDataSetPayload(result, "DRAFT", false);
     return state.dataSetId;
+  }
+
+  @RobotKeyword("Verify Data Set Snapshot")
+  @ArgumentNames({"expectedStatus=DRAFT", "expectPublicRoutes=false"})
+  public void verifyDataSetSnapshot(String expectedStatus, String expectPublicRoutes) {
+    ensureDataSetId();
+    JsonNode dataset = portalClient.getJson("/datasets/" + state.dataSetId, state.accessToken, 200).json();
+    validateDataSetPayload(dataset, expectedStatus, parseBoolean(expectPublicRoutes));
   }
 
   @RobotKeyword("Create Pipeline")
@@ -202,7 +253,20 @@ public class SystemTestKeywords {
     JsonNode result = portalClient.postJson(
         "/datasets/" + state.dataSetId + "/pipelines", body, state.accessToken, 201).json();
     state.pipelineId = requiredText(result, "id", "pipeline");
+    validatePipelinePayload(result);
     return state.pipelineId;
+  }
+
+  @RobotKeyword("Verify Pipeline Snapshot")
+  public void verifyPipelineSnapshot() {
+    ensureDataSetId();
+    if (state.pipelineId == null) {
+      throw new IllegalStateException("Pipeline has not been created yet");
+    }
+    JsonNode pipeline = portalClient
+        .getJson("/datasets/" + state.dataSetId + "/pipelines/" + state.pipelineId, state.accessToken, 200)
+        .json();
+    validatePipelinePayload(pipeline);
   }
 
   @RobotKeyword("Stage Data Set")
@@ -217,6 +281,16 @@ public class SystemTestKeywords {
     portalClient.postVoid("/datasets/" + state.dataSetId + "/release", state.accessToken, 200);
   }
 
+  @RobotKeyword("Wait For Data Set Status")
+  @ArgumentNames({"expectedStatus=READY", "timeoutSeconds=60", "pollSeconds=2"})
+  public void waitForDataSetStatusKeyword(String expectedStatus, String timeoutSeconds, String pollSeconds) {
+    ensureDataSetId();
+    waitForDatasetStatus(
+        firstNonBlank(expectedStatus, "READY"),
+        Duration.ofSeconds(parsePositiveInt(timeoutSeconds, 60)),
+        Duration.ofSeconds(parsePositiveInt(pollSeconds, 2)));
+  }
+
   @RobotKeyword("Wait For Data Set Available")
   @ArgumentNames({"timeoutSeconds=180", "pollSeconds=2"})
   public String waitForDataSetAvailable(String timeoutSeconds, String pollSeconds) {
@@ -227,6 +301,7 @@ public class SystemTestKeywords {
     state.publicUrl = requiredText(dataset, "publicUrl", "dataSet.publicUrl");
     state.namedApiPreviewUrl = previewUrl(dataset);
     state.pendingSagaType = textOrNull(dataset, "pendingSagaType");
+    validateDataSetPayload(dataset, "AVAILABLE", true);
     return state.publicUrl;
   }
 
@@ -234,14 +309,7 @@ public class SystemTestKeywords {
   public void verifyDataSetSnapshot() {
     ensureDataSetId();
     JsonNode dataset = portalClient.getJson("/datasets/" + state.dataSetId, state.accessToken, 200).json();
-    assertTextEquals("AVAILABLE", requiredText(dataset, "dataSetStatus", "dataSet.dataSetStatus"));
-    assertTextEquals(Boolean.toString(state.openDataAccess), requiredText(dataset, "openDataAccess", "dataSet.openDataAccess"));
-    assertNullOrEmpty(textOrNull(dataset, "pendingSagaType"), "pendingSagaType should be null after the saga");
-    state.publicUrl = requiredText(dataset, "publicUrl", "dataSet.publicUrl");
-    state.namedApiPreviewUrl = previewUrl(dataset);
-    assertTrue(!state.publicUrl.isBlank(), "publicUrl must be present after release");
-    assertTrue(state.namedApiPreviewUrl.contains("/v1/datasets/" + state.dataSetId + "/" + state.namedApiSlug),
-        "Named API previewUrl must point to the public route");
+    validateDataSetPayload(dataset, "AVAILABLE", true);
   }
 
   @RobotKeyword("Verify Gateway Access")
@@ -257,7 +325,21 @@ public class SystemTestKeywords {
       assertTrue(!response.body().isBlank(), "Gateway response body must not be empty");
       assertTrue(response.contentType().contains("json") || response.body().trim().startsWith("{")
           || response.body().trim().startsWith("["), "Gateway response should be JSON");
+      assertGatewayResponseContainsExpectedThing(response.json());
     }
+  }
+
+  @RobotKeyword("Verify Gateway Response Content")
+  @ArgumentNames({"expectedThingName=", "expectedDescription="})
+  public void verifyGatewayResponseContent(String expectedThingName, String expectedDescription) {
+    ensureNamedApiPreviewUrl();
+    String bearerToken = state.openDataAccess ? null : state.accessToken;
+    Map<String, String> headers = state.openDataAccess ? Map.of() : Map.of("X-Allowed-Scope-Ids", "*");
+    ApiResponse response = portalClient.getText(state.namedApiPreviewUrl, bearerToken, headers, 200);
+    assertGatewayResponseContainsExpectedThing(
+        response.json(),
+        firstNonBlank(expectedThingName, state.expectedGatewayThingName),
+        firstNonBlank(expectedDescription, state.expectedGatewayThingDescription));
   }
 
   private void cleanupDataSet() {
@@ -523,6 +605,233 @@ public class SystemTestKeywords {
     JsonNode get();
   }
 
+  private void validateDataStructurePayload(JsonNode dataStructure, String expectedStatus, boolean expectVersionReference) {
+    assertTrue(dataStructure.isObject(), "dataStructure response must be a JSON object");
+    assertTextEquals(state.dataStructureId, requiredText(dataStructure, "id", "dataStructure.id"));
+    assertTextEquals(state.dataStructureName, requiredText(dataStructure, "name", "dataStructure.name"));
+    assertTextEquals(
+        "Data structure for the dataset saga system test",
+        requiredText(dataStructure, "description", "dataStructure.description"));
+    assertTextEquals(
+        expectedStatus,
+        requiredText(dataStructure, "dataStructureStatus", "dataStructure.dataStructureStatus"));
+    assertBooleanEquals(
+        false,
+        dataStructure.path("createdFromDataSource").asBoolean(true),
+        "dataStructure.createdFromDataSource");
+    assertIsArray(dataStructure.path("dataStructureVersionIds"), "dataStructure.dataStructureVersionIds");
+    assertIsArray(dataStructure.path("assignments"), "dataStructure.assignments");
+    if (expectVersionReference) {
+      ensureDataStructureVersionId();
+      assertArrayContainsText(
+          dataStructure.path("dataStructureVersionIds"),
+          state.dataStructureVersionId,
+          "dataStructure.dataStructureVersionIds");
+    }
+  }
+
+  private void validateDataStructureVersionPayload(JsonNode version) {
+    assertTrue(version.isObject(), "dataStructureVersion response must be a JSON object");
+    assertTextEquals(state.dataStructureVersionId, requiredText(version, "id", "dataStructureVersion.id"));
+    assertTextEquals("OWN", requiredText(version, "dataStructureVersionSource", "dataStructureVersion.dataStructureVersionSource"));
+    assertTextEquals("1.0.0", requiredText(version, "version", "dataStructureVersion.version"));
+    assertTextEquals(
+        "Initial release for the system test proof of concept",
+        requiredText(version, "description", "dataStructureVersion.description"));
+    assertTextEquals(state.modelAtlasUri, requiredText(version, "modelAtlasUri", "dataStructureVersion.modelAtlasUri"));
+    assertTextEquals(state.modelName, requiredText(version, "modelName", "dataStructureVersion.modelName"));
+    assertTrue(
+        requiredText(version, "model", "dataStructureVersion.model").contains("<uml:Model"),
+        "dataStructureVersion.model must contain the serialized UML model");
+    assertIsObject(version.path("styles"), "dataStructureVersion.styles");
+  }
+
+  private void validateDataSourcePayload(JsonNode dataSource, String expectedStatus, boolean expectDataStructureVersion) {
+    assertTrue(dataSource.isObject(), "dataSource response must be a JSON object");
+    assertTextEquals(state.dataSourceId, requiredText(dataSource, "id", "dataSource.id"));
+    assertTextEquals(state.dataSourceName, requiredText(dataSource, "name", "dataSource.name"));
+    assertTextEquals(
+        "MQTT datasource for the system test proof of concept",
+        requiredText(dataSource, "description", "dataSource.description"));
+    assertTextEquals("MQTT", requiredText(dataSource, "connectorType", "dataSource.connectorType"));
+    assertTextEquals(expectedStatus, requiredText(dataSource, "dataSourceStatus", "dataSource.dataSourceStatus"));
+    assertIsArray(dataSource.path("assignments"), "dataSource.assignments");
+    JsonNode configuration = dataSource.path("configuration");
+    assertIsObject(configuration, "dataSource.configuration");
+    assertArrayContainsText(configuration.path("urls"), "tcp://broker.hivemq.com:1883", "dataSource.configuration.urls");
+    assertArrayContainsText(
+        configuration.path("topics"),
+        "+/civitas+/civitas/core/energy/meter/+/taf10",
+        "dataSource.configuration.topics");
+    assertTextEquals(
+        state.dataSourceClientId,
+        requiredText(configuration, "client_id", "dataSource.configuration.client_id"));
+    assertTextEquals("1", requiredText(configuration, "qos", "dataSource.configuration.qos"));
+    assertTextEquals("5s", requiredText(configuration, "connect_timeout", "dataSource.configuration.connect_timeout"));
+    assertTextEquals("30s", requiredText(configuration, "keepalive", "dataSource.configuration.keepalive"));
+    assertBooleanEquals(false, configuration.path("tls").path("enabled").asBoolean(true), "dataSource.configuration.tls.enabled");
+    if (expectDataStructureVersion) {
+      ensureDataStructureVersionId();
+      assertTextEquals(
+          state.dataStructureVersionId,
+          requiredText(dataSource, "dataStructureVersionId", "dataSource.dataStructureVersionId"));
+    } else {
+      assertNullOrEmpty(
+          textOrNull(dataSource, "dataStructureVersionId"),
+          "dataSource.dataStructureVersionId should be empty before the patch");
+    }
+  }
+
+  private void validateDataSetPayload(JsonNode dataset, String expectedStatus, boolean expectPublicRoutes) {
+    assertTextEquals(state.dataSetId, requiredText(dataset, "id", "dataSet.id"));
+    assertTextEquals(state.dataSetName, requiredText(dataset, "name", "dataSet.name"));
+    assertTextEquals(
+        "Dataset for the system test proof of concept",
+        requiredText(dataset, "description", "dataSet.description"));
+    assertTextEquals(expectedStatus, requiredText(dataset, "dataSetStatus", "dataSet.dataSetStatus"));
+    assertBooleanEquals(
+        state.openDataAccess,
+        dataset.path("openDataAccess").asBoolean(!state.openDataAccess),
+        "dataSet.openDataAccess");
+    JsonNode namedApis = dataset.path("namedApis");
+    assertTrue(namedApis.isArray() && !namedApis.isEmpty(), "dataSet.namedApis must contain at least one entry");
+    JsonNode namedApi = namedApis.get(0);
+    assertTextEquals("Things", requiredText(namedApi, "name", "dataSet.namedApis[0].name"));
+    assertTextEquals(state.namedApiSlug, requiredText(namedApi, "slug", "dataSet.namedApis[0].slug"));
+    assertTextEquals("STA", requiredText(namedApi, "standard", "dataSet.namedApis[0].standard"));
+    assertTextEquals("1.1", requiredText(namedApi, "version", "dataSet.namedApis[0].version"));
+    if (expectPublicRoutes) {
+      assertNullOrEmpty(textOrNull(dataset, "pendingSagaType"), "pendingSagaType should be null after the saga");
+      state.publicUrl = requiredText(dataset, "publicUrl", "dataSet.publicUrl");
+      state.namedApiPreviewUrl = previewUrl(dataset);
+      assertTrue(!state.publicUrl.isBlank(), "publicUrl must be present after release");
+      assertTrue(
+          state.namedApiPreviewUrl.contains("/v1/datasets/" + state.dataSetId + "/" + state.namedApiSlug),
+          "Named API previewUrl must point to the public route");
+      assertTrue(
+          requiredText(namedApi, "previewUrl", "dataSet.namedApis[0].previewUrl").equals(state.namedApiPreviewUrl),
+          "Named API previewUrl must match the stored preview URL");
+    } else {
+      assertNullOrEmpty(textOrNull(dataset, "publicUrl"), "publicUrl should not be present before release");
+      assertNullOrEmpty(previewUrlOrNull(dataset), "Named API previewUrl should not be present before release");
+    }
+  }
+
+  private void validatePipelinePayload(JsonNode pipeline) {
+    assertTrue(pipeline.isObject(), "pipeline response must be a JSON object");
+    assertTextEquals(state.pipelineId, requiredText(pipeline, "id", "pipeline.id"));
+    assertTextEquals(state.pipelineName, requiredText(pipeline, "name", "pipeline.name"));
+    assertTextEquals(state.pipelineDescription, requiredText(pipeline, "description", "pipeline.description"));
+    assertArrayContainsText(pipeline.path("dataSourceIds"), state.dataSourceId, "pipeline.dataSourceIds");
+    assertIsObject(pipeline.path("styles"), "pipeline.styles");
+    JsonNode model = pipeline.path("model");
+    assertIsObject(model, "pipeline.model");
+    JsonNode generate = model.path("input").path("generate");
+    assertIsObject(generate, "pipeline.model.input.generate");
+    assertTextEquals("1s", requiredText(generate, "interval", "pipeline.model.input.generate.interval"));
+    assertTextEquals("1", requiredText(generate, "count", "pipeline.model.input.generate.count"));
+    assertTrue(
+        requiredText(generate, "mapping", "pipeline.model.input.generate.mapping").contains(state.expectedGatewayThingName),
+        "pipeline mapping must contain the expected thing name");
+    JsonNode httpClientConfig = model.path("output").path("http_client");
+    assertIsObject(httpClientConfig, "pipeline.model.output.http_client");
+    assertTextEquals(
+        config.frostBaseUrl + "/Things",
+        requiredText(httpClientConfig, "url", "pipeline.model.output.http_client.url"));
+    assertTextEquals(
+        "POST",
+        requiredText(httpClientConfig, "verb", "pipeline.model.output.http_client.verb"));
+    assertTextEquals(
+        "application/json",
+        requiredText(httpClientConfig.path("headers"), "Content-Type", "pipeline.model.output.http_client.headers.Content-Type"));
+  }
+
+  private void assertGatewayResponseContainsExpectedThing(JsonNode responseJson) {
+    assertGatewayResponseContainsExpectedThing(
+        responseJson,
+        state.expectedGatewayThingName,
+        state.expectedGatewayThingDescription);
+  }
+
+  private void assertGatewayResponseContainsExpectedThing(
+      JsonNode responseJson,
+      String expectedThingName,
+      String expectedDescription) {
+    JsonNode entities = gatewayEntities(responseJson);
+    assertTrue(entities.isArray() && !entities.isEmpty(), "Gateway JSON response must contain at least one entity");
+    boolean found = false;
+    for (JsonNode entity : entities) {
+      String name = textOrNull(entity, "name");
+      String description = textOrNull(entity, "description");
+      if (Objects.equals(expectedThingName, name) && Objects.equals(expectedDescription, description)) {
+        found = true;
+        break;
+      }
+    }
+    assertTrue(
+        found,
+        "Gateway response must contain an entity with name '"
+            + expectedThingName
+            + "' and description '"
+            + expectedDescription
+            + "'. Response: "
+            + responseJson.toPrettyString());
+  }
+
+  private JsonNode gatewayEntities(JsonNode responseJson) {
+    if (responseJson == null || responseJson.isNull()) {
+      return JsonNodeFactory.instance.arrayNode();
+    }
+    if (responseJson.isArray()) {
+      return responseJson;
+    }
+    JsonNode value = responseJson.path("value");
+    if (value.isArray()) {
+      return value;
+    }
+    if (responseJson.isObject()) {
+      ArrayNode single = mapper.createArrayNode();
+      single.add(responseJson);
+      return single;
+    }
+    return JsonNodeFactory.instance.arrayNode();
+  }
+
+  private void assertArrayContainsText(JsonNode arrayNode, String expectedValue, String label) {
+    assertTrue(arrayNode.isArray(), label + " must be an array");
+    for (JsonNode node : arrayNode) {
+      if (Objects.equals(expectedValue, node.asText())) {
+        return;
+      }
+    }
+    throw new AssertionError(label + " must contain '" + expectedValue + "'. Response: " + arrayNode.toPrettyString());
+  }
+
+  private void assertBooleanEquals(boolean expected, boolean actual, String label) {
+    if (expected != actual) {
+      throw new AssertionError(label + " expected '" + expected + "' but got '" + actual + "'");
+    }
+  }
+
+  private void assertIsArray(JsonNode node, String label) {
+    assertTrue(node.isArray(), label + " must be a JSON array");
+  }
+
+  private void assertIsObject(JsonNode node, String label) {
+    assertTrue(node.isObject(), label + " must be a JSON object");
+  }
+
+  private JsonNode responseJsonOrFetch(ApiResponse response, ResourceSupplier fallback, String operationLabel) {
+    if (!response.json().isNull() && !response.json().isMissingNode()) {
+      return response.json();
+    }
+    JsonNode fallbackJson = fallback.get();
+    assertTrue(
+        fallbackJson != null && !fallbackJson.isNull() && !fallbackJson.isMissingNode(),
+        operationLabel + " must provide a JSON response or a readable follow-up resource");
+    return fallbackJson;
+  }
+
   private static final class SystemTestState {
     private String runSuffix;
     private String accessToken;
@@ -542,6 +851,10 @@ public class SystemTestKeywords {
     private String publicUrl;
     private String namedApiPreviewUrl;
     private String pendingSagaType;
+    private String modelAtlasUri;
+    private String modelName;
+    private String expectedGatewayThingName;
+    private String expectedGatewayThingDescription;
     private boolean openDataAccess;
 
     private void reset() {
@@ -563,6 +876,10 @@ public class SystemTestKeywords {
       publicUrl = null;
       namedApiPreviewUrl = null;
       pendingSagaType = null;
+      modelAtlasUri = null;
+      modelName = null;
+      expectedGatewayThingName = null;
+      expectedGatewayThingDescription = null;
       openDataAccess = false;
     }
   }

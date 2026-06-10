@@ -1,50 +1,93 @@
 *** Settings ***
+Documentation     Open-data dataset publication flow. Each test case maps to a GitLab test library issue via its TB identifier.
 Library           Remote    ${REMOTE_URL}
 Suite Setup       Initialize System Test Run    suffix=open    openDataAccess=${TRUE}
 Suite Teardown    Cleanup System Test Run
 
 *** Test Cases ***
-Create Data Structure
+TB-001 Create Data Structure
     Create Data Structure
 
-Create Data Structure Version
+TB-002 Verify Draft Data Structure Snapshot
+    Verify Data Structure Snapshot    DRAFT    ${FALSE}
+
+TB-003 Create Data Structure Version
     Create Data Structure Version
 
-Release Data Structure Version
+TB-004 Verify Data Structure Version Snapshot
+    Verify Data Structure Version Snapshot
+
+TB-005 Verify Data Structure References Created Version
+    Verify Data Structure Snapshot    DRAFT    ${TRUE}
+
+TB-006 Release Data Structure Version
     Release Data Structure Version
 
-Release Data Structure
+TB-007 Verify Data Structure Version Snapshot After Release
+    Verify Data Structure Version Snapshot
+
+TB-008 Release Data Structure
     Release Data Structure
 
-Create Data Source
+TB-009 Verify Released Data Structure Snapshot
+    Verify Data Structure Snapshot    AVAILABLE    ${TRUE}
+
+TB-010 Create Data Source
     Create Data Source
 
-Patch Data Source
+TB-011 Verify Draft Data Source Snapshot
+    Verify Data Source Snapshot    DRAFT    ${FALSE}
+
+TB-012 Patch Data Source With Data Structure Version
     Patch Data Source With Data Structure Version
 
-Release Data Source
+TB-013 Verify Data Source References Data Structure Version
+    Verify Data Source Snapshot    DRAFT    ${TRUE}
+
+TB-014 Release Data Source
     Release Data Source
 
-Create Data Set
+TB-015 Verify Released Data Source Snapshot
+    Verify Data Source Snapshot    AVAILABLE    ${TRUE}
+
+TB-016 Create Data Set
     Create Data Set
 
-Create Pipeline
+TB-017 Verify Draft Data Set Snapshot
+    Verify Data Set Snapshot    DRAFT    ${FALSE}
+
+TB-018 Create Pipeline
     Create Pipeline
 
-Stage Data Set
+TB-019 Verify Pipeline Snapshot
+    Verify Pipeline Snapshot
+
+TB-020 Stage Data Set
     Stage Data Set
 
-Release Data Set
+TB-021 Wait For Ready Data Set Status
+    Wait For Data Set Status    READY    60    2
+
+TB-022 Verify Ready Data Set Snapshot
+    Verify Data Set Snapshot    READY    ${FALSE}
+
+TB-023 Release Data Set
     Release Data Set
 
-Wait For Availability
+TB-024 Wait For Available Data Set
     Wait For Data Set Available
 
-Verify Data Set Snapshot
+TB-025 Verify Available Data Set Snapshot
     Verify Data Set Snapshot
 
-Verify Anonymous Gateway Access
+TB-026 Verify Anonymous Gateway Access
     Verify Gateway Access    200    ${FALSE}
 
-Verify Authenticated Gateway Access
+TB-027 Verify Anonymous Gateway Response Content
+    Verify Gateway Response Content    Test Sensor    test
+
+TB-028 Verify Authenticated Gateway Access
     Verify Gateway Access    200    ${TRUE}
+
+TB-029 Verify Authenticated Gateway Response Content
+    Verify Gateway Response Content    Test Sensor    test
