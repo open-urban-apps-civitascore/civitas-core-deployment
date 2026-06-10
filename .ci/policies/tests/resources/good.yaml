@@ -1,0 +1,123 @@
+---
+# Fully compliant resources: every policy must report "pass" on these.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: good-pod
+spec:
+  containers:
+    - name: app
+      image: nginx:1.27
+      securityContext:
+        readOnlyRootFilesystem: true
+        capabilities:
+          drop:
+            - ALL
+      resources:
+        requests:
+          cpu: 100m
+          memory: 128Mi
+        limits:
+          cpu: 200m
+          memory: 256Mi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: good-deployment
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  selector:
+    matchLabels:
+      app: good
+  template:
+    metadata:
+      labels:
+        app: good
+    spec:
+      containers:
+        - name: app
+          image: nginx:1.27
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 8080
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+          securityContext:
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 200m
+              memory: 256Mi
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: good-statefulset
+spec:
+  serviceName: good
+  replicas: 2
+  updateStrategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: good-sts
+  template:
+    metadata:
+      labels:
+        app: good-sts
+    spec:
+      containers:
+        - name: app
+          image: nginx:1.27
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 8080
+          securityContext:
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 200m
+              memory: 256Mi
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: good-ingress
+spec:
+  ingressClassName: apisix
+  rules:
+    - host: example.com
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: good-pdb
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: good

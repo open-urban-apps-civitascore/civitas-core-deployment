@@ -2,3 +2,4 @@
 tests/.venv
 deployment
 .env
+__pycache__/

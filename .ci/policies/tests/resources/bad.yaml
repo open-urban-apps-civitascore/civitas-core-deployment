@@ -1,0 +1,151 @@
+---
+# Violating resources: every applicable policy must report "fail" on these.
+# bad-pod: no securityContext, no resources.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: bad-pod
+spec:
+  containers:
+    - name: app
+      image: nginx:1.27
+---
+# bad-host-pod: violates all four PSS baseline policies at once
+# (host namespaces, hostPath volume, hostPort, privileged container).
+apiVersion: v1
+kind: Pod
+metadata:
+  name: bad-host-pod
+spec:
+  hostNetwork: true
+  hostPID: true
+  volumes:
+    - name: host
+      hostPath:
+        path: /var/run
+  containers:
+    - name: app
+      image: nginx:1.27
+      securityContext:
+        privileged: true
+      ports:
+        - containerPort: 80
+          hostPort: 8080
+---
+# bad-init-pod: compliant main container, violating init container.
+# Documents the coverage gap of the vendored require-ro-rootfs policy,
+# which only validates spec.containers (see tests/kyverno-test.yaml).
+apiVersion: v1
+kind: Pod
+metadata:
+  name: bad-init-pod
+spec:
+  initContainers:
+    - name: init
+      image: busybox:1.37
+  containers:
+    - name: app
+      image: nginx:1.27
+      securityContext:
+        readOnlyRootFilesystem: true
+        capabilities:
+          drop:
+            - ALL
+      resources:
+        requests:
+          cpu: 100m
+          memory: 128Mi
+        limits:
+          cpu: 200m
+          memory: 256Mi
+---
+# bad-deployment: 1 replica, default strategy, no probes.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bad-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: bad
+  template:
+    metadata:
+      labels:
+        app: bad
+    spec:
+      containers:
+        - name: app
+          image: nginx:1.27
+---
+# identical-probes-deployment: readiness and liveness probes are the same,
+# which validate-probes/require-different-probes must reject.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: identical-probes-deployment
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  selector:
+    matchLabels:
+      app: identical
+  template:
+    metadata:
+      labels:
+        app: identical
+    spec:
+      containers:
+        - name: app
+          image: nginx:1.27
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+---
+# bad-statefulset: no updateStrategy.
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: bad-statefulset
+spec:
+  serviceName: bad
+  replicas: 2
+  selector:
+    matchLabels:
+      app: bad-sts
+  template:
+    metadata:
+      labels:
+        app: bad-sts
+    spec:
+      containers:
+        - name: app
+          image: nginx:1.27
+---
+# bad-ingress: spec.ingressClassName missing.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: bad-ingress
+spec:
+  rules:
+    - host: example.com
+---
+# bad-pdb: neither minAvailable nor maxUnavailable.
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: bad-pdb
+spec:
+  selector:
+    matchLabels:
+      app: bad
