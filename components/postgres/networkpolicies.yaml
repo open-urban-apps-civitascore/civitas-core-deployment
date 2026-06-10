@@ -50,3 +50,19 @@ postgres:
         - podSelector:
             matchLabels:
               batch.kubernetes.io/job-name: portal-db-create-role-authz-readonly
+    # Geoserver
+    - from:
+        - podSelector:
+          matchLabels:
+            app.kubernetes.io/component: rest
+            app.kubernetes.io/instance: geoserver-geoserver
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/component: wcs
+              app.kubernetes.io/instance: geoserver-geoserver
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/component: wms
+              app.kubernetes.io/instance: geoserver-geoserver
