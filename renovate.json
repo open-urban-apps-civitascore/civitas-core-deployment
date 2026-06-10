@@ -70,11 +70,7 @@
     {
       "description": "Label container image updates (component images, base images, CI images)",
       "matchDatasources": ["docker"],
-      "matchFileNames": [
-        "components/**/images.yaml",
-        "container-images/**",
-        ".gitlab-ci.yml"
-      ],
+      "matchFileNames": ["components/**/images.yaml", "container-images/**", ".gitlab-ci.yml"],
       "addLabels": ["docker"]
     },
     {
