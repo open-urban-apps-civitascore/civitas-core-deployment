@@ -278,6 +278,8 @@ build-container-image:
   needs:
     - job: setup-version
       artifacts: true
+    - job: pre-commit
+      artifacts: false
   variables:
     DOCKER_DRIVER: overlay2
     DOCKER_TLS_CERTDIR: '/certs'
