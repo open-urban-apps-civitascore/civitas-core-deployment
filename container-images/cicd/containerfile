@@ -8,6 +8,8 @@ ENV HELM_VERSION=v4.1.0
 ENV HELMFILE_VERSION=v1.2.3
 # renovate: datasource=github-tags depName=kubernetes/kubernetes
 ENV KUBECTL_VERSION=v1.35.0
+# renovate: datasource=github-releases depName=kyverno/kyverno
+ENV KYVERNO_VERSION=v1.18.1
 
 # Install dependencies
 RUN apk update && \
@@ -28,6 +30,11 @@ RUN tar -xzf /tmp/helm.tar.gz -C /tmp
 RUN curl -fL "https://github.com/helmfile/helmfile/releases/download/${HELMFILE_VERSION}/helmfile_${HELMFILE_VERSION#v}_linux_${TARGETARCH}.tar.gz" -o /tmp/helmfile.tar.gz
 RUN tar -xzf /tmp/helmfile.tar.gz -C /tmp
 
+# Install kyverno CLI (release archives use x86_64/arm64 instead of amd64/arm64)
+RUN KYVERNO_ARCH=$([ "${TARGETARCH}" = "amd64" ] && echo "x86_64" || echo "${TARGETARCH}") && \
+  curl -fL "https://github.com/kyverno/kyverno/releases/download/${KYVERNO_VERSION}/kyverno-cli_${KYVERNO_VERSION}_linux_${KYVERNO_ARCH}.tar.gz" -o /tmp/kyverno.tar.gz
+RUN tar -xzf /tmp/kyverno.tar.gz -C /tmp
+
 FROM alpine:3.23.3 AS cicd
 
 ARG TARGETARCH
@@ -36,12 +43,14 @@ ARG TARGETARCH
 COPY --from=fetcher /tmp/linux-${TARGETARCH}/helm /usr/local/bin/helm
 COPY --from=fetcher /tmp/helmfile /usr/local/bin/helmfile
 COPY --from=fetcher /tmp/kubectl /usr/local/bin/kubectl
+COPY --from=fetcher /tmp/kyverno /usr/local/bin/kyverno
 
 # Install any additional dependencies needed for CI/CD tasks
 RUN apk add --no-cache --update \
   git \
   python3 \
   py3-pip \
+  py3-yaml \
   nodejs \
   npm \
   bash \
