@@ -1,11 +1,6 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": [
-    "config:recommended",
-    ":configMigration",
-    "customManagers:dockerfileVersions",
-    "gitlab>civitas-connect/civitas-core/renovate-integration//renovate.json#main"
-  ],
+  "extends": ["config:recommended", ":configMigration", "customManagers:dockerfileVersions"],
   "baseBranchPatterns": ["staging"],
   "enabledManagers": ["custom.regex", "dockerfile", "gitlabci"],
   "labels": ["renovate", "v::2", "team devops"],
