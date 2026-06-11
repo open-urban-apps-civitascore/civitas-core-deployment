@@ -453,10 +453,11 @@ scan-kyverno-policies:
   stage: lint
   image: registry.gitlab.com/civitas-connect/civitas-core/civitas-core-v2/civitas-core-deployment/cicd:a1aebd6
   needs: []
-  # Transitional: the production rendering currently has ~36 known findings
-  # (rolling-update, resources, ro-rootfs, capabilities, probes). The job
-  # reports them as JUnit results without blocking the pipeline. Remove
-  # allow_failure once the existing findings are fixed or covered by
+  # Transitional: the production rendering currently has ~49 known findings
+  # (rolling-update, resources, ro-rootfs, capabilities, probes, and the
+  # explicit-securityContext requirements of the PSS restricted profile).
+  # The job reports them as JUnit results without blocking the pipeline.
+  # Remove allow_failure once the existing findings are fixed or covered by
   # PolicyExceptions, so new violations block again.
   allow_failure: true
   rules:

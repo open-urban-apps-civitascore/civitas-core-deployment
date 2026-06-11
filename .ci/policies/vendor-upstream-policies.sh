@@ -6,13 +6,28 @@ set -euo pipefail
 # and run `just test-policies` (expectations live in tests/kyverno-test.yaml).
 UPSTREAM_REF=76be98a25d49ae01278a94ecde8f50f9e08577ef
 
+# Note: the PSS baseline policies disallow-capabilities and restrict-seccomp
+# are deliberately absent - their restricted counterparts
+# (disallow-capabilities-strict, restrict-seccomp-strict) are strict supersets
+# and running both would report every violation twice. The same applies to
+# best-practices/require-drop-all, which disallow-capabilities-strict subsumes.
 UPSTREAM_POLICIES=(
-  best-practices/require-drop-all/require-drop-all.yaml
   best-practices/require-ro-rootfs/require-ro-rootfs.yaml
   pod-security/baseline/disallow-host-namespaces/disallow-host-namespaces.yaml
   pod-security/baseline/disallow-host-path/disallow-host-path.yaml
   pod-security/baseline/disallow-host-ports/disallow-host-ports.yaml
+  pod-security/baseline/disallow-host-process/disallow-host-process.yaml
   pod-security/baseline/disallow-privileged-containers/disallow-privileged-containers.yaml
+  pod-security/baseline/disallow-proc-mount/disallow-proc-mount.yaml
+  pod-security/baseline/disallow-selinux/disallow-selinux.yaml
+  pod-security/baseline/restrict-apparmor-profiles/restrict-apparmor-profiles.yaml
+  pod-security/baseline/restrict-sysctls/restrict-sysctls.yaml
+  pod-security/restricted/disallow-capabilities-strict/disallow-capabilities-strict.yaml
+  pod-security/restricted/disallow-privilege-escalation/disallow-privilege-escalation.yaml
+  pod-security/restricted/require-run-as-non-root-user/require-run-as-non-root-user.yaml
+  pod-security/restricted/require-run-as-nonroot/require-run-as-nonroot.yaml
+  pod-security/restricted/restrict-seccomp-strict/restrict-seccomp-strict.yaml
+  pod-security/restricted/restrict-volume-types/restrict-volume-types.yaml
 )
 
 cd "$(dirname "$0")"

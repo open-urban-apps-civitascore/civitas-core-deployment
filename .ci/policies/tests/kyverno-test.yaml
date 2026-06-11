@@ -8,14 +8,24 @@ kind: Test
 metadata:
   name: civitas-policy-tests
 policies:
+  - ../base/disallow-capabilities-strict.yaml
   - ../base/disallow-host-namespaces.yaml
   - ../base/disallow-host-path.yaml
   - ../base/disallow-host-ports.yaml
+  - ../base/disallow-host-process.yaml
+  - ../base/disallow-privilege-escalation.yaml
   - ../base/disallow-privileged-containers.yaml
+  - ../base/disallow-proc-mount.yaml
+  - ../base/disallow-selinux.yaml
   - ../base/probes.yaml
-  - ../base/require-drop-all.yaml
   - ../base/require-ingress-class.yaml
   - ../base/require-ro-rootfs.yaml
+  - ../base/require-run-as-non-root-user.yaml
+  - ../base/require-run-as-nonroot.yaml
+  - ../base/restrict-apparmor-profiles.yaml
+  - ../base/restrict-seccomp-strict.yaml
+  - ../base/restrict-sysctls.yaml
+  - ../base/restrict-volume-types.yaml
   - ../production/require-pdb.yaml
   - ../production/require-replicas-or-hpa.yaml
   - ../production/require-resources.yaml
@@ -24,58 +34,183 @@ resources:
   - resources/good.yaml
   - resources/bad.yaml
 results:
-  # --- base: PSS baseline (vendored) ---
-  - policy: disallow-host-namespaces
-    rule: host-namespaces
-    kind: Pod
-    resources: [good-pod]
-    result: pass
-  - policy: disallow-host-namespaces
-    rule: host-namespaces
-    kind: Pod
-    resources: [bad-host-pod]
-    result: fail
-  - policy: disallow-host-path
-    rule: host-path
-    kind: Pod
-    resources: [good-pod]
-    result: pass
-  - policy: disallow-host-path
-    rule: host-path
-    kind: Pod
-    resources: [bad-host-pod]
-    result: fail
-  - policy: disallow-host-ports
-    rule: host-ports-none
-    kind: Pod
-    resources: [good-pod]
-    result: pass
-  - policy: disallow-host-ports
-    rule: host-ports-none
-    kind: Pod
-    resources: [bad-host-pod]
-    result: fail
-  - policy: disallow-privileged-containers
-    rule: privileged-containers
-    kind: Pod
-    resources: [good-pod]
-    result: pass
-  - policy: disallow-privileged-containers
-    rule: privileged-containers
-    kind: Pod
-    resources: [bad-host-pod]
-    result: fail
-
-  # --- base: drop-all-capabilities ---
-  - policy: drop-all-capabilities
+  # --- base: PSS baseline + restricted (vendored) ---
+  - policy: disallow-capabilities-strict
     rule: require-drop-all
     kind: Pod
     resources: [good-pod]
     result: pass
-  - policy: drop-all-capabilities
+  - policy: disallow-capabilities-strict
     rule: require-drop-all
     kind: Pod
     resources: [bad-pod]
+    result: fail
+  - policy: disallow-capabilities-strict
+    rule: adding-capabilities-strict
+    kind: Pod
+    resources: [good-pod]
+    result: pass
+  - policy: disallow-capabilities-strict
+    rule: adding-capabilities-strict
+    kind: Pod
+    resources: [bad-pss-pod]
+    result: fail
+  - policy: disallow-host-namespaces
+    rule: host-namespaces
+    kind: Pod
+    resources: [good-pod]
+    result: pass
+  - policy: disallow-host-namespaces
+    rule: host-namespaces
+    kind: Pod
+    resources: [bad-host-pod]
+    result: fail
+  - policy: disallow-host-path
+    rule: host-path
+    kind: Pod
+    resources: [good-pod]
+    result: pass
+  - policy: disallow-host-path
+    rule: host-path
+    kind: Pod
+    resources: [bad-host-pod]
+    result: fail
+  - policy: disallow-host-ports
+    rule: host-ports-none
+    kind: Pod
+    resources: [good-pod]
+    result: pass
+  - policy: disallow-host-ports
+    rule: host-ports-none
+    kind: Pod
+    resources: [bad-host-pod]
+    result: fail
+  - policy: disallow-host-process
+    rule: host-process-containers
+    kind: Pod
+    resources: [good-pod]
+    result: pass
+  - policy: disallow-host-process
+    rule: host-process-containers
+    kind: Pod
+    resources: [bad-pss-pod]
+    result: fail
+  - policy: disallow-privilege-escalation
+    rule: privilege-escalation
+    kind: Pod
+    resources: [good-pod]
+    result: pass
+  - policy: disallow-privilege-escalation
+    rule: privilege-escalation
+    kind: Pod
+    resources: [bad-pod]
+    result: fail
+  - policy: disallow-privileged-containers
+    rule: privileged-containers
+    kind: Pod
+    resources: [good-pod]
+    result: pass
+  - policy: disallow-privileged-containers
+    rule: privileged-containers
+    kind: Pod
+    resources: [bad-host-pod]
+    result: fail
+  - policy: disallow-proc-mount
+    rule: check-proc-mount
+    kind: Pod
+    resources: [good-pod]
+    result: pass
+  - policy: disallow-proc-mount
+    rule: check-proc-mount
+    kind: Pod
+    resources: [bad-pss-pod]
+    result: fail
+  - policy: disallow-selinux
+    rule: selinux-type
+    kind: Pod
+    resources: [good-pod]
+    result: pass
+  - policy: disallow-selinux
+    rule: selinux-type
+    kind: Pod
+    resources: [bad-pss-pod]
+    result: fail
+  - policy: disallow-selinux
+    rule: selinux-user-role
+    kind: Pod
+    resources: [good-pod]
+    result: pass
+  - policy: disallow-selinux
+    rule: selinux-user-role
+    kind: Pod
+    resources: [bad-pss-pod]
+    result: fail
+  - policy: restrict-apparmor-profiles
+    rule: app-armor
+    kind: Pod
+    resources: [good-pod]
+    result: pass
+  - policy: restrict-apparmor-profiles
+    rule: app-armor
+    kind: Pod
+    resources: [bad-pss-pod]
+    result: fail
+  - policy: require-run-as-non-root-user
+    rule: run-as-non-root-user
+    kind: Pod
+    resources: [good-pod]
+    result: pass
+  - policy: require-run-as-non-root-user
+    rule: run-as-non-root-user
+    kind: Pod
+    resources: [bad-pss-pod]
+    result: fail
+  - policy: require-run-as-nonroot
+    rule: run-as-non-root
+    kind: Pod
+    resources: [good-pod]
+    result: pass
+  - policy: require-run-as-nonroot
+    rule: run-as-non-root
+    kind: Pod
+    resources: [bad-pod]
+    result: fail
+  - policy: restrict-seccomp-strict
+    rule: check-seccomp-strict
+    kind: Pod
+    resources: [good-pod]
+    result: pass
+  # restricted requires an explicit profile: unset (bad-pod) fails just like
+  # an explicit Unconfined (bad-pss-pod).
+  - policy: restrict-seccomp-strict
+    rule: check-seccomp-strict
+    kind: Pod
+    resources: [bad-pod]
+    result: fail
+  - policy: restrict-seccomp-strict
+    rule: check-seccomp-strict
+    kind: Pod
+    resources: [bad-pss-pod]
+    result: fail
+  - policy: restrict-sysctls
+    rule: check-sysctls
+    kind: Pod
+    resources: [good-pod]
+    result: pass
+  - policy: restrict-sysctls
+    rule: check-sysctls
+    kind: Pod
+    resources: [bad-pss-pod]
+    result: fail
+  - policy: restrict-volume-types
+    rule: restricted-volumes
+    kind: Pod
+    resources: [good-pod]
+    result: pass
+  - policy: restrict-volume-types
+    rule: restricted-volumes
+    kind: Pod
+    resources: [bad-host-pod]
     result: fail
 
   # --- base: validate-probes ---

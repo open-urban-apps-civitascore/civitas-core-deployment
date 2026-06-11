@@ -5,11 +5,16 @@ kind: Pod
 metadata:
   name: good-pod
 spec:
+  securityContext:
+    runAsNonRoot: true
+    seccompProfile:
+      type: RuntimeDefault
   containers:
     - name: app
       image: nginx:1.27
       securityContext:
         readOnlyRootFilesystem: true
+        allowPrivilegeEscalation: false
         capabilities:
           drop:
             - ALL
@@ -40,6 +45,10 @@ spec:
       labels:
         app: good
     spec:
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: app
           image: nginx:1.27
@@ -53,6 +62,7 @@ spec:
               port: 8080
           securityContext:
             readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
             capabilities:
               drop:
                 - ALL
@@ -83,6 +93,10 @@ spec:
       labels:
         app: good-sts
     spec:
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: app
           image: nginx:1.27
@@ -92,6 +106,7 @@ spec:
               port: 8080
           securityContext:
             readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
             capabilities:
               drop:
                 - ALL
