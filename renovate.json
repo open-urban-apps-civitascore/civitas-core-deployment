@@ -3,8 +3,7 @@
   "extends": [
     "config:recommended",
     ":configMigration",
-    "customManagers:dockerfileVersions",
-    "gitlab>civitas-connect/civitas-core/renovate-integration//renovate.json#main"
+    "customManagers:dockerfileVersions"
   ],
   "baseBranchPatterns": ["staging"],
   "enabledManagers": ["custom.regex", "dockerfile", "gitlabci"],
