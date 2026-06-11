@@ -1,10 +1,6 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": [
-    "config:recommended",
-    ":configMigration",
-    "customManagers:dockerfileVersions"
-  ],
+  "extends": ["config:recommended", ":configMigration", "customManagers:dockerfileVersions"],
   "baseBranchPatterns": ["staging"],
   "enabledManagers": ["custom.regex", "dockerfile", "gitlabci"],
   "labels": ["renovate", "v::2", "team devops"],
