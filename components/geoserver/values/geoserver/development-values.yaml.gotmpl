@@ -1,0 +1,36 @@
+---
+{{- $this := .Values.geoserver.geoserver }}
+{{- $global := .Values.global }}
+# Checklist:
+# - [x] Minimal Resources
+# - [x] Minimal storage
+# - [x] 1 Replica
+
+development-service-config: &development-service
+  replicaCount: 1
+  containers:
+    spring:
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+        limits:
+          cpu: 500m
+          memory: 1Gi
+
+geoserver:
+  services:
+    webui:
+      <<: *development-service
+    rest:
+      <<: *development-service
+    wms:
+      <<: *development-service
+    wcs:
+      <<: *development-service
+    wfs:
+      <<: *development-service
+    gwc:
+      replicaCount: 0
+    wps:
+      <<: *development-service

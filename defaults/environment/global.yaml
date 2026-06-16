@@ -68,3 +68,4 @@ components:
   - redpanda-connect
   - config-adapters
   - portal
+  - geoserver

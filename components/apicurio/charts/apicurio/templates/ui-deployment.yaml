@@ -108,7 +108,7 @@ spec:
         resources:
           {{- toYaml . | nindent 10 }}
         {{- end }}
-        {{- with .Values.registry.ui.containerSecurityContext }}
+        {{- with .Values.registry.ui.podSecurityContext }}
         securityContext:
           {{- toYaml . | nindent 10 }}
         {{- end }}
