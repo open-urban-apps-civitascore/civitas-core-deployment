@@ -26,7 +26,7 @@ stages:
 
 # TODO: Make this work with rennovate
 .cicd-image: &cicd_image >-
-  registry.gitlab.com/civitas-connect/civitas-core/civitas-core-v2/civitas-core-deployment/cicd:v2.0-beta-13-g53f3c18
+  registry.gitlab.com/civitas-connect/civitas-core/docker-images/cicd:2.0.0-beta
 
 setup-version:
   image: alpine:latest
