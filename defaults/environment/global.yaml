@@ -65,7 +65,7 @@ components:
   - apicurio
   - frost
   - model-atlas
-  - redpanda-connect
+  - nifi
   - config-adapters
   - portal
   - geoserver

@@ -89,3 +89,12 @@ config-adapter-egress:
       ports:
         - port: 9080
           protocol: TCP
+
+    # NiFi REST API
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/instance: nifi-nifi
+      ports:
+        - port: 8443
+          protocol: TCP

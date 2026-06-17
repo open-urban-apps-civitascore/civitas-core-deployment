@@ -1,0 +1,13 @@
+---
+nifi:
+  nifi:
+    enabled: true
+    namespace: {{ include "civitas.namespace" (dict "global" .Values.global "suffix" "nifi") }}
+    # TODO
+    nodeCount: 1
+    initialAdminEmail: {{ .Values.global.initialUserEmail }}
+    bootstrapAdminIdentity: nifi-admin@internal.local
+
+  bootstrap:
+    enabled: true
+    namespace: {{ include "civitas.namespace" (dict "global" .Values.global "suffix" "nifi") }}

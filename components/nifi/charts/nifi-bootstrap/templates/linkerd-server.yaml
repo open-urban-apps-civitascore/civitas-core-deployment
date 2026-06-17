@@ -1,0 +1,29 @@
+{{- /*
+  Linkerd `Server` resources marking NiFi's TLS ports as `proxyProtocol: opaque`.
+  Without this the linkerd-proxy runs HTTP protocol detection on inbound TLS
+  Client Hello bytes and resets the connection.
+
+  Equivalent to the pod-level `config.linkerd.io/opaque-ports` annotation, but
+  expressed as a CRD so we don't have to fork the upstream NiFi chart.
+
+  `accessPolicy: all-unauthenticated` defers authorization to the existing
+  NetworkPolicy stack in `components/nifi/networkpolicies.yaml`.
+*/}}
+{{- if .Values.linkerd.enable }}
+{{- range $port := .Values.linkerd.opaquePorts }}
+---
+apiVersion: policy.linkerd.io/v1beta3
+kind: Server
+metadata:
+  name: {{ printf "%s-%s-%d" (include "nifi-bootstrap.fullname" $) "opaque" (int $port.port) }}
+  labels:
+    {{- include "nifi-bootstrap.labels" $ | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- toYaml $.Values.linkerd.podSelector | nindent 6 }}
+  port: {{ $port.port }}
+  proxyProtocol: opaque
+  accessPolicy: all-unauthenticated
+{{- end }}
+{{- end }}

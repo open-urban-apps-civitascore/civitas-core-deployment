@@ -1,7 +1,0 @@
----
-apiVersion: v2
-name: streams-config
-description: Static configmap for Redpanda Connect streams mode
-type: application
-version: 0.1.0
-appVersion: '1.0'
