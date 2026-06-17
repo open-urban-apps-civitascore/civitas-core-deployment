@@ -84,9 +84,16 @@ spec:
             "desc": "{{ $config.description }}",
             "upstream": {
               "type": "roundrobin",
+              {{- if hasKey $config "scheme" }}
+              "scheme": "{{ $config.scheme }}",
+              "pass_host": "{{ $config.passHost | default "pass" }}",
+              {{- end }}
               "nodes": {
                 "{{ $config.upstream }}": 1
               },
+              {{- if eq ($config.scheme | default "") "https" }}
+              "tls": { "verify": false },
+              {{- end }}
               "timeout": {
                 "connect": 6,
                 "send": 6,
@@ -103,9 +110,16 @@ spec:
             "plugin_config_id": "{{ $component }}",
             "upstream": {
               "type": "roundrobin",
+              {{- if hasKey $config "scheme" }}
+              "scheme": "{{ $config.scheme }}",
+              "pass_host": "{{ $config.passHost | default "pass" }}",
+              {{- end }}
               "nodes": {
                 "{{ $config.upstream }}": 1
               },
+              {{- if eq ($config.scheme | default "") "https" }}
+              "tls": { "verify": false },
+              {{- end }}
               "timeout": {
                 "connect": 6,
                 "send": 6,

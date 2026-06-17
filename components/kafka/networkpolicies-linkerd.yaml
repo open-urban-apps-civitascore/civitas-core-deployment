@@ -23,7 +23,7 @@ kafka-allow-linkerd:
               app.kubernetes.io/name: config-adapter
         - podSelector:
             matchLabels:
-              app.kubernetes.io/name: redpanda-connect
+              app.kubernetes.io/name: nifi
       ports:
         - port: 4143
           protocol: TCP
