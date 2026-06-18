@@ -8,6 +8,7 @@ The execution layer implements these `TC-xxx` contracts and must stay aligned wi
 The Hero Case composes these `TC-xxx` building blocks into a red-line happy path for Open Data and Protected Data.
 The same building blocks can also be combined into shorter feature-specific paths, for example `TC-001 -> TC-003 -> TC-007`.
 Frontend-oriented `TC-xxx` items are shared between backend state setup and portal UI validation and therefore carry both `backend` and `frontend` labels in GitLab.
+Geo-related `TC-xxx` items extend the Hero Case with geo persistence, OWS/WFS/WMS API configuration, and layer metadata. DataSpace and datapool behavior stays out of scope for this library.
 
 ## Purpose
 
@@ -16,6 +17,7 @@ Frontend-oriented `TC-xxx` items are shared between backend state setup and port
 - allow use cases to be assembled from existing library steps instead of redefining them
 - support incremental growth of the test library as features are completed
 - keep the happy-path composition readable in the Hero Case suite
+- extend the Hero Case with geo persistence and WFS/WMS building blocks when those capabilities are added
 
 ## Naming Convention
 
@@ -97,6 +99,12 @@ Create a data structure for the use case.
 | `TC-029` | Backend | Verify Authenticated Gateway Response Content | Send an authenticated gateway request and inspect the response body. | Response body contains the expected entity content. |
 | `TC-030` | Backend | Verify Anonymous Gateway Rejection | Send an anonymous gateway request for protected data and inspect the HTTP status code. | Anonymous request returns `401`. |
 | `TC-031` | Backend and Frontend | Change Data Set Access To Protected | Open the access settings for the released dataset in the portal and switch open data access off through the browser. | The portal shows protected access after the change. The dataset remains available in the browser. Anonymous access is no longer permitted. |
+| `TC-032` | Backend | Create Geo Pipeline | Create the geo pipeline and persist a POSTGIS data sink that references the prepared data structure version. | The pipeline is created with a POSTGIS sink, the configured table name, and the expected data structure reference. |
+| `TC-033` | Backend | Verify Geo Pipeline Snapshot | Read back the geo pipeline and inspect the stored POSTGIS sink configuration. | The pipeline snapshot contains the geo sink, table name, and data structure version summary. |
+| `TC-034` | Backend | Create OWS API | Add the WFS/WMS named API to the dataset before release. | The dataset stores the OWS named API with slug `ows` and the expected base metadata. |
+| `TC-035` | Backend and Frontend | Verify OWS API Snapshot | Refresh the dataset overview in the portal and open the OWS API card to inspect the base information snapshot. | The portal shows the WFS/WMS API card, the `ows` slug, and the PostGIS persistence choice. |
+| `TC-036` | Backend | Create Geo Layer | Create the GeoServer layer for the POSTGIS sink. | The layer is stored with the selected table, geometry field, CRS, and layer metadata. |
+| `TC-037` | Backend and Frontend | Verify Geo Layer Snapshot | Open the OWS API detail page in the portal and inspect the layer tab snapshot. | The portal shows the expected layer title, technical name, table, geometry field, and CRS. |
 
 ## Use In Planning
 

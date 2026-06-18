@@ -52,6 +52,18 @@ public class SystemTestKeywords {
     state.dataSetName = "Saga DataSet " + state.runSuffix;
     state.pipelineName = "Saga Pipeline " + state.runSuffix;
     state.pipelineDescription = "Robot/Java system test proof of concept";
+    state.geoPipelineName = "Saga Geo Pipeline " + state.runSuffix;
+    state.geoPipelineDescription = "Robot/Java geo system test proof of concept";
+    state.geoDataSinkTableName = "geo_data_" + state.runSuffix.replace('-', '_');
+    state.geoApiName = "WFS/WMS API";
+    state.geoApiSlug = "ows";
+    state.geoApiDescription = "Geo API for the system test proof of concept";
+    state.geoLayerName = "geo_layer_" + state.runSuffix.replace('-', '_');
+    state.geoLayerTitle = "Geo Layer " + state.runSuffix;
+    state.geoLayerDescription = "Geo layer for the system test proof of concept";
+    state.geoLayerAttribute = "value";
+    state.geoLayerGeometryColumnRef = "value";
+    state.geoLayerCrs = "EPSG:4326";
     state.dataSourceClientId = "civitas-saga-demo-" + state.runSuffix;
     state.namedApiSlug = "things";
     state.modelAtlasUri = "http://civitas.org/model/SagaSensorModel/1.0.0";
@@ -96,6 +108,66 @@ public class SystemTestKeywords {
   public String getGeneratedPipelineName() {
     ensureInitialized();
     return state.pipelineName;
+  }
+
+  @RobotKeyword("Get Generated Geo Pipeline Name")
+  public String getGeneratedGeoPipelineName() {
+    ensureInitialized();
+    return state.geoPipelineName;
+  }
+
+  @RobotKeyword("Get Generated Geo Data Sink Table Name")
+  public String getGeneratedGeoDataSinkTableName() {
+    ensureInitialized();
+    return state.geoDataSinkTableName;
+  }
+
+  @RobotKeyword("Get Generated OWS API Name")
+  public String getGeneratedOwsApiName() {
+    ensureInitialized();
+    return state.geoApiName;
+  }
+
+  @RobotKeyword("Get Generated OWS API Slug")
+  public String getGeneratedOwsApiSlug() {
+    ensureInitialized();
+    return state.geoApiSlug;
+  }
+
+  @RobotKeyword("Get Generated Geo Layer Name")
+  public String getGeneratedGeoLayerName() {
+    ensureInitialized();
+    return state.geoLayerName;
+  }
+
+  @RobotKeyword("Get Generated Geo Layer Title")
+  public String getGeneratedGeoLayerTitle() {
+    ensureInitialized();
+    return state.geoLayerTitle;
+  }
+
+  @RobotKeyword("Get Generated Geo Layer Description")
+  public String getGeneratedGeoLayerDescription() {
+    ensureInitialized();
+    return state.geoLayerDescription;
+  }
+
+  @RobotKeyword("Get Generated Geo Layer Attribute")
+  public String getGeneratedGeoLayerAttribute() {
+    ensureInitialized();
+    return state.geoLayerAttribute;
+  }
+
+  @RobotKeyword("Get Generated Geo Layer Geometry Column Ref")
+  public String getGeneratedGeoLayerGeometryColumnRef() {
+    ensureInitialized();
+    return state.geoLayerGeometryColumnRef;
+  }
+
+  @RobotKeyword("Get Generated Geo Layer CRS")
+  public String getGeneratedGeoLayerCrs() {
+    ensureInitialized();
+    return state.geoLayerCrs;
   }
 
   @RobotKeyword("Get Named API Slug")
@@ -278,31 +350,38 @@ public class SystemTestKeywords {
   public String createPipeline() {
     ensureDataSetId();
     ensureDataSourceId();
-    ObjectNode body = mapper.createObjectNode();
-    body.put("name", state.pipelineName);
-    body.put("description", state.pipelineDescription);
-    ArrayNode dataSourceIds = body.putArray("dataSourceIds");
-    dataSourceIds.add(state.dataSourceId);
-    body.set("styles", mapper.createObjectNode());
-
-    ObjectNode model = body.putObject("model");
-    ObjectNode input = model.putObject("input");
-    ObjectNode generate = input.putObject("generate");
-    generate.put("interval", "1s");
-    generate.put("count", 1);
-    generate.put("mapping", "root = {\"name\": \"Test Sensor\", \"description\": \"test\"}");
-    ObjectNode output = model.putObject("output");
-    ObjectNode httpClient = output.putObject("http_client");
-    httpClient.put("url", config.frostBaseUrl + "/Things");
-    httpClient.put("verb", "POST");
-    ObjectNode headers = httpClient.putObject("headers");
-    headers.put("Content-Type", "application/json");
+    ObjectNode body = buildPipelinePayload(state.pipelineName, state.pipelineDescription);
 
     JsonNode result = portalClient.postJson(
         "/datasets/" + state.dataSetId + "/pipelines", body, state.accessToken, 201).json();
     state.pipelineId = requiredText(result, "id", "pipeline");
     validatePipelinePayload(result);
     return state.pipelineId;
+  }
+
+  @RobotKeyword("Create Geo Pipeline")
+  public String createGeoPipeline() {
+    ensureDataSetId();
+    ensureDataSourceId();
+    ensureDataStructureVersionId();
+    ObjectNode body = buildPipelinePayload(state.geoPipelineName, state.geoPipelineDescription);
+    ArrayNode dataSinks = body.putArray("dataSinks");
+    ObjectNode sink = dataSinks.addObject();
+    sink.put("dataSinkType", "POSTGIS");
+    ObjectNode configuration = sink.putObject("configuration");
+    configuration.put("tableName", state.geoDataSinkTableName);
+    configuration.put("dataStructureVersionId", state.dataStructureVersionId);
+
+    JsonNode result = portalClient.postJson(
+        "/datasets/" + state.dataSetId + "/pipelines", body, state.accessToken, 201).json();
+    state.geoPipelineId = requiredText(result, "id", "geoPipeline");
+    validateGeoPipelinePayload(result);
+
+    JsonNode dataSinksResult = result.path("dataSinks");
+    assertTrue(dataSinksResult.isArray() && !dataSinksResult.isEmpty(), "geo pipeline must return a POSTGIS sink");
+    JsonNode firstSink = dataSinksResult.get(0);
+    state.geoDataSinkId = requiredText(firstSink, "id", "geoPipeline.dataSinks[0].id");
+    return state.geoPipelineId;
   }
 
   @RobotKeyword("Verify Pipeline Snapshot")
@@ -315,6 +394,87 @@ public class SystemTestKeywords {
         .getJson("/datasets/" + state.dataSetId + "/pipelines/" + state.pipelineId, state.accessToken, 200)
         .json();
     validatePipelinePayload(pipeline);
+  }
+
+  @RobotKeyword("Verify Geo Pipeline Snapshot")
+  public void verifyGeoPipelineSnapshot() {
+    ensureDataSetId();
+    if (state.geoPipelineId == null) {
+      throw new IllegalStateException("Geo pipeline has not been created yet");
+    }
+    JsonNode pipeline = portalClient
+        .getJson("/datasets/" + state.dataSetId + "/pipelines/" + state.geoPipelineId, state.accessToken, 200)
+        .json();
+    validateGeoPipelinePayload(pipeline);
+  }
+
+  @RobotKeyword("Create OWS API")
+  public void createOwsApi() {
+    ensureDataSetId();
+    ObjectNode body = mapper.createObjectNode();
+    ArrayNode namedApis = body.putArray("namedApis");
+
+    ObjectNode things = namedApis.addObject();
+    things.put("name", "Things");
+    things.put("slug", state.namedApiSlug);
+    things.put("standard", "STA");
+    things.put("version", "1.1");
+
+    ObjectNode ows = namedApis.addObject();
+    ows.put("name", state.geoApiName);
+    ows.put("slug", state.geoApiSlug);
+    ows.put("standard", "OWS");
+    ows.put("description", state.geoApiDescription);
+
+    JsonNode result = portalClient.patchJson("/datasets/" + state.dataSetId, body, state.accessToken, 200).json();
+    validateDataSetPayload(result, "DRAFT", false);
+    validateNamedApiPresence(result, state.geoApiSlug, state.geoApiName, "OWS", state.geoApiDescription);
+  }
+
+  @RobotKeyword("Verify OWS API Snapshot")
+  public void verifyOwsApiSnapshot() {
+    ensureDataSetId();
+    JsonNode dataset = portalClient.getJson("/datasets/" + state.dataSetId, state.accessToken, 200).json();
+    validateNamedApiPresence(dataset, state.geoApiSlug, state.geoApiName, "OWS", state.geoApiDescription);
+  }
+
+  @RobotKeyword("Create Geo Layer")
+  public String createGeoLayer() {
+    ensureDataSetId();
+    ensureGeoDataSinkId();
+    ObjectNode body = mapper.createObjectNode();
+    body.put("dataSinkId", state.geoDataSinkId);
+    body.put("layerName", state.geoLayerName);
+    body.put("title", state.geoLayerTitle);
+    body.put("description", state.geoLayerDescription);
+    ArrayNode keywords = body.putArray("keywords");
+    keywords.add("geo");
+    keywords.add("system-test");
+    ArrayNode attributes = body.putArray("attribute");
+    attributes.add(state.geoLayerAttribute);
+    body.put("geometryColumnRef", state.geoLayerGeometryColumnRef);
+    body.put("cqlFilter", "");
+    body.putNull("defaultStyleId");
+    body.set("alternativeStyleIds", mapper.createArrayNode());
+    body.put("crs", state.geoLayerCrs);
+    body.put("bboxAutoCalculate", true);
+    body.set("nativeBoundingBox", mapper.nullNode());
+    body.set("latLonBoundingBox", mapper.nullNode());
+
+    JsonNode result = portalClient.postJson("/datasets/" + state.dataSetId + "/layers", body, state.accessToken, 201).json();
+    state.geoLayerId = requiredText(result, "id", "geoLayer");
+    validateGeoLayerPayload(result);
+    return state.geoLayerId;
+  }
+
+  @RobotKeyword("Verify Geo Layer Snapshot")
+  public void verifyGeoLayerSnapshot() {
+    ensureDataSetId();
+    ensureGeoLayerId();
+    JsonNode layer = portalClient
+        .getJson("/datasets/" + state.dataSetId + "/layers/" + state.geoLayerId, state.accessToken, 200)
+        .json();
+    validateGeoLayerPayload(layer);
   }
 
   @RobotKeyword("Stage Data Set")
@@ -552,6 +712,20 @@ public class SystemTestKeywords {
     ensureDataStructureId();
     if (state.dataStructureVersionId == null) {
       throw new IllegalStateException("Data structure version has not been created yet");
+    }
+  }
+
+  private void ensureGeoDataSinkId() {
+    ensureDataSetId();
+    if (state.geoDataSinkId == null) {
+      throw new IllegalStateException("Geo data sink has not been created yet");
+    }
+  }
+
+  private void ensureGeoLayerId() {
+    ensureDataSetId();
+    if (state.geoLayerId == null) {
+      throw new IllegalStateException("Geo layer has not been created yet");
     }
   }
 
@@ -890,6 +1064,99 @@ public class SystemTestKeywords {
     return fallbackJson;
   }
 
+  private ObjectNode buildPipelinePayload(String pipelineName, String pipelineDescription) {
+    ObjectNode body = mapper.createObjectNode();
+    body.put("name", pipelineName);
+    body.put("description", pipelineDescription);
+    ArrayNode dataSourceIds = body.putArray("dataSourceIds");
+    dataSourceIds.add(state.dataSourceId);
+    body.set("styles", mapper.createObjectNode());
+
+    ObjectNode model = body.putObject("model");
+    ObjectNode input = model.putObject("input");
+    ObjectNode generate = input.putObject("generate");
+    generate.put("interval", "1s");
+    generate.put("count", 1);
+    generate.put("mapping", "root = {\"name\": \"Test Sensor\", \"description\": \"test\"}");
+    ObjectNode output = model.putObject("output");
+    ObjectNode httpClient = output.putObject("http_client");
+    httpClient.put("url", config.frostBaseUrl + "/Things");
+    httpClient.put("verb", "POST");
+    ObjectNode headers = httpClient.putObject("headers");
+    headers.put("Content-Type", "application/json");
+    return body;
+  }
+
+  private void validateGeoPipelinePayload(JsonNode pipeline) {
+    assertTrue(pipeline.isObject(), "geo pipeline response must be a JSON object");
+    assertTextEquals(state.geoPipelineId, requiredText(pipeline, "id", "geoPipeline.id"));
+    assertTextEquals(state.geoPipelineName, requiredText(pipeline, "name", "geoPipeline.name"));
+    assertTextEquals(
+        state.geoPipelineDescription,
+        requiredText(pipeline, "description", "geoPipeline.description"));
+    assertArrayContainsText(pipeline.path("dataSourceIds"), state.dataSourceId, "geoPipeline.dataSourceIds");
+    JsonNode dataSinks = pipeline.path("dataSinks");
+    assertTrue(dataSinks.isArray() && !dataSinks.isEmpty(), "geoPipeline.dataSinks must contain at least one sink");
+    JsonNode sink = dataSinks.get(0);
+    assertTextEquals(state.geoDataSinkId, requiredText(sink, "id", "geoPipeline.dataSinks[0].id"));
+    assertTextEquals("POSTGIS", requiredText(sink, "dataSinkType", "geoPipeline.dataSinks[0].dataSinkType"));
+    JsonNode configuration = sink.path("configuration");
+    assertIsObject(configuration, "geoPipeline.dataSinks[0].configuration");
+    assertTextEquals(
+        state.geoDataSinkTableName,
+        requiredText(configuration, "tableName", "geoPipeline.dataSinks[0].configuration.tableName"));
+    JsonNode dsv = configuration.path("dataStructureVersion");
+    assertIsObject(dsv, "geoPipeline.dataSinks[0].configuration.dataStructureVersion");
+    assertTextEquals(
+        state.dataStructureVersionId,
+        requiredText(dsv, "id", "geoPipeline.dataSinks[0].configuration.dataStructureVersion.id"));
+  }
+
+  private void validateNamedApiPresence(
+      JsonNode dataset,
+      String slug,
+      String expectedName,
+      String expectedStandard,
+      String expectedDescription) {
+    JsonNode namedApis = dataset.path("namedApis");
+    assertTrue(namedApis.isArray() && !namedApis.isEmpty(), "dataset.namedApis must contain at least one entry");
+    JsonNode match = null;
+    for (JsonNode candidate : namedApis) {
+      if (Objects.equals(slug, textOrNull(candidate, "slug"))) {
+        match = candidate;
+        break;
+      }
+    }
+    if (match == null) {
+      throw new AssertionError("dataset.namedApis must contain slug '" + slug + "'. Response: " + dataset.toPrettyString());
+    }
+    assertTextEquals(expectedName, requiredText(match, "name", "dataset.namedApis[" + slug + "].name"));
+    assertTextEquals(expectedStandard, requiredText(match, "standard", "dataset.namedApis[" + slug + "].standard"));
+    if (expectedDescription != null) {
+      assertTextEquals(
+          expectedDescription,
+          requiredText(match, "description", "dataset.namedApis[" + slug + "].description"));
+    }
+  }
+
+  private void validateGeoLayerPayload(JsonNode layer) {
+    assertTrue(layer.isObject(), "geo layer response must be a JSON object");
+    assertTextEquals(state.geoLayerId, requiredText(layer, "id", "geoLayer.id"));
+    assertTextEquals(state.dataSetId, requiredText(layer, "dataSetId", "geoLayer.dataSetId"));
+    assertTextEquals(state.geoDataSinkId, requiredText(layer, "dataSinkId", "geoLayer.dataSinkId"));
+    assertTextEquals(state.geoLayerName, requiredText(layer, "layerName", "geoLayer.layerName"));
+    assertTextEquals(state.geoLayerTitle, requiredText(layer, "title", "geoLayer.title"));
+    assertTextEquals(
+        state.geoLayerDescription, requiredText(layer, "description", "geoLayer.description"));
+    assertArrayContainsText(layer.path("keywords"), "geo", "geoLayer.keywords");
+    assertArrayContainsText(layer.path("attribute"), state.geoLayerAttribute, "geoLayer.attribute");
+    assertTextEquals(
+        state.geoLayerGeometryColumnRef,
+        requiredText(layer, "geometryColumnRef", "geoLayer.geometryColumnRef"));
+    assertTextEquals(state.geoLayerCrs, requiredText(layer, "crs", "geoLayer.crs"));
+    assertBooleanEquals(true, layer.path("bboxAutoCalculate").asBoolean(false), "geoLayer.bboxAutoCalculate");
+  }
+
   private static final class SystemTestState {
     private String runSuffix;
     private String accessToken;
@@ -905,6 +1172,21 @@ public class SystemTestKeywords {
     private String pipelineName;
     private String pipelineDescription;
     private String pipelineId;
+    private String geoPipelineName;
+    private String geoPipelineDescription;
+    private String geoPipelineId;
+    private String geoDataSinkTableName;
+    private String geoDataSinkId;
+    private String geoApiName;
+    private String geoApiSlug;
+    private String geoApiDescription;
+    private String geoLayerName;
+    private String geoLayerTitle;
+    private String geoLayerDescription;
+    private String geoLayerAttribute;
+    private String geoLayerGeometryColumnRef;
+    private String geoLayerCrs;
+    private String geoLayerId;
     private String namedApiSlug;
     private String publicUrl;
     private String namedApiPreviewUrl;
@@ -930,6 +1212,21 @@ public class SystemTestKeywords {
       pipelineName = null;
       pipelineDescription = null;
       pipelineId = null;
+      geoPipelineName = null;
+      geoPipelineDescription = null;
+      geoPipelineId = null;
+      geoDataSinkTableName = null;
+      geoDataSinkId = null;
+      geoApiName = null;
+      geoApiSlug = null;
+      geoApiDescription = null;
+      geoLayerName = null;
+      geoLayerTitle = null;
+      geoLayerDescription = null;
+      geoLayerAttribute = null;
+      geoLayerGeometryColumnRef = null;
+      geoLayerCrs = null;
+      geoLayerId = null;
       namedApiSlug = null;
       publicUrl = null;
       namedApiPreviewUrl = null;

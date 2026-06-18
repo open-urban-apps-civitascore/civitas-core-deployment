@@ -38,6 +38,7 @@ Frontend browser execution additionally requires the `robotframework-browser` pa
 - Data structure creation and release
 - Datasource creation, patching, and release
 - Dataset creation, pipeline creation, staging, and release
+- Geo pipeline creation, OWS API configuration, and layer metadata validation
 - Browser-based frontend execution for dataset management with Playwright via Robot Browser
 - Waiting for the async saga to complete
 - Verifying the public route anonymously and with authentication
