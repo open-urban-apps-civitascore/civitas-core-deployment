@@ -4,8 +4,7 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 JAVA_PROJECT_DIR="${ROOT_DIR}/tests/system/java"
 ROBOT_SUITES=(
-  "${ROOT_DIR}/tests/system/robot/open_data_dataset_saga_publication.robot"
-  "${ROOT_DIR}/tests/system/robot/restricted_data_dataset_saga_publication.robot"
+  "${ROOT_DIR}/tests/system/robot/tu-001-hero-case.robot"
 )
 RESULT_DIR="${ROOT_DIR}/tests/system/results"
 SERVER_LOG="${RESULT_DIR}/remote-server.log"

@@ -46,8 +46,8 @@ public class SystemTestKeywords {
     state.runSuffix = sanitizeSuffix(firstNonBlank(suffix, generatedSuffix()));
     state.openDataAccess = parseBoolean(openDataAccess);
     state.accessToken = keycloakClient.getAccessToken();
-    state.dataStructureName = "Saga Sensor Data Structure " + state.runSuffix;
-    state.dataStructureVersionName = "Saga Sensor Data Structure Version " + state.runSuffix;
+    state.dataStructureName = "Sensor Data Structure " + state.runSuffix;
+    state.dataStructureVersionName = "Sensor Data Structure Version " + state.runSuffix;
     state.dataSourceName = "Saga MQTT DataSource " + state.runSuffix;
     state.dataSetName = "Saga DataSet " + state.runSuffix;
     state.pipelineName = "Saga Pipeline " + state.runSuffix;
@@ -310,6 +310,16 @@ public class SystemTestKeywords {
     ensureDataSetId();
     JsonNode dataset = portalClient.getJson("/datasets/" + state.dataSetId, state.accessToken, 200).json();
     validateDataSetPayload(dataset, "AVAILABLE", true);
+  }
+
+  @RobotKeyword("Change Data Set Access To Protected")
+  public void changeDataSetAccessToProtected() {
+    ensureDataSetId();
+    ObjectNode body = mapper.createObjectNode();
+    body.put("openDataAccess", false);
+    JsonNode result = portalClient.patchJson("/datasets/" + state.dataSetId, body, state.accessToken, 200).json();
+    state.openDataAccess = false;
+    validateDataSetPayload(result, "AVAILABLE", true);
   }
 
   @RobotKeyword("Verify Gateway Access")

@@ -1,12 +1,12 @@
-# System Test PoC
+# Test PoC
 
-This directory contains a Robot Framework proof of concept for the dataset saga use case.
+This directory contains a Robot Framework proof of concept for the dataset saga use case and its reusable test library.
 
 The setup is intentionally split into two layers:
 
 - `tests/system/java`: Java remote library that talks to the backend and gateway.
-- `tests/system/robot`: Robot suites that describe the open and restricted use cases in fine-grained steps.
-- `tests/system/TEST_LIBRARY.md`: initial English template for the GitLab-based test library with `TB-xxx` identifiers.
+- `tests/system/robot`: Robot suite `tu-001-hero-case.robot` with one Hero Case test case that composes the open and protected data paths from fine-grained `TC-xxx` building blocks.
+- `tests/system/TEST_LIBRARY.md`: initial English template for the GitLab-based test library with `TC-xxx` identifiers and Hero Case composition guidance.
 
 ## Run locally
 
