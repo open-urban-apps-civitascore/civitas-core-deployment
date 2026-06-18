@@ -16,6 +16,19 @@ rm -f "${SERVER_LOG}"
 
 mvn -q -f "${JAVA_PROJECT_DIR}/pom.xml" -DskipTests package
 
+if ! python3 - <<'PY' >/dev/null 2>&1
+import importlib.util
+import sys
+
+sys.exit(0 if importlib.util.find_spec("Browser") else 1)
+PY
+then
+  echo "Missing Robot Browser library. Install it with:"
+  echo "  python3 -m pip install -r tests/system/browser/requirements.txt"
+  echo "  rfbrowser init"
+  exit 1
+fi
+
 java -jar "${JAVA_PROJECT_DIR}/target/civitas-system-tests-0.1.0.jar" "${REMOTE_PORT}" >"${SERVER_LOG}" 2>&1 &
 SERVER_PID="$!"
 

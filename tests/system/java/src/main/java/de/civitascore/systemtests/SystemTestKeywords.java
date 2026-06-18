@@ -68,6 +68,54 @@ public class SystemTestKeywords {
     safe("datastructure", () -> cleanupDataStructure());
   }
 
+  @RobotKeyword("Get Generated Data Structure Name")
+  public String getGeneratedDataStructureName() {
+    ensureInitialized();
+    return state.dataStructureName;
+  }
+
+  @RobotKeyword("Get Generated Data Structure Version Name")
+  public String getGeneratedDataStructureVersionName() {
+    ensureInitialized();
+    return state.dataStructureVersionName;
+  }
+
+  @RobotKeyword("Get Generated Data Source Name")
+  public String getGeneratedDataSourceName() {
+    ensureInitialized();
+    return state.dataSourceName;
+  }
+
+  @RobotKeyword("Get Generated Data Set Name")
+  public String getGeneratedDataSetName() {
+    ensureInitialized();
+    return state.dataSetName;
+  }
+
+  @RobotKeyword("Get Generated Pipeline Name")
+  public String getGeneratedPipelineName() {
+    ensureInitialized();
+    return state.pipelineName;
+  }
+
+  @RobotKeyword("Get Named API Slug")
+  public String getNamedApiSlug() {
+    ensureInitialized();
+    return state.namedApiSlug;
+  }
+
+  @RobotKeyword("Get Expected Gateway Thing Name")
+  public String getExpectedGatewayThingName() {
+    ensureInitialized();
+    return state.expectedGatewayThingName;
+  }
+
+  @RobotKeyword("Get Expected Gateway Thing Description")
+  public String getExpectedGatewayThingDescription() {
+    ensureInitialized();
+    return state.expectedGatewayThingDescription;
+  }
+
   @RobotKeyword("Create Data Structure")
   public String createDataStructure() {
     ensureInitialized();

@@ -7,6 +7,7 @@ The `TC-xxx` work items are the source of truth for the test library: they defin
 The execution layer implements these `TC-xxx` contracts and must stay aligned with the work-item description.
 The Hero Case composes these `TC-xxx` building blocks into a red-line happy path for Open Data and Protected Data.
 The same building blocks can also be combined into shorter feature-specific paths, for example `TC-001 -> TC-003 -> TC-007`.
+Frontend-oriented `TC-xxx` items are shared between backend state setup and portal UI validation and therefore carry both `backend` and `frontend` labels in GitLab.
 
 ## Purpose
 
@@ -63,39 +64,39 @@ Create a data structure for the use case.
 
 ## Traceability Matrix
 
-| ID | Layer | Title | Purpose | Expected Result |
+| ID | Layer | Title | Action | Expected Result |
 | --- | --- | --- | --- | --- |
-| `TC-001` | Backend | Create Data Structure | Create the data structure resource | Resource is created and an ID is returned |
-| `TC-002` | Backend | Verify Draft Data Structure Snapshot | Validate the initial data structure payload | Draft snapshot matches expected values |
-| `TC-003` | Backend | Create Data Structure Version | Create the first version for the data structure | Version resource is created and linked to the structure |
-| `TC-004` | Backend | Verify Data Structure Version Snapshot | Validate the version payload after creation | Version fields match the expected model metadata |
-| `TC-005` | Backend | Verify Data Structure References Created Version | Confirm the structure references the created version | Version ID is present in the structure snapshot |
-| `TC-006` | Backend | Release Data Structure Version | Release the created structure version | Release call succeeds |
-| `TC-007` | Backend | Verify Data Structure Version Snapshot After Release | Re-read the released version | Released version remains readable and consistent |
-| `TC-008` | Backend | Release Data Structure | Release the parent data structure | Release call succeeds |
-| `TC-009` | Backend | Verify Released Data Structure Snapshot | Validate the released structure state | Structure is `AVAILABLE` and still references the version |
-| `TC-010` | Backend | Create Data Source | Create the data source resource | Resource is created and an ID is returned |
-| `TC-011` | Backend | Verify Draft Data Source Snapshot | Validate the draft data source payload | Draft snapshot matches expected connector settings |
-| `TC-012` | Backend | Patch Data Source With Data Structure Version | Link the datasource to the structure version | Patch call succeeds |
-| `TC-013` | Backend | Verify Data Source References Data Structure Version | Confirm the linked version on the datasource | Data source snapshot contains the expected version ID |
-| `TC-014` | Backend | Release Data Source | Release the data source | Release call succeeds |
-| `TC-015` | Backend | Verify Released Data Source Snapshot | Validate the released data source state | Data source is `AVAILABLE` and correctly configured |
-| `TC-016` | Frontend | Create Data Set | Create the dataset resource | Resource is created and an ID is returned |
-| `TC-017` | Frontend | Verify Draft Data Set Snapshot | Validate the draft dataset payload | Draft snapshot matches expected access and named API settings |
-| `TC-018` | Frontend | Create Pipeline | Create the dataset pipeline | Pipeline resource is created and linked to the dataset |
-| `TC-019` | Frontend | Verify Pipeline Snapshot | Validate the created pipeline payload | Pipeline snapshot matches expected source and output configuration |
-| `TC-020` | Frontend | Stage Data Set | Stage the dataset for release | Stage call succeeds |
-| `TC-021` | Frontend | Wait For Ready Data Set Status | Wait for the dataset to reach `READY` | Dataset reaches `READY` within the timeout |
-| `TC-022` | Frontend | Verify Ready Data Set Snapshot | Validate the staged dataset snapshot | Dataset is `READY` and public routes are not exposed yet |
-| `TC-023` | Frontend | Release Data Set | Release the dataset | Release call succeeds |
-| `TC-024` | Frontend | Wait For Available Data Set | Wait for the released dataset to become available | Dataset reaches `AVAILABLE` and exposes public route metadata |
-| `TC-025` | Frontend | Verify Available Data Set Snapshot | Validate the available dataset snapshot | Dataset is `AVAILABLE` and route metadata matches the expectation |
-| `TC-026` | Backend | Verify Anonymous Gateway Access | Verify anonymous gateway access for Open Data or Protected Data | Anonymous request returns the expected status code for Open Data or Protected Data |
-| `TC-027` | Backend | Verify Anonymous Gateway Response Content | Validate the open-data gateway payload | Response body contains the expected entity content |
-| `TC-028` | Backend | Verify Authenticated Gateway Access | Verify authenticated gateway access | Authenticated request returns `200` |
-| `TC-029` | Backend | Verify Authenticated Gateway Response Content | Validate the authenticated gateway payload | Response body contains the expected entity content |
-| `TC-030` | Backend | Verify Anonymous Gateway Rejection | Verify restricted-data anonymous access is denied | Anonymous request returns `401` |
-| `TC-031` | Frontend | Change Data Set Access To Protected | Change the released dataset from open access to protected access | Dataset is updated to protected access and the public route is no longer anonymously accessible |
+| `TC-001` | Backend | Create Data Structure | Create the data structure resource through the API. | Resource is created and an ID is returned. |
+| `TC-002` | Backend | Verify Draft Data Structure Snapshot | Read back the draft data structure and inspect the payload. | Draft snapshot matches expected values. |
+| `TC-003` | Backend | Create Data Structure Version | Create the first version for the data structure. | Version resource is created and linked to the structure. |
+| `TC-004` | Backend | Verify Data Structure Version Snapshot | Read the created version and inspect the payload. | Version fields match the expected model metadata. |
+| `TC-005` | Backend | Verify Data Structure References Created Version | Read the structure snapshot and verify the version reference. | Version ID is present in the structure snapshot. |
+| `TC-006` | Backend | Release Data Structure Version | Release the created structure version. | Release call succeeds. |
+| `TC-007` | Backend | Verify Data Structure Version Snapshot After Release | Read the released version again and inspect the payload. | Released version remains readable and consistent. |
+| `TC-008` | Backend | Release Data Structure | Release the parent data structure. | Release call succeeds. |
+| `TC-009` | Backend | Verify Released Data Structure Snapshot | Read the released structure and inspect the payload. | Structure is `AVAILABLE` and still references the version. |
+| `TC-010` | Backend | Create Data Source | Create the data source resource through the API. | Resource is created and an ID is returned. |
+| `TC-011` | Backend | Verify Draft Data Source Snapshot | Read the draft data source and inspect the payload. | Draft snapshot matches expected connector settings. |
+| `TC-012` | Backend | Patch Data Source With Data Structure Version | Patch the datasource with the linked structure version. | Patch call succeeds. |
+| `TC-013` | Backend | Verify Data Source References Data Structure Version | Read the datasource snapshot and inspect the version reference. | Data source snapshot contains the expected version ID. |
+| `TC-014` | Backend | Release Data Source | Release the data source. | Release call succeeds. |
+| `TC-015` | Backend | Verify Released Data Source Snapshot | Read the released data source and inspect the payload. | Data source is `AVAILABLE` and correctly configured. |
+| `TC-016` | Backend and Frontend | Create Data Set | Open the dataset management view in the portal UI and create the dataset draft with the generated dataset name, description, open data access state, and named API metadata. | The dataset draft is saved in the portal UI. The generated dataset name and named API configuration remain visible in the browser. The browser stays on the dataset flow with the new dataset selected. |
+| `TC-017` | Backend and Frontend | Verify Draft Data Set Snapshot | Open the dataset details page in the portal and inspect the draft snapshot rendered by the UI. | The portal shows the dataset in draft state. The access mode and named API settings match the expected values. The generated dataset name is visible in the browser. |
+| `TC-018` | Backend | Create Pipeline | Create the pipeline resource through the API for the dataset and datasource that were prepared earlier. | The pipeline resource is created and linked to the dataset. The configured datasource, generator settings, and output target are persisted. |
+| `TC-019` | Backend and Frontend | Verify Pipeline Snapshot | Open the pipeline details in the portal and inspect the rendered snapshot. | The portal shows the expected pipeline source and output configuration. The dataset linkage remains visible in the browser. The pipeline snapshot matches the configured frontend values. |
+| `TC-020` | Backend and Frontend | Stage Data Set | Trigger dataset staging from the portal UI after the dataset and pipeline configuration have been saved successfully. | The portal confirms that staging has been started. The dataset remains visible in the browser while the staging transition runs. The UI can be used for the next status check. |
+| `TC-021` | Backend and Frontend | Wait For Ready Data Set Status | Refresh or poll the dataset view in the portal until the status badge shows `READY`. | The portal shows `READY` within the configured timeout. The ready state is visible in the browser. The dataset can be used for the next frontend snapshot check. |
+| `TC-022` | Backend and Frontend | Verify Ready Data Set Snapshot | Open the staged dataset details page in the portal and inspect the rendered snapshot. | The portal shows the dataset in `READY` state. No public route is exposed in the browser at this stage. The dataset remains in the staged state for release. |
+| `TC-023` | Backend and Frontend | Release Data Set | Trigger dataset release from the portal UI after the ready state has been confirmed. | The portal confirms that release has been triggered. The released dataset remains visible in the browser. The dataset can continue into the availability check. |
+| `TC-024` | Backend and Frontend | Wait For Available Data Set | Refresh or poll the dataset view in the portal until the status changes to `AVAILABLE`. | The portal shows `AVAILABLE` within the timeout. The public URL and route metadata are visible in the browser. The dataset is ready for the route snapshot verification. |
+| `TC-025` | Backend and Frontend | Verify Available Data Set Snapshot | Open the available dataset details page in the portal and inspect the rendered snapshot. | The portal shows the dataset in `AVAILABLE` state. The public route metadata is visible in the browser. The snapshot matches the configured frontend values. |
+| `TC-026` | Backend | Verify Anonymous Gateway Access | Send an anonymous gateway request and inspect the HTTP status code. | Anonymous request returns the expected status code for Open Data or Protected Data. |
+| `TC-027` | Backend | Verify Anonymous Gateway Response Content | Send an anonymous gateway request and inspect the response body. | Response body contains the expected entity content. |
+| `TC-028` | Backend | Verify Authenticated Gateway Access | Send an authenticated gateway request and inspect the HTTP status code. | Authenticated request returns `200`. |
+| `TC-029` | Backend | Verify Authenticated Gateway Response Content | Send an authenticated gateway request and inspect the response body. | Response body contains the expected entity content. |
+| `TC-030` | Backend | Verify Anonymous Gateway Rejection | Send an anonymous gateway request for protected data and inspect the HTTP status code. | Anonymous request returns `401`. |
+| `TC-031` | Backend and Frontend | Change Data Set Access To Protected | Open the access settings for the released dataset in the portal and switch open data access off through the browser. | The portal shows protected access after the change. The dataset remains available in the browser. Anonymous access is no longer permitted. |
 
 ## Use In Planning
 
