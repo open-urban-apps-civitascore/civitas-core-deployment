@@ -72,6 +72,11 @@ registry:
       - name: REGISTRY_KAFKASQL_TOPIC_AUTO_CREATE
         value: "false"
 
+    securityContext:
+      {{ .Values.securityDefaults.podSecurityContext | toYaml | nindent 6 }}
+    containerSecurityContext:
+      {{ .Values.securityDefaults.securityContext | toYaml | nindent 6 }}
+
   ui:
     enabled: {{ .Values.apicurio.ui.enabled }}
     image:
@@ -96,3 +101,7 @@ registry:
     podDisruptionBudget:
       enabled: false
 
+    securityContext:
+      {{ .Values.securityDefaults.podSecurityContext | toYaml | nindent 6 }}
+    containerSecurityContext:
+      {{ .Values.securityDefaults.securityContext | toYaml | nindent 6 }}
