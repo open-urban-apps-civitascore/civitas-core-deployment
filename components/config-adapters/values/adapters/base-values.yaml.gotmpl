@@ -82,12 +82,18 @@ env:
       secretKeyRef:
         name: "apisix-admin-credentials"
         key: "admin"
-  - name: APISIX_DATA_HOST
+  - name: APISIX_API_HOST
     value: {{ $apisixDataHost | quote }}
-  - name: APISIX_DATA_PUBLIC_URL
+  - name: APISIX_API_PUBLIC_URL
     value: {{ $apisixDataPublicUrl | quote }}
   - name: APISIX_TOPICS
     value: "de.civitascore.api.backend.created,de.civitascore.api.backend.updated,de.civitascore.api.backend.deleted,de.civitascore.api.route.created,de.civitascore.api.route.updated,de.civitascore.api.route.deleted"
+  - name: APISIX_PLUGIN_CONFIG_ID
+    value: "portal-backend" # TODO: document this
+  - name: APISIX_FROST_BASIC_AUTH_USERNAME
+    value: "admin"
+  - name: APISIX_FROST_BASIC_AUTH_PASSWORD
+    value: "admin"
 
   # FROST configuration (accessed via linkerd service mesh, basic auth)
   {{- $frostUrl := printf "http://frost-frost-frost-server-http.%s/FROST-Server/v1.1" .Values.frost.frost.namespace }}
@@ -133,3 +139,29 @@ env:
   # Health check configuration
   - name: HEALTHCHECK_PORT
     value: "8080"
+
+  # GeoServer configuration
+  {{- $geoserverRestUrl := printf "http://geoserver-geoserver-rest.%s/geoserver" .Values.geoserver.geoserver.namespace }}
+  - name: GEOSERVER_URL
+    value: {{ $geoserverRestUrl | quote }}
+  - name: GEOSERVER_PUBLIC_URL
+    value: "https://geoserver.{{ $global.domain }}/geoserver" # TODO: check why this is needed. because this would not work
+  - name: GEOSERVER_ADMIN_USER
+    value: "admin"
+  - name: GEOSERVER_ADMIN_PASSWORD
+    value: "geoserver"
+  - name: GEOSERVER_POSTGIS_HOST
+    value: "postgres-cluster-rw"
+  - name: GEOSERVER_POSTGIS_PORT
+    value: "5432"
+  - name: GEOSERVER_POSTGIS_DATABASE
+    value: "payload_data"
+  - name: GEOSERVER_POSTGIS_SCHEMA
+    value: "public"
+  - name: GEOSERVER_POSTGIS_USER
+    value: "payload_data"
+  - name: GEOSERVER_POSTGIS_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        name: "db-payload-data"
+        key: "password"
