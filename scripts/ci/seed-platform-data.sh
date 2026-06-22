@@ -117,12 +117,10 @@ EOF
 if [ -n "${AUTH_PASSWORD:-}" ]; then
   echo "AUTH_PASSWORD provided via env — skipping keycloak admin reset steps."
 else
-  # Read a fixed-size chunk of randomness first, then transform/truncate. A
-  # naive `tr … /dev/urandom | head -c 32` pipeline trips SIGPIPE under
-  # `pipefail`.
-  AUTH_PASSWORD="$(head -c 96 /dev/urandom | LC_ALL=C tr -dc 'A-Za-z0-9' | cut -c1-32)"
+  # Generate a 32-char alphanumeric password.
+  AUTH_PASSWORD="$(openssl rand -base64 288 | LC_ALL=C tr -dc 'A-Za-z0-9' | dd bs=32 count=1 2>/dev/null)"
   if [ "${#AUTH_PASSWORD}" -lt 16 ]; then
-    echo "ERROR: failed to generate AUTH_PASSWORD" >&2
+    echo "ERROR: failed to generate AUTH_PASSWORD (got length ${#AUTH_PASSWORD})" >&2
     exit 1
   fi
 

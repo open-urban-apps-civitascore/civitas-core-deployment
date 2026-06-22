@@ -1,0 +1,7 @@
+---
+component: nifi
+parts:
+  - name: nifi
+  - name: bootstrap
+    needs:
+      - nifi.nifi

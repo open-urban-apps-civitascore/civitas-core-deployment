@@ -1,23 +1,26 @@
 ---
-keycloak-allow-linkerd:
+nifi-allow-linkerd:
   podSelector:
-    app.kubernetes.io/instance: keycloak-app
+    app.kubernetes.io/instance: nifi-nifi
   policyTypes:
     - Ingress
   ingress:
     - from:
         - podSelector:
             matchLabels:
-              app.kubernetes.io/name: apisix
-        - podSelector:
-            matchLabels:
               app.kubernetes.io/name: config-adapter
+              app.kubernetes.io/instance: config-adapters-adapters
+      ports:
+        - port: 4143
+          protocol: TCP
+        - port: 4190
+          protocol: TCP
+        - port: 4191
+          protocol: TCP
+    - from:
         - podSelector:
             matchLabels:
-              app.kubernetes.io/name: keycloak-config-cli
-        - podSelector:
-            matchLabels:
-              app.kubernetes.io/name: nifi-bootstrap
+              app.kubernetes.io/instance: nifi-nifi
       ports:
         - port: 4143
           protocol: TCP

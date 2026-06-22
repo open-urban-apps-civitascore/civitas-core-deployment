@@ -15,3 +15,6 @@ keycloak:
         - podSelector:
             matchLabels:
               app.kubernetes.io/name: keycloak-config-cli
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: nifi-bootstrap

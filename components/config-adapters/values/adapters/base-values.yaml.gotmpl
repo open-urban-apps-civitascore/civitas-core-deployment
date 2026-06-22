@@ -29,8 +29,10 @@ image:
 
 env:
   # Adapter configuration
+  # TODO Add nifi to list of config adapters, once implemented in config adapter
+  # Otherwise config adapter will crash on startup
   - name: ADAPTERS
-    value: "apisix,keycloak,frost,redpanda"
+    value: "apisix,keycloak,frost"
   - name: EVENTHANDLER_NAME
     value: "kafka"
 
@@ -88,6 +90,8 @@ env:
     value: {{ $apisixDataPublicUrl | quote }}
   - name: APISIX_TOPICS
     value: "de.civitascore.api.backend.created,de.civitascore.api.backend.updated,de.civitascore.api.backend.deleted,de.civitascore.api.route.created,de.civitascore.api.route.updated,de.civitascore.api.route.deleted"
+  - name: APISIX_API_HOST
+    value: {{ $apisixHost | quote }}
 
   # FROST configuration (accessed via linkerd service mesh, basic auth)
   {{- $frostUrl := printf "http://frost-frost-frost-server-http.%s/FROST-Server/v1.1" .Values.frost.frost.namespace }}
@@ -105,12 +109,29 @@ env:
   - name: FROST_TOPICS
     value: "de.civitascore.data.thing.created,de.civitascore.data.thing.updated,de.civitascore.data.thing.deleted,de.civitascore.data.location.created,de.civitascore.data.location.updated,de.civitascore.data.location.deleted,de.civitascore.data.sensor.created,de.civitascore.data.sensor.updated,de.civitascore.data.sensor.deleted,de.civitascore.data.observedproperty.created,de.civitascore.data.observedproperty.updated,de.civitascore.data.observedproperty.deleted,de.civitascore.data.datastream.created,de.civitascore.data.datastream.updated,de.civitascore.data.datastream.deleted,de.civitascore.data.project.created,de.civitascore.data.project.updated,de.civitascore.data.project.deleted"
 
-  # Redpanda configuration
-  {{- $redpandaUrl := printf "http://redpanda-connect-connect.%s:80" .Values.redpandaConnect.connect.namespace }}
-  - name: REDPANDA_URL
-    value: {{ $redpandaUrl | quote }}
-  - name: REDPANDA_TOPICS
-    value: "de.civitascore.data.pipeline.created,de.civitascore.data.pipeline.updated,de.civitascore.data.pipeline.deleted"
+  # NiFi configuration — uses `nifi-direct` client with DAG/password grant.
+  {{- $nifiUrl := printf "https://nifi-nifi.%s.svc.cluster.local:8443/nifi-api" .Values.nifi.nifi.namespace }}
+  {{- $nifiTokenUrl := printf "%s/realms/%s/protocol/openid-connect/token" $keycloakUrl $realmName }}
+  - name: NIFI_URL
+    value: {{ $nifiUrl | quote }}
+  - name: NIFI_OIDC_TOKEN_URL
+    value: {{ $nifiTokenUrl | quote }}
+  - name: NIFI_OIDC_CLIENT_ID
+    value: "nifi-direct"
+  - name: NIFI_USERNAME
+    value: "nifi-config-adapter@internal.local"
+  - name: NIFI_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        name: "nifi-config-adapter-keycloak-user"
+        key: "password"
+  # Skipping NiFi's self-signed cert verification is intentional: all traffic is
+  # cluster-internal (nifi-nifi.<namespace>.svc.cluster.local:8443) and already
+  # protected by the Linkerd service mesh (mTLS). Not a public-facing path.
+  - name: NIFI_TLS_INSECURE_SKIP_VERIFY
+    value: "true"
+  - name: NIFI_TOPICS
+    value: "de.civitascore.data.flow.created,de.civitascore.data.flow.updated,de.civitascore.data.flow.deleted"
 
   # Crypto configuration (shared with portal backend)
   - name: CIVITAS_MASTER_KEY

@@ -1,0 +1,11 @@
+---
+# NiFi terminates TLS on 8443 with a self-signed cert; passHost=node sends the upstream
+# hostname (nifi-nifi-http) as SNI so it matches the cert SAN.
+nifi:
+  name: nifi
+  description: Apache NiFi web UI and REST API
+  upstream: nifi-nifi-http:8443
+  scheme: https
+  passHost: node
+  subDomain: nifi
+  uri: '/*'

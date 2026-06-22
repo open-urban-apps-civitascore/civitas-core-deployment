@@ -1,0 +1,42 @@
+---
+{{- $this := .Values.nifi.nifi }}
+{{- $global := .Values.global }}
+# Checklist:
+# - [x] Minimal Resources
+# - [x] Minimal storage
+# - [x] 1 Replica -> nodeCount is 1 globally (single-instance deployment)
+
+jvmHeap:
+  min: 512m
+  max: 1g
+
+resources:
+  requests:
+    cpu: 500m
+    memory: 1Gi
+  limits:
+    cpu: '1'
+    memory: 2Gi
+
+volumeClaims:
+  config:
+    storageClass: ""
+    size: 1Gi
+  state:
+    storageClass: ""
+    size: 1Gi
+  logs:
+    storageClass: ""
+    size: 1Gi
+  flowfile:
+    storageClass: ""
+    size: 2Gi
+  content:
+    storageClass: ""
+    size: 2Gi
+  provenance:
+    storageClass: ""
+    size: 2Gi
+
+pdb:
+  enabled: false
