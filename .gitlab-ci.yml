@@ -299,7 +299,7 @@ destroy-smoke-test-mr:
 # Regression tests for kyverno policies themselves (good/bad fixtures per policy).
 test-kyverno-policies:
   stage: lint
-  image: registry.gitlab.com/civitas-connect/civitas-core/civitas-core-v2/civitas-core-deployment/cicd:a1aebd6
+  image: registry.gitlab.com/civitas-connect/civitas-core/docker-images/cicd:2.0.0-beta
   needs: []
   rules:
     - when: always
@@ -308,7 +308,7 @@ test-kyverno-policies:
 
 scan-kyverno-policies:
   stage: lint
-  image: registry.gitlab.com/civitas-connect/civitas-core/civitas-core-v2/civitas-core-deployment/cicd:a1aebd6
+  image: registry.gitlab.com/civitas-connect/civitas-core/docker-images/cicd:2.0.0-beta
   needs: []
   # Transitional: the production rendering currently has ~49 known findings
   # (rolling-update, resources, ro-rootfs, capabilities, probes, and the
