@@ -23,6 +23,7 @@ supersetNode:
     enabled: true
   podDisruptionBudget:
     enabled: true
+    maxUnavailable: null
   resources:
     limits:
       cpu: 400m
@@ -30,6 +31,7 @@ supersetNode:
     requests:
       cpu: 200m
       memory: 256Mi
+
   strategy:
     type: RollingUpdate
     rollingUpdate:
@@ -43,6 +45,7 @@ supersetWorker:
     enabled: true
   podDisruptionBudget:
     enabled: true
+    maxUnavailable: null
   resources:
     limits:
       cpu: 800m
@@ -59,6 +62,7 @@ supersetWorker:
 supersetCeleryBeat:
   podDisruptionBudget:
     enabled: true
+    maxUnavailable: null
   resources:
     limits:
       cpu: 400m
@@ -71,6 +75,7 @@ supersetCeleryFlower:
   replicaCount: 2
   podDisruptionBudget:
     enabled: true
+    maxUnavailable: null
   resources:
     limits:
       cpu: 4000m
