@@ -275,4 +275,3 @@ registry:
 
     # Image pull secrets
     imagePullSecrets: []
-
