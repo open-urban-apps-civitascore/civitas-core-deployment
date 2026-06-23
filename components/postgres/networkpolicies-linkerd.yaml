@@ -33,6 +33,12 @@ postgres-allow-linkerd:
         - podSelector:
             matchLabels:
               batch.kubernetes.io/job-name: portal-db-create-role-authz-readonly
+        - podSelector:
+            matchLabels:
+              app: superset
+        - podSelector:
+            matchLabels:
+              app: superset-worker
       ports:
         - port: 4143
           protocol: TCP

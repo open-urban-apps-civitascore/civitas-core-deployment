@@ -1,0 +1,11 @@
+---
+superset:
+  name: 'superset'
+  embedded: true
+  user: 'superset'
+  secret:
+    name: 'db-superset'
+    key: 'password'
+    generate: true
+  host: 'postgres-cluster-rw'
+  port: 5432

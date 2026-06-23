@@ -1,0 +1,8 @@
+---
+superset:
+  name: superset
+  description: 'Dashboard for the Civitas Platform'
+  upstream: superset-superset:8088
+  uri: /*
+  subDomain: dashboard
+  priority: 10

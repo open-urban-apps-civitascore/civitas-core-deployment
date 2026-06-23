@@ -1,0 +1,21 @@
+---
+superset:
+  name: superset
+  description: 'Dashboard for the Civitas Platform'
+  plugins:
+    request-id:
+      include_in_response: true
+    serverless-pre-function:
+      phase: rewrite
+      functions:
+        - >-
+          return function()
+            ngx.req.clear_header("X-Userinfo")
+            ngx.req.clear_header("X-Access-Token")
+            ngx.req.clear_header("X-Allowed-Scope-Ids")
+          end
+    proxy-rewrite:
+      headers:
+        set:
+          X-Forwarded-Proto: https
+          X-Forwarded-Port: '443'
