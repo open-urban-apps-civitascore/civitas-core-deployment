@@ -29,8 +29,6 @@ image:
 
 env:
   # Adapter configuration
-  # TODO Add nifi to list of config adapters, once implemented in config adapter
-  # Otherwise config adapter will crash on startup
   - name: ADAPTERS
     value: "apisix,keycloak,frost,nifi"
   - name: EVENTHANDLER_NAME
@@ -90,7 +88,7 @@ env:
     value: {{ $apisixDataPublicUrl | quote }}
   - name: APISIX_TOPICS
     value: "de.civitascore.api.backend.created,de.civitascore.api.backend.updated,de.civitascore.api.backend.deleted,de.civitascore.api.route.created,de.civitascore.api.route.updated,de.civitascore.api.route.deleted"
-  - name: APISIX_API_HOST
+  - name: APISIX_API_PUBLIC_HOST
     value: {{ $apisixHost | quote }}
   - name: APISIX_PLUGIN_CONFIG_ID
     value: "portal-backend" # TODO: document this
@@ -136,6 +134,22 @@ env:
   # protected by the Linkerd service mesh (mTLS). Not a public-facing path.
   - name: NIFI_TLS_INSECURE_SKIP_VERIFY
     value: "true"
+  # FROST sink target for NiFi-provisioned data pipelines (SensorThings base URL).
+  - name: NIFI_FROST_URL
+    value: {{ $frostUrl | quote }}
+  # PostGIS sink DB for NiFi-provisioned pipelines. Reuses the `payload_data`
+  # PostGIS-enabled database (declared in components/geoserver/databases.yaml,
+  # secret `db-payload-data`). Without these, PostGIS deploys fail with
+  # NIFI_TEMPLATE_ERROR.
+  - name: NIFI_POSTGIS_URL
+    value: "jdbc:postgresql://postgres-cluster-rw:5432/payload_data"
+  - name: NIFI_POSTGIS_USER
+    value: "payload_data"
+  - name: NIFI_POSTGIS_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        name: "db-payload-data"
+        key: "password"
   - name: NIFI_TOPICS
     value: "de.civitascore.data.flow.created,de.civitascore.data.flow.updated,de.civitascore.data.flow.deleted"
 
