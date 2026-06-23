@@ -112,6 +112,20 @@ spec:
         securityContext:
           {{- toYaml . | nindent 10 }}
         {{- end }}
+        volumeMounts:
+        # Writable /tmp for the UI runtime when readOnlyRootFilesystem is enabled
+        - name: tmp
+          mountPath: /tmp
+        {{- with .Values.registry.ui.volumeMounts }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      volumes:
+      # Writable /tmp for the UI runtime when readOnlyRootFilesystem is enabled
+      - name: tmp
+        emptyDir: {}
+      {{- with .Values.registry.ui.volumes }}
+      {{- toYaml . | nindent 6 }}
+      {{- end }}
       {{- with .Values.registry.ui.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

@@ -177,6 +177,11 @@ registry:
     # securityContext is applied at the container level (.spec.template.spec.containers[].securityContext)
     securityContext: {}
 
+    # Extra volumes and mounts. A writable emptyDir at /tmp is always added so the
+    # app can write its Quarkus/Vert.x cache when readOnlyRootFilesystem is enabled.
+    volumes: []
+    volumeMounts: []
+
     # Node selection
     nodeSelector: {}
     tolerations: []
@@ -186,6 +191,7 @@ registry:
     imagePullSecrets: []
 
   # UI component configuration
+
 
   ui:
     enabled: true
@@ -257,6 +263,11 @@ registry:
     # securityContext is applied at the container level (.spec.template.spec.containers[].securityContext)
     securityContext: {}
 
+    # Extra volumes and mounts. A writable emptyDir at /tmp is always added so the
+    # UI runtime can write when readOnlyRootFilesystem is enabled.
+    volumes: []
+    volumeMounts: []
+
     # Node selection
     nodeSelector: {}
     tolerations: []
@@ -264,3 +275,4 @@ registry:
 
     # Image pull secrets
     imagePullSecrets: []
+

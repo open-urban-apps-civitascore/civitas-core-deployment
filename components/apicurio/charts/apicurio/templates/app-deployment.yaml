@@ -199,9 +199,24 @@ spec:
         securityContext:
           {{- toYaml . | nindent 10 }}
         {{- end }}
+        volumeMounts:
+        # Writable /tmp for Quarkus/Vert.x cache when readOnlyRootFilesystem is enabled
+        - name: tmp
+          mountPath: /tmp
+        {{- with .Values.registry.app.volumeMounts }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      volumes:
+      # Writable /tmp for Quarkus/Vert.x cache when readOnlyRootFilesystem is enabled
+      - name: tmp
+        emptyDir: {}
+      {{- with .Values.registry.app.volumes }}
+      {{- toYaml . | nindent 6 }}
+      {{- end }}
       {{- with .Values.registry.app.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
+
       {{- end }}
       {{- with .Values.registry.app.affinity }}
       affinity:
