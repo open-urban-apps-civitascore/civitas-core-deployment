@@ -45,10 +45,13 @@ spec:
         command:
         - sh
         - -c
-        - cp -aT /opt/app-root/etc /writable-app-root-etc
+        # Copy contents (not attributes); the emptyDir mount root cannot have its
+        # ownership/timestamps changed by the non-root user, so avoid `cp -a`.
+        - cp -RL /opt/app-root/etc/. /writable-app-root-etc/
         volumeMounts:
         - name: app-root-etc
           mountPath: /writable-app-root-etc
+
         {{- with .Values.registry.ui.securityContext }}
         securityContext:
           {{- toYaml . | nindent 10 }}
