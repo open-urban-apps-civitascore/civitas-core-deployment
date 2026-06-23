@@ -69,3 +69,5 @@ components:
   - config-adapters
   - portal
   - geoserver
+  - valkey
+  - superset

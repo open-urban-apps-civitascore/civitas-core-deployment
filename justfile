@@ -4,7 +4,7 @@ set dotenv-load
 
 # MINIKUBE_IP := $(shell minikube ip)
 marker := 'LOCAL_CIVITAS_HOSTS'
-hosts := 'idm.civitas.test portal.civitas.test api.civitas.test'
+hosts := 'idm.civitas.test portal.civitas.test api.civitas.test dashboard.civitas.test'
 
 default:
 	@just --list
@@ -397,24 +397,22 @@ create-device-management-db:
 
 # Create test user in Keycloak
 [group('helpers')]
-create-test-user:
+create-test-user profile='local':
     #!/usr/bin/env bash
     set -euo pipefail
 
     # Read configuration from global.yaml
-    NS=$(yq '.global.instanceSlug' defaults/environment/global.yaml)
+    NS=$(helmfile template -f deployment/helmfile.yaml -e local --selector component=keycloak --skip-deps -q | yq 'select(.kind == "StatefulSet") | .metadata.namespace')
     DOMAIN=$(yq '.global.domain' defaults/environment/global.yaml)
-    REALM="$NS"
+    REALM=$(yq '.global.instanceSlug' defaults/environment/global.yaml)
     TEST_EMAIL="test@$DOMAIN"
     TEST_PASSWORD="TestTest1234!"
 
     echo "Creating test user: $TEST_EMAIL in realm: $REALM"
 
-    # Get
     ADMIN_USER=$(yq '.global.initialUserEmail' defaults/environment/global.yaml | cut -d '@' -f 1)
     ADMIN_PASSWORD=$(kubectl get secret -n "$NS" keycloak-admin-user -o jsonpath='{.data.password}' | base64 -d)
 
-    # Get Keycloak pod name
     POD=$(kubectl get pods -n "$NS" -l app.kubernetes.io/name=keycloakx -o jsonpath='{.items[0].metadata.name}')
 
     if [ -z "$POD" ]; then
@@ -424,7 +422,6 @@ create-test-user:
 
     echo "Using Keycloak pod: $POD"
 
-    # Create user using kcadm.sh
     kubectl exec -n "$NS" "$POD" -- bash -c "
         /opt/keycloak/bin/kcadm.sh config credentials \
             --server http://localhost:8080 \

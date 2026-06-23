@@ -66,3 +66,14 @@ postgres:
             matchLabels:
               app.kubernetes.io/component: wms
               app.kubernetes.io/instance: geoserver-geoserver
+    # Superset - auto-inject instanceSlug namespace
+    - from:
+        - podSelector:
+            matchLabels:
+              app: superset
+        - podSelector:
+            matchLabels:
+              app: superset-worker
+        - podSelector:
+            matchLabels:
+              job-name: superset-superset-init-db
