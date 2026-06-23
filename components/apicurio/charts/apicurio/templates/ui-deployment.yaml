@@ -34,6 +34,25 @@ spec:
       securityContext:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+      initContainers:
+      # The UI image (UBI/nginx) writes its nss_wrapper passwd file into
+      # /opt/app-root/etc at startup. With readOnlyRootFilesystem enabled that
+      # directory is not writable, so copy its contents into a writable emptyDir
+      # which is then mounted over /opt/app-root/etc in the main container.
+      - name: copy-app-root-etc
+        image: "{{ .Values.registry.ui.image.repository }}:{{ .Values.registry.ui.image.tag }}"
+        imagePullPolicy: {{ .Values.registry.ui.image.pullPolicy | default "IfNotPresent" }}
+        command:
+        - sh
+        - -c
+        - cp -aT /opt/app-root/etc /writable-app-root-etc
+        volumeMounts:
+        - name: app-root-etc
+          mountPath: /writable-app-root-etc
+        {{- with .Values.registry.ui.securityContext }}
+        securityContext:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
       containers:
       - name: apicurio-registry-ui
         image: "{{ .Values.registry.ui.image.repository }}:{{ .Values.registry.ui.image.tag }}"
@@ -113,15 +132,31 @@ spec:
           {{- toYaml . | nindent 10 }}
         {{- end }}
         volumeMounts:
-        # Writable /tmp for the UI runtime when readOnlyRootFilesystem is enabled
+        # Writable paths required by the UBI/nginx image when readOnlyRootFilesystem is enabled
         - name: tmp
           mountPath: /tmp
+        - name: app-root-etc
+          mountPath: /opt/app-root/etc
+        - name: nginx-log
+          mountPath: /var/log/nginx
+        - name: nginx-lib
+          mountPath: /var/lib/nginx
+        - name: run
+          mountPath: /run
         {{- with .Values.registry.ui.volumeMounts }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
       volumes:
-      # Writable /tmp for the UI runtime when readOnlyRootFilesystem is enabled
+      # Writable paths required by the UBI/nginx image when readOnlyRootFilesystem is enabled
       - name: tmp
+        emptyDir: {}
+      - name: app-root-etc
+        emptyDir: {}
+      - name: nginx-log
+        emptyDir: {}
+      - name: nginx-lib
+        emptyDir: {}
+      - name: run
         emptyDir: {}
       {{- with .Values.registry.ui.volumes }}
       {{- toYaml . | nindent 6 }}
