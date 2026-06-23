@@ -1,0 +1,36 @@
+---
+{{- $this := .Values.valkey.valkey }}
+{{- $global := .Values.global }}
+# Checklist:
+# - [x] Minimal Resources
+# - [x] Minimal storage
+# - [x] 1 Replica
+
+resources:
+  limits:
+    cpu: 100m
+    memory: 128Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+initResources:
+  limits:
+    cpu: 100m
+    memory: 128Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+replica:
+    enabled: false
+
+metrics:
+  exporter:
+    resources:
+      limits:
+        cpu: 100m
+        memory: 128Mi
+      requests:
+        cpu: 100m
+        memory: 128Mi
