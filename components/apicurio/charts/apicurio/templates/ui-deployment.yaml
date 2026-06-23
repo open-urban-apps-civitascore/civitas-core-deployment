@@ -30,7 +30,7 @@ spec:
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with .Values.registry.ui.securityContext }}
+      {{- with .Values.registry.ui.podSecurityContext }}
       securityContext:
         {{- toYaml . | nindent 8 }}
       {{- end }}
@@ -108,7 +108,7 @@ spec:
         resources:
           {{- toYaml . | nindent 10 }}
         {{- end }}
-        {{- with .Values.registry.ui.podSecurityContext }}
+        {{- with .Values.registry.ui.securityContext }}
         securityContext:
           {{- toYaml . | nindent 10 }}
         {{- end }}

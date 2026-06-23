@@ -172,9 +172,10 @@ registry:
     podLabels: {}
 
     # Security contexts
+    # podSecurityContext is applied at the Pod level (.spec.template.spec.securityContext)
     podSecurityContext: {}
+    # securityContext is applied at the container level (.spec.template.spec.containers[].securityContext)
     securityContext: {}
-    containerSecurityContext: {}
 
     # Node selection
     nodeSelector: {}
@@ -185,6 +186,7 @@ registry:
     imagePullSecrets: []
 
   # UI component configuration
+
   ui:
     enabled: true
 
@@ -250,8 +252,10 @@ registry:
     podLabels: {}
 
     # Security contexts
+    # podSecurityContext is applied at the Pod level (.spec.template.spec.securityContext)
+    podSecurityContext: {}
+    # securityContext is applied at the container level (.spec.template.spec.containers[].securityContext)
     securityContext: {}
-    containerSecurityContext: {}
 
     # Node selection
     nodeSelector: {}
@@ -260,3 +264,4 @@ registry:
 
     # Image pull secrets
     imagePullSecrets: []
+
