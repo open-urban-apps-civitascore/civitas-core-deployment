@@ -62,9 +62,7 @@ components:
   - keycloak
   - authz
   - apisix
-  - apicurio
   - frost
-  - model-atlas
   - nifi
   - config-adapters
   - portal

@@ -8,9 +8,6 @@ kafka-cluster:
     - from:
         - podSelector:
             matchLabels:
-              app.kubernetes.io/name: apicurio
-        - podSelector:
-            matchLabels:
               app.kubernetes.io/name: portal
               app.kubernetes.io/component: backend
         - podSelector:

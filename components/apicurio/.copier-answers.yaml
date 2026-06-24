@@ -1,8 +1,0 @@
----
-# Changes here will be overwritten by Copier.
-_commit: e124159
-_src_path: ..
-componentName: Apicurio
-componentSlug: apicurio
-releases: apicurio
-shortDescription: Schema and Model management stack
