@@ -1,0 +1,20 @@
+---
+# Pentest environment resource overrides for FROST.
+#
+# FROST HTTP (x2 replicas) reserved 1Gi/400m each but used only ~380Mi (~38%).
+# We reduce the request to 512Mi memory / 200m CPU - still a comfortable buffer
+# above observed usage - and keep the 2Gi/800m limit for bursts.
+#
+# Path mirrors components/frost/values/frost/production-values.yaml.gotmpl
+frost:
+  frost:
+    rawValues:
+      frost:
+        http:
+          resources:
+            requests:
+              cpu: 200m
+              memory: 512Mi
+            limits:
+              cpu: 800m
+              memory: 2Gi

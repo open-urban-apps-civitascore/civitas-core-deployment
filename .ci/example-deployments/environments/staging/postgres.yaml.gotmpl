@@ -1,0 +1,22 @@
+---
+# Pentest environment resource overrides for Postgres.
+#
+# Rationale: in cc2-pentest each postgres instance reserved 8Gi/2CPU but
+# actually used only ~70-234Mi (1-3%). This massive over-reservation blocked
+# scheduling of new pods. We reduce the *request* substantially while keeping a
+# generous safety buffer (request ~2Gi = roughly 8-10x observed usage) and keep
+# the limit unchanged so the DB can still burst if needed.
+#
+# Path mirrors components/postgres/values/cluster/production-values.yaml.gotmpl
+# (rawValues is merged as the highest-priority chart values layer).
+postgres:
+  cluster:
+    rawValues:
+      cluster:
+        resources:
+          requests:
+            cpu: "500m"
+            memory: "2Gi"
+          limits:
+            cpu: "2"
+            memory: "8Gi"
