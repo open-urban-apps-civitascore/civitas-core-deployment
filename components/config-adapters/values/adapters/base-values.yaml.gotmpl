@@ -106,7 +106,7 @@ env:
         key: "admin"
   - name: APISIX_DATA_HOST
     value: {{ $apisixDataHost | quote }}
-  - name: APISIX_DATA_PUBLIC_URL
+  - name: APISIX_DATA_HOST_URL
     value: {{ $apisixDataPublicUrl | quote }}
   - name: APISIX_TOPICS
     value: "de.civitascore.api.backend.created,de.civitascore.api.backend.updated,de.civitascore.api.backend.deleted,de.civitascore.api.route.created,de.civitascore.api.route.updated,de.civitascore.api.route.deleted"
@@ -116,6 +116,8 @@ env:
     value: {{ $apisixHost | quote }}
   - name: APISIX_PLUGIN_CONFIG_ID
     value: "portal-backend" # TODO: document this
+  - name: APISIX_PLUGIN_CONFIG_ID
+    value: "portal-backend"
   - name: APISIX_FROST_BASIC_AUTH_USERNAME
     value: "admin"
   - name: APISIX_FROST_BASIC_AUTH_PASSWORD
@@ -123,12 +125,9 @@ env:
 
   # FROST configuration (accessed via linkerd service mesh, basic auth)
   {{- $frostUrl := printf "http://frost-frost-frost-server-http.%s/FROST-Server/v1.1" .Values.frost.frost.namespace }}
-  # TODO: only FROST_BASE should be required, but we keep FROST_URL for backward compatibility for now, should be removed in future
   - name: FROST_URL
     value: {{ $frostUrl | quote }}
   - name: FROST_PUBLIC_URL
-    value: {{ $frostUrl | quote }}
-  - name: FROST_BASE
     value: {{ $frostUrl | quote }}
   - name: FROST_BASIC_AUTH_USERNAME
     value: "admin"
