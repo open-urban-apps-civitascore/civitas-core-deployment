@@ -31,4 +31,3 @@ keycloak:
           port: 7800
         - protocol: TCP
           port: 57800
-
