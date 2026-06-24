@@ -27,10 +27,32 @@ image:
   repository: {{ .Values.images.configAdapters.adapters.repository }}
   tag: {{ .Values.images.configAdapters.adapters.tag }}
 
+# The container runs with readOnlyRootFilesystem=true (see checklist above), which
+# makes the default temp dir (/tmp -> java.io.tmpdir) read-only. Jersey's
+# MultiPartReaderClientSide calls File.createTempFile() during REST client setup
+# (NifiSagaHandler.createClient), which then fails with
+# "java.io.IOException: Read-only file system". Mount a writable emptyDir at /tmp
+# so temp files (and JVM scratch space) can be created.
+volumes:
+  - name: tmp
+    emptyDir: {}
+
+volumeMounts:
+  - name: tmp
+    mountPath: /tmp
+
 env:
+  # Ensure the JVM and all libraries (incl. Jersey multipart) write temp files to
+  # the writable /tmp emptyDir mounted above, despite readOnlyRootFilesystem.
+  - name: TMPDIR
+    value: "/tmp"
+  - name: JAVA_TOOL_OPTIONS
+    value: "-Djava.io.tmpdir=/tmp"
+
   # Adapter configuration
   - name: ADAPTERS
     value: "apisix,keycloak,frost"
+
   - name: EVENTHANDLER_NAME
     value: "kafka"
 
