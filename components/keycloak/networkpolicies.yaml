@@ -18,3 +18,17 @@ keycloak:
         - podSelector:
             matchLabels:
               app.kubernetes.io/name: nifi-bootstrap
+    # Allow Keycloak replicas to reach each other on the JGroups cluster ports
+    # (7800 = TCP transport, 57800 = FD_SOCK2 failure detection). Required so the
+    # Infinispan/JGroups cluster can form. Without this the pods get
+    # "Connection refused" on 7800 and degrade into isolated singletons.
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/instance: keycloak-app
+      ports:
+        - protocol: TCP
+          port: 7800
+        - protocol: TCP
+          port: 57800
+
