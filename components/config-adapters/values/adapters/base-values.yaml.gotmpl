@@ -82,12 +82,14 @@ env:
       secretKeyRef:
         name: "apisix-admin-credentials"
         key: "admin"
-  - name: APISIX_API_HOST
+  - name: APISIX_DATA_HOST
     value: {{ $apisixDataHost | quote }}
-  - name: APISIX_API_PUBLIC_URL
+  - name: APISIX_DATA_PUBLIC_URL
     value: {{ $apisixDataPublicUrl | quote }}
   - name: APISIX_TOPICS
     value: "de.civitascore.api.backend.created,de.civitascore.api.backend.updated,de.civitascore.api.backend.deleted,de.civitascore.api.route.created,de.civitascore.api.route.updated,de.civitascore.api.route.deleted"
+  - name: APISIX_API_HOST
+    value: {{ $apisixHost | quote }}
   - name: APISIX_API_PUBLIC_HOST
     value: {{ $apisixHost | quote }}
   - name: APISIX_PLUGIN_CONFIG_ID
