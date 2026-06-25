@@ -23,7 +23,7 @@ supersetNode:
     enabled: true
   podDisruptionBudget:
     enabled: true
-    maxUnavailable: null
+    minAvailable: 1
   resources:
     limits:
       cpu: 400m
@@ -45,7 +45,7 @@ supersetWorker:
     enabled: true
   podDisruptionBudget:
     enabled: true
-    maxUnavailable: null
+    minAvailable: 1
   resources:
     limits:
       cpu: 800m
@@ -62,7 +62,7 @@ supersetWorker:
 supersetCeleryBeat:
   podDisruptionBudget:
     enabled: true
-    maxUnavailable: null
+    minAvailable: 1
   resources:
     limits:
       cpu: 400m
@@ -75,7 +75,7 @@ supersetCeleryFlower:
   replicaCount: 2
   podDisruptionBudget:
     enabled: true
-    maxUnavailable: null
+    minAvailable: 1
   resources:
     limits:
       cpu: 4000m
