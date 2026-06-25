@@ -100,7 +100,7 @@ env:
         key: "admin"
   - name: APISIX_API_HOST
     value: {{ $apisixDataHost | quote }}
-  - name: APISIX_API_PUBLIC_HOST
+  - name: APISIX_API_PUBLIC_URL
     value: {{ $apisixDataPublicUrl | quote }}
   - name: APISIX_TOPICS
     value: "de.civitascore.api.backend.created,de.civitascore.api.backend.updated,de.civitascore.api.backend.deleted,de.civitascore.api.route.created,de.civitascore.api.route.updated,de.civitascore.api.route.deleted"
@@ -156,6 +156,10 @@ env:
       secretKeyRef:
         name: "db-payload-data"
         key: "password"
+  - name: NIFI_TOPICS
+    value: "de.civitascore.data.flow.created,de.civitascore.data.flow.updated,de.civitascore.data.flow.deleted"
+
+  # Postgis configuration
   - name: POSTGIS_JDBC_URL
     value: "jdbc:postgresql://postgres-cluster-rw:5432/payload_data"
   - name: POSTGIS_JDBC_USER
@@ -165,8 +169,6 @@ env:
       secretKeyRef:
         name: "db-payload-data"
         key: "password"
-  - name: NIFI_TOPICS
-    value: "de.civitascore.data.flow.created,de.civitascore.data.flow.updated,de.civitascore.data.flow.deleted"
 
   # Crypto configuration (shared with portal backend)
   - name: CIVITAS_MASTER_KEY
