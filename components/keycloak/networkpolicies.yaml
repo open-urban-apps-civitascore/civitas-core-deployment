@@ -18,3 +18,12 @@ keycloak:
         - podSelector:
             matchLabels:
               app.kubernetes.io/name: nifi-bootstrap
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/instance: keycloak-app
+      ports:
+        - protocol: TCP
+          port: 7800
+        - protocol: TCP
+          port: 57800

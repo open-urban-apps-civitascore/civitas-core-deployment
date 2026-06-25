@@ -62,20 +62,25 @@ serviceAccount:
 extraVolumes:
   - name: temp
     emptyDir: {}
+  {{- if eq $global.ingress.clusterIssuer "selfsigned-ca" }}
   - name: custom-ca-cert
     secret:
       secretName: custom-ca-cert
       items:
         - key: ca.crt
           path: custom-ca.crt
+  {{- end }}
 
 extraVolumeMounts:
   - name: temp
     mountPath: /tmp
+  {{- if eq $global.ingress.clusterIssuer "selfsigned-ca" }}
   - name: custom-ca-cert
     mountPath: /etc/ssl/certs/custom-ca.crt
     subPath: custom-ca.crt
     readOnly: true
+  {{- end }}
+
 
 {{- $keycloakHost := printf "%s.%s" (default "" .Values.keycloak.app.subdomain) $global.domain | trimPrefix "." }}
 {{- $keycloakPath := .Values.keycloak.app.pathPrefix | trimSuffix "/" }}
@@ -128,10 +133,13 @@ extraEnvRaw:
       value: superset
     - name: OIDC_ISSUER
       value: {{ $oidcIssuer }}
+    {{- if eq $global.ingress.clusterIssuer "selfsigned-ca" }}
     - name: REQUESTS_CA_BUNDLE
       value: /etc/ssl/certs/custom-ca.crt
     - name: SSL_CERT_FILE
       value: /etc/ssl/certs/custom-ca.crt
+    {{- end }}
+
 
 keycloak:
   authServerUrl: {{ $keycloakUrl }}

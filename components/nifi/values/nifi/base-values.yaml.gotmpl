@@ -71,18 +71,43 @@ extraEnv:
   - name: NIFI_WEB_HTTPS_HOST
     value: "nifi-nifi-0.nifi-nifi.{{ $this.namespace }}"
 
-{{- if eq $global.ingress.clusterIssuer "selfsigned-ca" }}
-# Mount the per-namespace self-signed CA (distributed by the prepare hook) so
-# custom-startup.sh can import it into NiFi's truststore for the OIDC back-channel.
+extraInitContainers:
+  - name: fetch-postgresql-jdbc
+    image: curlimages/curl:8.11.1
+    command:
+      - sh
+      - -c
+      - >-
+        curl -fsSL -o /opt/nifi/drivers/postgresql.jar
+        https://jdbc.postgresql.org/download/postgresql-{{ $this.postgresqlJdbcVersion | default "42.7.4" }}.jar
+    volumeMounts:
+      - name: jdbc-drivers
+        mountPath: /opt/nifi/drivers
+    securityContext:
+      runAsUser: 1000
+      runAsGroup: 1000
+      runAsNonRoot: true
+
 extraVolumes:
+  - name: jdbc-drivers
+    emptyDir: {}
+{{- if eq $global.ingress.clusterIssuer "selfsigned-ca" }}
+  # Mount the per-namespace self-signed CA (distributed by the prepare hook) so
+  # custom-startup.sh can import it into NiFi's truststore for the OIDC back-channel.
   - name: extra-ca
     secret:
       secretName: custom-ca-cert
+{{- end }}
 extraVolumeMounts:
+  - name: jdbc-drivers
+    mountPath: /opt/nifi/drivers
+    readOnly: true
+{{- if eq $global.ingress.clusterIssuer "selfsigned-ca" }}
   - name: extra-ca
     mountPath: /opt/extra-ca
     readOnly: true
 {{- end }}
+
 
 securityContext:
   runAsUser: 1000

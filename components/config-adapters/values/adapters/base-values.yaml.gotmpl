@@ -27,12 +27,26 @@ image:
   repository: {{ .Values.images.configAdapters.adapters.repository }}
   tag: {{ .Values.images.configAdapters.adapters.tag }}
 
+volumes:
+  - name: tmp
+    emptyDir: {}
+
+volumeMounts:
+  - name: tmp
+    mountPath: /tmp
+
 env:
+  # Ensure the JVM and all libraries (incl. Jersey multipart) write temp files to
+  # the writable /tmp emptyDir mounted above, despite readOnlyRootFilesystem.
+  - name: TMPDIR
+    value: "/tmp"
+  - name: JAVA_TOOL_OPTIONS
+    value: "-Djava.io.tmpdir=/tmp"
+
   # Adapter configuration
-  # TODO Add nifi to list of config adapters, once implemented in config adapter
-  # Otherwise config adapter will crash on startup
   - name: ADAPTERS
     value: "apisix,keycloak,frost"
+
   - name: EVENTHANDLER_NAME
     value: "kafka"
 
@@ -131,8 +145,30 @@ env:
   # protected by the Linkerd service mesh (mTLS). Not a public-facing path.
   - name: NIFI_TLS_INSECURE_SKIP_VERIFY
     value: "true"
+  - name: NIFI_FROST_URL
+    value: {{ $frostUrl | quote }}
+  - name: NIFI_POSTGIS_URL
+    value: "jdbc:postgresql://postgres-cluster-rw:5432/payload_data"
+  - name: NIFI_POSTGIS_USER
+    value: "payload_data"
+  - name: NIFI_POSTGIS_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        name: "db-payload-data"
+        key: "password"
   - name: NIFI_TOPICS
     value: "de.civitascore.data.flow.created,de.civitascore.data.flow.updated,de.civitascore.data.flow.deleted"
+
+  # Postgis configuration
+  - name: POSTGIS_JDBC_URL
+    value: "jdbc:postgresql://postgres-cluster-rw:5432/payload_data"
+  - name: POSTGIS_JDBC_USER
+    value: "payload_data"
+  - name: POSTGIS_JDBC_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        name: "db-payload-data"
+        key: "password"
 
   # Crypto configuration (shared with portal backend)
   - name: CIVITAS_MASTER_KEY
