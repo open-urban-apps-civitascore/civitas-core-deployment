@@ -17,11 +17,6 @@ podSecurityContext:
   {{ .Values.securityDefaults.podSecurityContext | toYaml | nindent 2 }}
 
 podAnnotations:
-  # ignore smtp ports (25,465,587) and JGroups cluster ports (7800 = TCP, 57800 = FD_SOCK2).
-  # JGroups ports must bypass the Linkerd proxy because Keycloak already wraps the
-  # cluster channel in its own mTLS. Letting Linkerd also intercept these ports causes
-  # a TLS-over-TLS handshake failure ("Remote host terminated the handshake") and the
-  # replicas fail to form an Infinispan cluster, degrading into isolated singletons.
   config.linkerd.io/skip-outbound-ports: "25,465,587,7800,57800"
   config.linkerd.io/skip-inbound-ports: "7800,57800"
 

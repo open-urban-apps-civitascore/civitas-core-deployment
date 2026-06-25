@@ -1,16 +1,5 @@
 ---
-# Pentest environment resource overrides for NiFi.
-#
-# NiFi was pending (could not schedule its 8Gi request). NiFi runs a JVM with
-# heap min 4g / max 6g (see values/nifi/production-values.yaml.gotmpl), so its
-# memory request must comfortably cover the max heap PLUS JVM/off-heap overhead.
-# We trim the request from 8Gi -> 7Gi (still > 6g max heap + ~1g buffer) and CPU
-# from 2 -> 1 so it can schedule, while keeping the 12Gi limit so it can burst.
-#
-# NOTE: do NOT reduce memory below the JVM max heap (6g) + overhead, or NiFi
-# will be OOMKilled.
-#
-# Path mirrors components/nifi/values/nifi/production-values.yaml.gotmpl
+
 nifi:
   nifi:
     rawValues:

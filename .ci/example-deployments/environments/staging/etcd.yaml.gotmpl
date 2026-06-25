@@ -1,12 +1,5 @@
 ---
-# Pentest environment resource overrides for etcd.
-#
-# etcd (x3 replicas) reserved 512Mi/500m each but used only ~35Mi (~7%).
-# We reduce the request to 256Mi memory / 200m CPU - still ~7x observed usage
-# as a buffer - and keep the 1Gi/1CPU limit. etcd is latency-sensitive, so we
-# keep a non-trivial CPU request.
-#
-# Path mirrors components/etcd/values/etcd/production-values.yaml.gotmpl
+
 etcd:
   etcd:
     rawValues:

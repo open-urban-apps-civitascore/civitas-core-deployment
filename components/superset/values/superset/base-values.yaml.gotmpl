@@ -63,8 +63,6 @@ extraVolumes:
   - name: temp
     emptyDir: {}
   {{- if eq $global.ingress.clusterIssuer "selfsigned-ca" }}
-  # Mount the per-namespace self-signed CA (distributed by the prepare hook) so
-  # Superset trusts the platform's self-signed certificates (e.g. for OIDC).
   - name: custom-ca-cert
     secret:
       secretName: custom-ca-cert
@@ -136,9 +134,6 @@ extraEnvRaw:
     - name: OIDC_ISSUER
       value: {{ $oidcIssuer }}
     {{- if eq $global.ingress.clusterIssuer "selfsigned-ca" }}
-    # Point Python/requests at the mounted self-signed CA so OIDC calls succeed.
-    # Only set when using a self-signed CA; with public issuers (e.g. Let's Encrypt)
-    # the default system trust store is used and this file is not mounted.
     - name: REQUESTS_CA_BUNDLE
       value: /etc/ssl/certs/custom-ca.crt
     - name: SSL_CERT_FILE

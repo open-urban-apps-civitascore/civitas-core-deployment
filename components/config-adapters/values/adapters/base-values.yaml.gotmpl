@@ -27,12 +27,6 @@ image:
   repository: {{ .Values.images.configAdapters.adapters.repository }}
   tag: {{ .Values.images.configAdapters.adapters.tag }}
 
-# The container runs with readOnlyRootFilesystem=true (see checklist above), which
-# makes the default temp dir (/tmp -> java.io.tmpdir) read-only. Jersey's
-# MultiPartReaderClientSide calls File.createTempFile() during REST client setup
-# (NifiSagaHandler.createClient), which then fails with
-# "java.io.IOException: Read-only file system". Mount a writable emptyDir at /tmp
-# so temp files (and JVM scratch space) can be created.
 volumes:
   - name: tmp
     emptyDir: {}
@@ -155,13 +149,8 @@ env:
   # protected by the Linkerd service mesh (mTLS). Not a public-facing path.
   - name: NIFI_TLS_INSECURE_SKIP_VERIFY
     value: "true"
-  # FROST sink target for NiFi-provisioned data pipelines (SensorThings base URL).
   - name: NIFI_FROST_URL
     value: {{ $frostUrl | quote }}
-  # PostGIS sink DB for NiFi-provisioned pipelines. Reuses the `payload_data`
-  # PostGIS-enabled database (declared in components/geoserver/databases.yaml,
-  # secret `db-payload-data`). Without these, PostGIS deploys fail with
-  # NIFI_TEMPLATE_ERROR.
   - name: NIFI_POSTGIS_URL
     value: "jdbc:postgresql://postgres-cluster-rw:5432/payload_data"
   - name: NIFI_POSTGIS_USER
@@ -206,11 +195,10 @@ env:
     value: "8080"
 
   # GeoServer configuration
-  {{- $geoserverRestUrl := printf "http://geoserver-geoserver-rest.%s/geoserver" .Values.geoserver.geoserver.namespace }}
   - name: GEOSERVER_URL
-    value: {{ $geoserverRestUrl | quote }}
+    value: "http://geoserver-geoserver-rest/geoserver"
   - name: GEOSERVER_PUBLIC_URL
-    value: "https://geoserver.{{ $global.domain }}/geoserver" # TODO: check why this is needed. because this would not work
+    value: "https://api.{{ $global.domain }}/v1/datasets"
   - name: GEOSERVER_ADMIN_USER
     value: "admin"
   - name: GEOSERVER_ADMIN_PASSWORD

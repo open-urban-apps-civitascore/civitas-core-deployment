@@ -318,11 +318,7 @@ config:
       userManagedAccessAllowed: false
       # TR-03187 AR-11: ES256-only token signing.
       # Explicitly declare the realm key providers so keycloak-config-cli manages them
-      # authoritatively. Keycloak auto-creates default RS256 (rsa-generated) and HS512
-      # (hmac-generated) signing providers for every realm; we disable those so that
-      # ES256 (ecdsa-generated) is the ONLY active signature key. The RSA-OAEP and AES
-      # providers are encryption keys (use=enc) and are kept — they are not used for
-      # token signatures and are required for key/cookie encryption.
+      # authoritatively.
       components:
         org.keycloak.keys.KeyProvider:
           # ES256 signing key — the only active signature provider.

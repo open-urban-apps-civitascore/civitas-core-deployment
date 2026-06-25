@@ -3,13 +3,9 @@ nifi:
   nifi:
     enabled: true
     namespace: {{ include "civitas.namespace" (dict "global" .Values.global "suffix" "nifi") }}
-    # Single-instance deployment in all profiles; HA is disabled by design.
-    # The NIFI_WEB_HTTPS_HOST override in base-values only supports nodeCount=1.
     nodeCount: 1
     initialAdminEmail: {{ .Values.global.initialUserEmail }}
     bootstrapAdminIdentity: nifi-admin@internal.local
-    # PostgreSQL JDBC driver version fetched into /opt/nifi/drivers/postgresql.jar
-    # (required by the config-adapter's DBCP fragment for PostGIS sinks).
     postgresqlJdbcVersion: "42.7.4"
 
   bootstrap:

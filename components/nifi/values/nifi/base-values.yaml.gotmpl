@@ -71,10 +71,6 @@ extraEnv:
   - name: NIFI_WEB_HTTPS_HOST
     value: "nifi-nifi-0.nifi-nifi.{{ $this.namespace }}"
 
-# PostgreSQL JDBC driver provisioning. The config-adapter's DBCP fragment loads the
-# driver from exactly /opt/nifi/drivers/postgresql.jar — if it is missing, every
-# PostGIS-sink deploy fails. The stock apache/nifi image ships no JDBC drivers, so an
-# init container downloads the driver into a shared emptyDir mounted at that path.
 extraInitContainers:
   - name: fetch-postgresql-jdbc
     image: curlimages/curl:8.11.1

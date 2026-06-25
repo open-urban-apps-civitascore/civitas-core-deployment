@@ -1,12 +1,5 @@
 ---
-# Pentest environment resource overrides for Keycloak.
-#
-# Keycloak (x2 replicas) reserved 4Gi/2CPU each but used only ~680Mi (~16%).
-# We reduce the request to 1.5Gi memory / 500m CPU - still ~2x the observed
-# usage as a safety buffer - and keep the limit at 8Gi/4CPU so it can burst
-# under load. Keycloak is a JVM app, so we keep a healthy memory request.
-#
-# Path mirrors components/keycloak/values/app/production-values.yaml.gotmpl
+
 keycloak:
   app:
     rawValues:

@@ -1,12 +1,5 @@
 ---
-# Pentest environment resource overrides for APISIX.
-#
-# APISIX (x2 replicas) reserved 512Mi/500m each but used only ~180Mi (~35%).
-# We reduce the request to 320Mi memory / 250m CPU - still a healthy buffer
-# above observed usage - and keep the 2Gi/2CPU limit so it can burst under load
-# (gateway traffic can spike).
-#
-# Path mirrors components/apisix/values/apisix/production-values.yaml.gotmpl
+
 apisix:
   apisix:
     rawValues:
