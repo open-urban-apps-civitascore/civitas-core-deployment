@@ -8,6 +8,7 @@ metadata:
   # kubernetes names on the other hand must follow RFC 1123 DNS label rules, which are lowercase and hyphen-separated.
   # because of this, metadata.name is different to spec.name
   name: {{ $config.name | replace "_" "-" }}
+  namespace: {{ $root.Release.Namespace }}
   labels:
     {{- include "database.labels" $root | nindent 6 }}
     ## TODO: Add component label?

@@ -52,12 +52,13 @@ env:
 
   # Kafka configuration
   - name: KAFKA_BOOTSTRAP_SERVERS
-    value: "{{ .Values.kafka.cluster.bootstrapService }}:{{ .Values.kafka.cluster.bootstrapPort }}"
+    value: "{{ .Values.kafka.cluster.bootstrapService }}.{{ .Values.kafka.cluster.namespace }}.svc.cluster.local:{{ .Values.kafka.cluster.bootstrapPort }}"
   - name: KAFKA_GROUP_ID
     value: config-adapter-group
 
   # Keycloak configuration — uses dedicated config-adapter client with password grant
-  {{- $keycloakUrl := printf "http://keycloak-app-keycloakx-http.%s.svc.cluster.local:80" .Values.keycloak.app.namespace -}}
+  {{- $keycloakNamespace := .Values.keycloak.app.namespace }}
+  {{- $keycloakUrl := printf "http://keycloak-app-keycloakx-http.%s.svc.cluster.local:80" $keycloakNamespace }}
   {{- $realmName := $global.instanceSlug }}
   - name: KEYCLOAK_URL
     value: {{ $keycloakUrl | quote }}
@@ -88,9 +89,10 @@ env:
   # APISIX configuration
   {{- $apisixHost := printf "%s.%s" (default "" .Values.apisix.apisix.subdomain) $global.domain | trimPrefix "." }}
   {{- $apisixPath := .Values.apisix.apisix.pathPrefix }}
-  {{- $apisixUrl := printf "http://%s%s" "apisix-admin:9180" $apisixPath }}
   {{- $apisixDataHost := printf "apisix-gateway.%s.svc.cluster.local:9080" .Values.apisix.apisix.namespace }}
   {{- $apisixDataPublicUrl := printf "https://api.%s" $global.domain }}
+  {{- $apisixNamespace := .Values.apisix.apisix.namespace }}
+  {{- $apisixUrl := printf "http://%s.%s.svc.cluster.local:9180%s" "apisix-admin" $apisixNamespace $apisixPath }}
   - name: APISIX_ADMIN_URL
     value: {{ $apisixUrl | quote }}
   - name: APISIX_ADMIN_KEY
@@ -112,7 +114,8 @@ env:
     value: "admin"
 
   # FROST configuration (accessed via linkerd service mesh, basic auth)
-  {{- $frostUrl := printf "http://frost-frost-frost-server-http.%s/FROST-Server/v1.1" .Values.frost.frost.namespace }}
+  {{- $frostUrl := printf "http://frost-frost-frost-server-http.%s.svc.cluster.local/FROST-Server/v1.1" .Values.frost.frost.namespace }}
+  # TODO: only FROST_BASE should be required, but we keep FROST_URL for backward compatibility for now, should be removed in future
   - name: FROST_URL
     value: {{ $frostUrl | quote }}
   - name: FROST_PUBLIC_URL
@@ -148,7 +151,7 @@ env:
   - name: NIFI_FROST_URL
     value: {{ $frostUrl | quote }}
   - name: NIFI_POSTGIS_URL
-    value: "jdbc:postgresql://postgres-cluster-rw:5432/payload_data"
+    value: "jdbc:postgresql://{{ .Values.databases.payload_data.hostServiceName}}.{{ .Values.postgres.cluster.namespace }}.svc.cluster.local:5432/payload_data"
   - name: NIFI_POSTGIS_USER
     value: "payload_data"
   - name: NIFI_POSTGIS_PASSWORD
@@ -161,7 +164,7 @@ env:
 
   # Postgis configuration
   - name: POSTGIS_JDBC_URL
-    value: "jdbc:postgresql://postgres-cluster-rw:5432/payload_data"
+    value: "jdbc:postgresql://{{ .Values.databases.payload_data.hostServiceName}}.{{ .Values.postgres.cluster.namespace }}.svc.cluster.local:5432/payload_data"
   - name: POSTGIS_JDBC_USER
     value: "payload_data"
   - name: POSTGIS_JDBC_PASSWORD
@@ -179,7 +182,7 @@ env:
 
   # Flowable configuration
   - name: FLOWABLE_JDBC_URL
-    value: jdbc:postgresql://{{ .Values.databases.flowable.host }}:{{ .Values.databases.flowable.port }}/{{ .Values.databases.flowable.name }}
+    value: jdbc:postgresql://{{ .Values.databases.flowable.hostServiceName}}.{{ .Values.postgres.cluster.namespace }}.svc.cluster.local:{{ .Values.databases.flowable.port }}/{{ .Values.databases.flowable.name }}
   - name: FLOWABLE_JDBC_USERNAME
     value: {{ .Values.databases.flowable.user }}
   - name: FLOWABLE_JDBC_PASSWORD
@@ -194,7 +197,7 @@ env:
 
   # GeoServer configuration
   - name: GEOSERVER_URL
-    value: "http://geoserver-geoserver-rest/geoserver"
+    value: "http://geoserver-geoserver-rest{{ .Values.geoserver.geoserver.namespace }}.svc.cluster.local/geoserver"
   - name: GEOSERVER_PUBLIC_URL
     value: "https://api.{{ $global.domain }}/v1/datasets"
   - name: GEOSERVER_ADMIN_USER
@@ -202,7 +205,7 @@ env:
   - name: GEOSERVER_ADMIN_PASSWORD
     value: "geoserver"
   - name: GEOSERVER_POSTGIS_HOST
-    value: "postgres-cluster-rw"
+    value: "{{ .Values.databases.payload_data.hostServiceName}}.{{ .Values.postgres.cluster.namespace }}.svc.cluster.local"
   - name: GEOSERVER_POSTGIS_PORT
     value: "5432"
   - name: GEOSERVER_POSTGIS_DATABASE

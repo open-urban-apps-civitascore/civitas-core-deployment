@@ -13,44 +13,34 @@
 runAsUser: 1000
 
 {{- $initContainerImage := printf "%s/%s:%s" .Values.images.superset.init.registry .Values.images.superset.init.repository .Values.images.superset.init.tag }}
-{{- $initContainers := list (dict
-  "name" "wait-for-postgres-redis"
-  "image" $initContainerImage
-  "env" (list
-    (dict
-      "name" "DB_HOST"
-      "value" .Values.databases.superset.host
-    )
-    (dict
-      "name" "DB_PORT"
-      "value" (printf "%v" .Values.databases.superset.port)
-    )
-    (dict
-      "name" "REDIS_HOST"
-      "value" "valkey-valkey"
-    )
-    (dict
-      "name" "REDIS_PORT"
-      "value" "6379"
-    )
-  )
-  
-  "command" (list
-    "/bin/sh"
-    "-c"
-    "timeout 120 sh -c 'until nc -z \"$DB_HOST\" \"$DB_PORT\"; do sleep 2; done; until nc -z \"$REDIS_HOST\" \"$REDIS_PORT\"; do sleep 2; done'"
-  )
-  "resources" (dict
-    "limits" (dict
-      "cpu" "500m"
-      "memory" "256Mi"
-    )
-    "requests" (dict
-      "cpu" "250m"
-      "memory" "128Mi"
-    )
-  )
-) }}
+initContainers: &initContainers
+  - name: wait-for-postgres-redis
+    image: {{ $initContainerImage }}
+    env:
+      - name: DB_HOST
+        value: {{ .Values.databases.superset.hostServiceName }}.{{ .Values.postgres.cluster.namespace }}.svc.cluster.local
+      - name: DB_PORT
+        value: {{ .Values.databases.superset.port | quote }}
+      - name: REDIS_HOST
+        value: valkey-valkey.{{ .Values.valkey.valkey.namespace }}.svc.cluster.local
+      - name: REDIS_PORT
+        value: "6379"
+    command:
+      - /bin/sh
+      - -c
+      - timeout 120 sh -c 'until nc -z "$DB_HOST" "$DB_PORT"; do sleep 2; done; until nc -z "$REDIS_HOST" "$REDIS_PORT"; do sleep 2; done'
+    resources:
+      limits:
+        cpu: "500m"
+        memory: "256Mi"
+      requests:
+        cpu: "250m"
+
+security: &security
+  podSecurityContext:
+    {{ .Values.securityDefaults.podSecurityContext | toYaml | nindent 4 }}
+  containerSecurityContext:
+    {{ .Values.securityDefaults.securityContext | toYaml | nindent 4 }}
 
 secretEnv:
   create: false
@@ -90,7 +80,7 @@ extraVolumeMounts:
 
 extraEnvRaw:
     - name: REDIS_HOST
-      value: valkey-valkey
+      value: valkey-valkey.{{ .Values.valkey.valkey.namespace }}.svc.cluster.local
     - name: REDIS_PORT
       value: "6379"
     - name: REDIS_USER
@@ -107,7 +97,7 @@ extraEnvRaw:
     - name: REDIS_PROTO
       value: redis
     - name: DB_HOST
-      value: {{ .Values.databases.superset.host | quote }}
+      value: {{ .Values.databases.superset.hostServiceName }}.{{ .Values.postgres.cluster.namespace }}.svc.cluster.local
     - name: DB_PORT
       value: {{ .Values.databases.superset.port | quote }}
     - name: DB_USER
@@ -161,7 +151,7 @@ configOverrides:
     AUTH_TYPE = AUTH_OAUTH
     AUTH_USER_REGISTRATION = True
     AUTH_ROLES_SYNC_AT_LOGIN = True
-    AUTH_USER_REGISTRATION_ROLE = "Public"
+    AUTH_USER_REGISTRATION_ROLE = "Gamma"
     ENABLE_PROXY_FIX = True
     PREFERRED_URL_SCHEME = 'https'
     PROXY_FIX_CONFIG = {
@@ -203,7 +193,9 @@ configOverrides:
         }
     ]
 
-    AUTH_ROLES_MAPPING = {}
+    AUTH_ROLES_MAPPING = {
+      "admin": ["Admin"]
+    }
 
     class CustomOAuthView(AuthOAuthView):
       @expose('/login/')
@@ -339,22 +331,14 @@ initImage:
   tag: {{ .Values.images.superset.init.tag }}
 
 supersetNode:
-  initContainers:
-    {{ $initContainers | toYaml | nindent 4 }}
-  podSecurityContext:
-    {{ .Values.securityDefaults.podSecurityContext | toYaml | nindent 2 }}
-  containerSecurityContext:
-    {{ .Values.securityDefaults.securityContext | toYaml | nindent 2 }}
+  initContainers: *initContainers
+  <<: *security
 
 supersetWorker:
   replicas:
     enabled: true
-  initContainers:
-    {{ $initContainers | toYaml | nindent 4 }}
-  podSecurityContext:
-    {{ .Values.securityDefaults.podSecurityContext | toYaml | nindent 4 }}
-  containerSecurityContext:
-    {{ .Values.securityDefaults.securityContext | toYaml | nindent 4 }}
+  initContainers: *initContainers
+  <<: *security
 
 supersetCeleryBeat:
   enabled: false
@@ -367,12 +351,8 @@ supersetWebsockets:
 
 init:
   createAdmin: false
-  initContainers:
-    {{ $initContainers | toYaml | nindent 4 }}
-  podSecurityContext:
-    {{ .Values.securityDefaults.podSecurityContext | toYaml | nindent 4 }}
-  containerSecurityContext:
-    {{ .Values.securityDefaults.securityContext | toYaml | nindent 4 }}
+  initContainers: *initContainers
+  <<: *security
 
 postgresql:
   enabled: false

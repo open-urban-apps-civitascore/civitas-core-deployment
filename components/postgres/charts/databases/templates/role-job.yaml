@@ -7,6 +7,7 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   name: {{ $config.name }}-db-create-role-{{ $role.name }}-{{ $role.type }}
+  namespace: {{ $.Release.Namespace }}
   labels:
     {{- include "database.labels" $root | nindent 4 }}
     app.kubernetes.io/component: database-role-setup
@@ -29,7 +30,7 @@ spec:
         image: postgres:16-alpine
         env:
         - name: PGHOST
-          value: {{ $root.Values.cluster.name }}-rw
+          value: {{ $root.Values.cluster.name }}-rw.{{ $.Release.Namespace }}.svc.cluster.local
         - name: PGPORT
           value: "5432"
         - name: PGDATABASE

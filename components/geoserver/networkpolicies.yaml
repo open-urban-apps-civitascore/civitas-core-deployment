@@ -17,3 +17,4 @@ geoserver-rabbitmq:
             matchLabels:
               app.kubernetes.io/instance: geoserver-geoserver
               app.kubernetes.io/component: webui
+          componentNamespace: geoserver

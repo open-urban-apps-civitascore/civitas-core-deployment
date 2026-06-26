@@ -26,6 +26,31 @@ destroy-component environment='local' component='':
 	echo "Destroying component: {{component}} in environment: {{environment}}"
 	helmfile -f ./deployment/helmfile.yaml destroy -e {{environment}} --selector component={{component}}
 
+# Get Keycloak Realm
+[group('helpers')]
+_get-keycloak-realm profile='local':
+	@yq '.global.instanceSlug' deployment/environments/{{ profile }}/global.yaml.gotmpl || yq '.global.instanceSlug' defaults/environment/global.yaml
+
+# Get domain
+[group('helpers')]
+_get-domain profile='local':
+	@yq '.global.domain' deployment/environments/{{ profile }}/global.yaml.gotmpl || yq '.global.domain' defaults/environment/global.yaml
+
+# Get Keycloak namespace
+[group('helpers')]
+_get-keycloak-namespace:
+	@helmfile template -f deployment/helmfile.yaml -e local --selector component=keycloak --skip-deps -q | yq 'select(.kind == "StatefulSet") | .metadata.namespace'
+
+# Get APISix namespace
+[group('helpers')]
+_get-apisix-namespace:
+	@helmfile template -f deployment/helmfile.yaml -e local --selector component=apisix --skip-deps -q | yq 'select(.kind == "Deployment" ) | .metadata.namespace'
+
+# Get Postgres namespace
+[group('helpers')]
+_get-postgres-namespace:
+	@helmfile template -f deployment/helmfile.yaml -e local --selector component=postgres --skip-deps -q | yq 'select(.kind == "Deployment") | .metadata.namespace'
+
 # Deploy minikube
 [group('deployment')]
 _minikube namespace='dev':
@@ -190,13 +215,19 @@ deploy cri='k3d' namespace='dev' profile='local':
 		cp -r defaults/deployment deployment; \
 	fi
 	@( timeout 30 bash -c 'until kubectl get ns {{namespace}} >/dev/null 2>&1; do sleep 1; done'; \
+	KEYCLOAK_NS=$( \
+		helmfile template \
+		-f deployment/helmfile.yaml \
+		-e {{profile}} \
+		--selector component=keycloak -q | \
+		yq eval -r 'select(.kind == "StatefulSet" and .metadata.name == "keycloak-app-keycloakx") | .metadata.namespace'); \
 	kubectl create secret generic keycloak-smtp \
 		--from-literal=host='smtp.example.com' \
 		--from-literal=port='587' \
 		--from-literal=from='noreply@example.com' \
 		--from-literal=user='noreply@example.com' \
 		--from-literal=password='YOUR_SMTP_PASSWORD' \
-		-n {{namespace}} ) &
+		-n ${KEYCLOAK_NS} ) &
 	@helmfile -f deployment/helmfile.yaml sync -e {{profile}}
 
 # Remove local cluster
@@ -285,13 +316,12 @@ install-dependencies:
 # Get Admin Credentials
 [group('helpers')]
 get-admin-credentials:
-    NS=$(yq '.global.instanceSlug' defaults/environment/global.yaml); \
-    APISIX_PASSWORD=$(kubectl get secret -n "$NS" apisix-admin-credentials -o jsonpath='{.data.admin}' | base64 -d && echo); \
+    @APISIX_PASSWORD=$(kubectl get secret -n "$(just _get-apisix-namespace)" apisix-admin-credentials -o jsonpath='{.data.admin}' | base64 -d && echo); \
     KEYCLOAK_USERNAME=$(yq '.global.initialUserEmail' defaults/environment/global.yaml | cut -d '@' -f 1); \
-    KEYCLOAK_PASSWORD=$(kubectl get secret -n "$NS" keycloak-admin-user -o jsonpath='{.data.password}' | base64 -d && echo); \
-    POSTGRES_USER=$(kubectl get secret -n "$NS" postgres-cluster-superuser -o jsonpath='{.data.username}' | base64 -d && echo); \
-    POSTGRES_PASSWORD=$(kubectl get secret -n "$NS" postgres-cluster-superuser -o jsonpath='{.data.password}' | base64 -d && echo); \
-    TESTUSER_USERNAME="test@$(yq '.global.domain' defaults/environment/global.yaml)"; \
+    KEYCLOAK_PASSWORD=$(kubectl get secret -n "$(just _get-keycloak-namespace)" keycloak-admin-user -o jsonpath='{.data.password}' | base64 -d && echo); \
+    POSTGRES_USER=$(kubectl get secret -n "$(just _get-postgres-namespace)" postgres-cluster-superuser -o jsonpath='{.data.username}' | base64 -d && echo); \
+    POSTGRES_PASSWORD=$(kubectl get secret -n "$(just _get-postgres-namespace)" postgres-cluster-superuser -o jsonpath='{.data.password}' | base64 -d && echo); \
+    TESTUSER_USERNAME="test@$(just _get-domain)"; \
     TESTUSER_PASSWORD="TestTest1234!"; \
     echo "APISix Admin Password: $APISIX_PASSWORD"; \
     echo "Keycloak Admin Username: $KEYCLOAK_USERNAME"; \
@@ -300,9 +330,9 @@ get-admin-credentials:
     echo "Postgres Password: $POSTGRES_PASSWORD"; \
     echo "Test User Username: $TESTUSER_USERNAME"; \
     echo "Test User Password: $TESTUSER_PASSWORD"; \
-    if kubectl get secret -n "$NS" devicemanagement-db-credentials >/dev/null 2>&1; then \
-        DEVICEMGMT_USER=$(kubectl get secret -n "$NS" devicemanagement-db-credentials -o jsonpath='{.data.username}' | base64 -d && echo); \
-        DEVICEMGMT_PASSWORD=$(kubectl get secret -n "$NS" devicemanagement-db-credentials -o jsonpath='{.data.password}' | base64 -d && echo); \
+    if kubectl get secret -n "$(just _get-postgres-namespace)" devicemanagement-db-credentials >/dev/null 2>&1; then \
+        DEVICEMGMT_USER=$(kubectl get secret -n "$(just _get-postgres-namespace)" devicemanagement-db-credentials -o jsonpath='{.data.username}' | base64 -d && echo); \
+        DEVICEMGMT_PASSWORD=$(kubectl get secret -n "$(just _get-postgres-namespace)" devicemanagement-db-credentials -o jsonpath='{.data.password}' | base64 -d && echo); \
         echo "Device-Management DB User: $DEVICEMGMT_USER"; \
         echo "Device-Management DB Password: $DEVICEMGMT_PASSWORD"; \
     fi
@@ -459,8 +489,8 @@ create-test-user profile='local':
 
     # Read configuration from global.yaml
     NS=$(helmfile template -f deployment/helmfile.yaml -e local --selector component=keycloak --skip-deps -q | yq 'select(.kind == "StatefulSet") | .metadata.namespace')
-    DOMAIN=$(yq '.global.domain' defaults/environment/global.yaml)
-    REALM=$(yq '.global.instanceSlug' defaults/environment/global.yaml)
+    DOMAIN=$(just _get-domain {{profile}})
+    REALM=$(just _get-keycloak-realm {{profile}})
     TEST_EMAIL="test@$DOMAIN"
     TEST_PASSWORD="TestTest1234!"
 

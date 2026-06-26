@@ -38,7 +38,7 @@ env: &env-override
   JAVA_OPTS:
     value: '$(JAVA_OPTS_DEFAULT) -XshowSettings:system'
   PGCONFIG_HOST:
-    value: {{ .Values.databases.geoserver.host }}
+    value: {{ .Values.databases.geoserver.hostServiceName }}.{{ .Values.postgres.cluster.namespace }}.svc.cluster.local
   PGCONFIG_PORT:
     value: "{{ .Values.databases.geoserver.port }}"
   PGCONFIG_DATABASE:
