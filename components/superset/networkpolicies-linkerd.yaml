@@ -1,8 +1,8 @@
 ---
-valkey:
+superset-allow-linkerd:
   podSelector:
-    app.kubernetes.io/instance: valkey-valkey
-    app.kubernetes.io/name: valkey
+    app.kubernetes.io/instance: superset-superset
+    app.kubernetes.io/name: superset
   policyTypes:
     - Ingress
   ingress:
@@ -10,15 +10,16 @@ valkey:
         - podSelector:
             matchLabels:
               app.kubernetes.io/name: valkey
-          componentNamespace: valkey
         - podSelector:
             matchLabels:
               app: superset
-          componentNamespace: superset
         - podSelector:
             matchLabels:
               app: superset-worker
-          componentNamespace: superset
       ports:
-        - port: 6379
+        - port: 4143
+          protocol: TCP
+        - port: 4190
+          protocol: TCP
+        - port: 4191
           protocol: TCP

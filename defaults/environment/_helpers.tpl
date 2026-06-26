@@ -22,7 +22,7 @@
     {{- end }}
     {{- if isFile $filePath -}}
       {{- $content := readFile $filePath -}}
-      {{- if and $global (hasSuffix ".gotmpl" $file) -}}
+      {{- if $global -}}
         {{- tpl $content $global | fromYaml | toYaml | nindent 0 }}
       {{- else -}}
         {{- $content | fromYaml | toYaml | nindent 2 }}

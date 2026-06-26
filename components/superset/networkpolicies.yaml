@@ -1,5 +1,5 @@
 ---
-valkey:
+superset:
   podSelector:
     app.kubernetes.io/instance: valkey-valkey
     app.kubernetes.io/name: valkey

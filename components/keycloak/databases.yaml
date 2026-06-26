@@ -7,6 +7,5 @@ keycloak:
     name: 'db-keycloak'
     key: 'password'
     generate: true
-  # TODO: different namespace does not yet work. Namespace of the cluster is not known, when rendering this.
-  host: 'postgres-cluster-rw'
+  hostServiceName: 'postgres-cluster-rw'
   port: 5432

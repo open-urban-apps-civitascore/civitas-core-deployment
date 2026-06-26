@@ -12,6 +12,13 @@ bases:
 {{- range $component := ($root.components | default list) }}
   {{- if ne $component "namespaces" }}
     {{- $componentValues := index $root $component | default dict }}
+    {{- if eq (len $componentValues) 0 }}
+      {{- range $rootKey, $rootVal := $root }}
+        {{- if and (kindIs "map" $rootVal) (eq ($rootKey | kebabcase) ($component | kebabcase)) }}
+          {{- $componentValues = $rootVal }}
+        {{- end }}
+      {{- end }}
+    {{- end }}
     {{- range $partName, $partValues := $componentValues }}
       {{- if and (kindIs "map" $partValues) (hasKey $partValues "namespace") (or (not (hasKey $partValues "enabled")) (index $partValues "enabled")) }}
         {{- $namespace := index $partValues "namespace" }}

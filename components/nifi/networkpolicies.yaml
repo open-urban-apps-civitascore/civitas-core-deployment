@@ -9,17 +9,21 @@ nifi:
         - podSelector:
             matchLabels:
               app.kubernetes.io/name: apisix
+          componentNamespace: apisix
     - from:
         - podSelector:
             matchLabels:
               app.kubernetes.io/name: config-adapter
               app.kubernetes.io/instance: config-adapters-adapters
+          componentNamespace: config-adapters
     - from:
         - podSelector:
             matchLabels:
               app.kubernetes.io/name: nifi-bootstrap
               app.kubernetes.io/instance: nifi-bootstrap
+          componentNamespace: nifi
     - from:
         - podSelector:
             matchLabels:
               app.kubernetes.io/instance: nifi-nifi
+          componentNamespace: nifi

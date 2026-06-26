@@ -2,3 +2,4 @@
 tests/.venv
 deployment
 .env
+.gitlab-ci-local/
