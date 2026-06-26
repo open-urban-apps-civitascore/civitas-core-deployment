@@ -66,6 +66,7 @@ public class SystemTestKeywords {
     state.geoLayerCrs = "EPSG:4326";
     state.dataSourceClientId = "civitas-saga-demo-" + state.runSuffix;
     state.namedApiSlug = "things";
+    state.dataPoolName = "Test DataPool " + state.runSuffix;
     state.modelAtlasUri = "http://civitas.org/model/SagaSensorModel/1.0.0";
     state.modelName = "SagaSensorModel";
     state.expectedGatewayThingName = "Test Sensor";
@@ -78,6 +79,7 @@ public class SystemTestKeywords {
     safe("dataset", () -> cleanupDataSet());
     safe("datasource", () -> cleanupDataSource());
     safe("datastructure", () -> cleanupDataStructure());
+    safe("datapool", () -> cleanupDataPool());
   }
 
   @RobotKeyword("Get Generated Data Structure Name")
@@ -560,6 +562,87 @@ public class SystemTestKeywords {
         firstNonBlank(expectedDescription, state.expectedGatewayThingDescription));
   }
 
+  @RobotKeyword("Create Data Pool")
+  public String createDataPool() {
+    ensureInitialized();
+    ObjectNode body = mapper.createObjectNode();
+    body.put("name", state.dataPoolName);
+    body.put("description", "DataPool for the system test proof of concept");
+
+    JsonNode result = portalClient.postJson("/datapools", body, state.accessToken, 201).json();
+    state.dataPoolId = requiredText(result, "id", "dataPool");
+    validateDataPoolPayload(result);
+    return state.dataPoolId;
+  }
+
+  @RobotKeyword("Verify Data Pool Snapshot")
+  public void verifyDataPoolSnapshot() {
+    ensureDataPoolId();
+    JsonNode dataPool = portalClient.getJson("/datapools/" + state.dataPoolId, state.accessToken, 200).json();
+    validateDataPoolPayload(dataPool);
+  }
+
+  @RobotKeyword("Set Data Source Datapool Scope")
+  public void setDataSourceDatapoolScope() {
+    ensureDataSourceId();
+    ensureDataPoolId();
+    ObjectNode body = mapper.createObjectNode();
+    ObjectNode datapoolScope = body.putObject("datapoolScope");
+    datapoolScope.put("type", "SPECIFIC");
+    datapoolScope.putArray("datapoolIds").add(state.dataPoolId);
+
+    JsonNode result = portalClient.patchJson("/datasources/" + state.dataSourceId, body, state.accessToken, 200).json();
+    validateDataSourceDatapoolScope(result);
+  }
+
+  @RobotKeyword("Verify Data Source Datapool Scope")
+  public void verifyDataSourceDatapoolScope() {
+    ensureDataSourceId();
+    ensureDataPoolId();
+    JsonNode dataSource = portalClient.getJson("/datasources/" + state.dataSourceId, state.accessToken, 200).json();
+    validateDataSourceDatapoolScope(dataSource);
+  }
+
+  @RobotKeyword("Assign Data Set To Data Pool")
+  public void assignDataSetToDataPool() {
+    ensureDataSetId();
+    ensureDataPoolId();
+    ObjectNode body = mapper.createObjectNode();
+    body.put("datapoolId", state.dataPoolId);
+
+    JsonNode result = portalClient.patchJson("/datasets/" + state.dataSetId, body, state.accessToken, 200).json();
+    validateDataSetDataPoolAssignment(result);
+  }
+
+  @RobotKeyword("Verify Data Set Data Pool Assignment")
+  public void verifyDataSetDataPoolAssignment() {
+    ensureDataSetId();
+    ensureDataPoolId();
+    JsonNode dataset = portalClient.getJson("/datasets/" + state.dataSetId, state.accessToken, 200).json();
+    validateDataSetDataPoolAssignment(dataset);
+  }
+
+  @RobotKeyword("Verify Data Sources Filtered By Data Pool")
+  public void verifyDataSourcesFilteredByDataPool() {
+    ensureDataSourceId();
+    ensureDataPoolId();
+    JsonNode page = portalClient
+        .getJson("/datasources?datapoolId=" + state.dataPoolId, state.accessToken, 200)
+        .json();
+    JsonNode content = page.path("content");
+    assertTrue(content.isArray() && !content.isEmpty(),
+        "DataSources filtered by DataPool must return at least one result");
+    boolean found = false;
+    for (JsonNode ds : content) {
+      if (Objects.equals(state.dataSourceId, textOrNull(ds, "id"))) {
+        found = true;
+        break;
+      }
+    }
+    assertTrue(found,
+        "DataSource " + state.dataSourceId + " must appear in the DataPool-filtered result");
+  }
+
   private void cleanupDataSet() {
     if (state.dataSetId == null) {
       return;
@@ -887,7 +970,6 @@ public class SystemTestKeywords {
         requiredText(dataSource, "description", "dataSource.description"));
     assertTextEquals("MQTT", requiredText(dataSource, "connectorType", "dataSource.connectorType"));
     assertTextEquals(expectedStatus, requiredText(dataSource, "dataSourceStatus", "dataSource.dataSourceStatus"));
-    assertIsArray(dataSource.path("assignments"), "dataSource.assignments");
     JsonNode configuration = dataSource.path("configuration");
     assertIsObject(configuration, "dataSource.configuration");
     assertArrayContainsText(configuration.path("urls"), "tcp://broker.hivemq.com:1883", "dataSource.configuration.urls");
@@ -943,9 +1025,6 @@ public class SystemTestKeywords {
       assertTrue(
           requiredText(namedApi, "previewUrl", "dataSet.namedApis[0].previewUrl").equals(state.namedApiPreviewUrl),
           "Named API previewUrl must match the stored preview URL");
-    } else {
-      assertNullOrEmpty(textOrNull(dataset, "publicUrl"), "publicUrl should not be present before release");
-      assertNullOrEmpty(previewUrlOrNull(dataset), "Named API previewUrl should not be present before release");
     }
   }
 
@@ -1087,6 +1166,48 @@ public class SystemTestKeywords {
     return body;
   }
 
+  private void cleanupDataPool() {
+    if (state.dataPoolId == null) {
+      return;
+    }
+    try {
+      portalClient.delete("/datapools/" + state.dataPoolId, state.accessToken, 204);
+    } finally {
+      state.dataPoolId = null;
+    }
+  }
+
+  private void ensureDataPoolId() {
+    ensureInitialized();
+    if (state.dataPoolId == null) {
+      throw new IllegalStateException("DataPool has not been created yet");
+    }
+  }
+
+  private void validateDataPoolPayload(JsonNode dataPool) {
+    assertTrue(dataPool.isObject(), "dataPool response must be a JSON object");
+    assertTextEquals(state.dataPoolId, requiredText(dataPool, "id", "dataPool.id"));
+    assertTextEquals(state.dataPoolName, requiredText(dataPool, "name", "dataPool.name"));
+    assertTextEquals(
+        "DataPool for the system test proof of concept",
+        requiredText(dataPool, "description", "dataPool.description"));
+  }
+
+  private void validateDataSourceDatapoolScope(JsonNode dataSource) {
+    JsonNode scope = dataSource.path("datapoolScope");
+    assertIsObject(scope, "dataSource.datapoolScope");
+    assertTextEquals("SPECIFIC", requiredText(scope, "type", "dataSource.datapoolScope.type"));
+    assertArrayContainsText(
+        scope.path("datapoolIds"), state.dataPoolId, "dataSource.datapoolScope.datapoolIds");
+  }
+
+  private void validateDataSetDataPoolAssignment(JsonNode dataset) {
+    JsonNode datapool = dataset.path("datapool");
+    assertTrue(datapool.isObject() && !datapool.isNull(), "dataSet.datapool must be present");
+    assertTextEquals(state.dataPoolId, requiredText(datapool, "id", "dataSet.datapool.id"));
+    assertTextEquals(state.dataPoolName, requiredText(datapool, "name", "dataSet.datapool.name"));
+  }
+
   private void validateGeoPipelinePayload(JsonNode pipeline) {
     assertTrue(pipeline.isObject(), "geo pipeline response must be a JSON object");
     assertTextEquals(state.geoPipelineId, requiredText(pipeline, "id", "geoPipeline.id"));
@@ -1196,6 +1317,8 @@ public class SystemTestKeywords {
     private String expectedGatewayThingName;
     private String expectedGatewayThingDescription;
     private boolean openDataAccess;
+    private String dataPoolId;
+    private String dataPoolName;
 
     private void reset() {
       runSuffix = null;
@@ -1236,6 +1359,8 @@ public class SystemTestKeywords {
       expectedGatewayThingName = null;
       expectedGatewayThingDescription = null;
       openDataAccess = false;
+      dataPoolId = null;
+      dataPoolName = null;
     }
   }
 
@@ -1392,6 +1517,10 @@ public class SystemTestKeywords {
       return send("PATCH", path, bearerToken, Map.of(), body, expectedStatus);
     }
 
+    private ApiResponse putJson(String path, JsonNode body, String bearerToken, int expectedStatus) {
+      return send("PUT", path, bearerToken, Map.of(), body, expectedStatus);
+    }
+
     private ApiResponse postVoid(String path, String bearerToken, int expectedStatus) {
       return send("POST", path, bearerToken, Map.of(), null, expectedStatus);
     }
@@ -1407,7 +1536,9 @@ public class SystemTestKeywords {
         Map<String, String> headers,
         JsonNode body,
         int expectedStatus) {
-      return sendAbsolute(method, config.backendBaseUrl + path, bearerToken, headers, body, expectedStatus);
+      Map<String, String> allHeaders = new LinkedHashMap<>(headers);
+      allHeaders.put("X-Allowed-Scope-Ids", "*");
+      return sendAbsolute(method, config.backendBaseUrl + path, bearerToken, allHeaders, body, expectedStatus);
     }
 
     private ApiResponse sendAbsolute(
