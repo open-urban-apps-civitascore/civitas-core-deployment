@@ -4,7 +4,7 @@ bases:
 ---
 {{- $root := .Values }}
 {{- $linkerdEnabled := and ($root.global.serviceMesh.enable | default false) (eq ($root.global.serviceMesh.type | default "") "linkerd") }}
-{{- $failureAction := $root.global.runtimePolicies.failureAction | default "Audit" }}
+{{- $failureAction := index ($root.global.runtimePolicies | default dict) "failureAction" | default "Audit" }}
 {{- $enabled := index ($root.global.runtimePolicies | default dict) "enabled" | default false }}
 
 releases:

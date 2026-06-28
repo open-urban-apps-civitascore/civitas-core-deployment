@@ -175,10 +175,13 @@ deploy-production:
     # 3. Bootstrap Linkerd inside the vcluster (idempotent — no-op on re-run).
     - ./scripts/ci/install-linkerd-if-missing.sh
 
-    # 4. Pre-create the keycloak-smtp secret before helmfile syncs keycloak.
+    # 4. Bootstrap Kyverno inside the vcluster (idempotent — no-op on re-run).
+    - ./scripts/ci/install-kyverno-if-missing.sh
+
+    # 5. Pre-create the keycloak-smtp secret before helmfile syncs keycloak.
     - *create-keycloak-smtp-secret
 
-    # 5. Deploy the platform.
+    # 6. Deploy the platform.
     - helmfile -f ./deployment/ sync -e smoke-test
 
 deploy-smoke-test-branch:
