@@ -9,6 +9,9 @@
 #   LINKERD_ISSUER_CRT_PEM    - Issuer certificate (PEM)
 #   LINKERD_ISSUER_KEY_PEM    - Issuer private key (PEM)
 
+# "linkerd-edge" is the only free distribution channel since Linkerd dropped open-source stable
+# releases in 2024. Despite the name, edge releases are versioned, tested, and production-ready —
+# the project explicitly marks individual releases as RECOMMENDED on https://github.com/linkerd/linkerd2/releases.
 repositories:
   - name: linkerd-edge
     url: https://helm.linkerd.io/edge
@@ -19,7 +22,7 @@ releases:
     namespace: linkerd
     createNamespace: true
     chart: linkerd-edge/linkerd-crds
-    version: 2025.4.2
+    version: 2026.5.1
     wait: true
     waitForJobs: true
 
@@ -27,7 +30,7 @@ releases:
   - name: linkerd-control-plane
     namespace: linkerd
     chart: linkerd-edge/linkerd-control-plane
-    version: 2025.4.2
+    version: 2026.5.1
     needs:
       - linkerd/linkerd-crds
     wait: true
