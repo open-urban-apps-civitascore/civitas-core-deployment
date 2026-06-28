@@ -2,8 +2,8 @@
 postgres:
   operator:
     enabled: true
-    namespace: {{ include "civitas.namespace" (dict "global" .Values.global "suffix" "postgres") }}
-    clusterWide: false
+    namespace: {{ include "civitas.operatorNamespace" (dict "global" .Values.global "suffix" "postgres" "deployLayer" .Values.deployLayer) }}
+    clusterWide: {{ (.Values.global.operators | default dict).watchAllNamespaces | default false }}
   cluster:
     enabled: true
     namespace: {{ include "civitas.namespace" (dict "global" .Values.global "suffix" "postgres") }}

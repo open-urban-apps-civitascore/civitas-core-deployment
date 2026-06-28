@@ -1,4 +1,10 @@
 ---
+# Internal orchestration flag (do not edit here). Set by the dedicated entrypoints:
+#   ""         -> deploy everything in one pass (legacy single-instance behaviour)
+#   "operators"-> only the shared cluster operators (deployment/helmfile-operators.yaml)
+#   "instance" -> everything except the operators (deployment/helmfile-instance.yaml.gotmpl)
+deployLayer: ''
+
 global:
   # The DNS domain for all services
   # e.g. this would build the keycloak domain: idm.civitas.test
@@ -21,6 +27,26 @@ global:
   #   true  = all components in a single namespace (e.g. "dev")
   #   false = each component in its own namespace (e.g. "dev-postgres", "dev-keycloak")
   singleNamespace: true
+
+  # Shared cluster operators (CloudNativePG, Strimzi).
+  # Enables running the operators ONCE per cluster while deploying arbitrarily
+  # many instances.
+  operators:
+    # Namespace for the shared cluster operators. Override it per environment by setting
+    # this key in deployment/environments/<env>/global.yaml.gotmpl; both the operator and
+    # the instance entrypoints read the same value, so they always agree.
+    #   "" (this default):
+    #     - multi-instance (deploy-operators / deploy-instance) -> resolves to the
+    #       built-in default namespace "civitas-operators"
+    #     - legacy all-in-one deployment                        -> operators run in the
+    #       instance namespace (single-instance behaviour)
+    #   "<name>": use this exact namespace for the shared operators.
+    # When set, it must differ from every instanceSlug used on the cluster.
+    namespace: ''
+    # true -> operators watch ALL namespaces (CNPG clusterWide, Strimzi watchAnyNamespace),
+    # so a single operator deployment serves every instance on the cluster.
+    # The operator entrypoint sets this automatically; leave it false here.
+    watchAllNamespaces: false
 
   # Service mesh configuration
   serviceMesh:

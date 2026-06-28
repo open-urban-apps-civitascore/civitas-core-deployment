@@ -6,10 +6,13 @@ postgres-allow-linkerd:
     - Ingress
   ingress:
     - from:
+        # CloudNative-PG operator: allow from ALL namespaces. The shared operator runs in a
+        # separate namespace in the multi-instance model and in the instance namespace in
+        # legacy mode; the podSelector keeps the peer restricted to the cnpg operator pod.
         - podSelector:
             matchLabels:
               app.kubernetes.io/name: cloudnative-pg
-          componentNamespace: postgres
+          namespaceSelector: {}
         - podSelector:
             matchLabels:
               app.kubernetes.io/name: portal

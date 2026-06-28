@@ -51,6 +51,35 @@ _get-apisix-namespace:
 _get-postgres-namespace:
 	@helmfile template -f deployment/helmfile.yaml -e local --selector component=postgres --skip-deps -q | yq 'select(.kind == "Deployment") | .metadata.namespace'
 
+# Deploy the shared cluster operators (CloudNativePG, Strimzi) ONCE per cluster.
+# Run this before deploying any instances; re-running is idempotent.
+[group('deployment')]
+deploy-operators environment='local':
+	echo "Deploying shared cluster operators in environment: {{environment}}"
+	helmfile -f ./deployment/helmfile-operators.yaml sync -e {{environment}}
+
+# Deploy a single instance (everything except the shared operators). The shared operators
+# must already be running (see deploy-operators). Optionally override the instance slug
+# (namespace + Keycloak realm) ad-hoc; otherwise the environment's instanceSlug is used.
+[group('deployment')]
+deploy-instance environment='local' slug='':
+	if [ -n "{{slug}}" ]; then \
+		echo "Deploying instance '{{slug}}' in environment: {{environment}}"; \
+		helmfile -f ./deployment/helmfile-instance.yaml.gotmpl sync -e {{environment}} --state-values-set instanceSlug={{slug}}; \
+	else \
+		echo "Deploying instance in environment: {{environment}}"; \
+		helmfile -f ./deployment/helmfile-instance.yaml.gotmpl sync -e {{environment}}; \
+	fi
+
+# Destroy a single instance (everything except the shared operators)
+[group('deployment')]
+destroy-instance environment='local' slug='':
+	if [ -n "{{slug}}" ]; then \
+		helmfile -f ./deployment/helmfile-instance.yaml.gotmpl destroy -e {{environment}} --state-values-set instanceSlug={{slug}}; \
+	else \
+		helmfile -f ./deployment/helmfile-instance.yaml.gotmpl destroy -e {{environment}}; \
+	fi
+
 # Deploy minikube
 [group('deployment')]
 _minikube namespace='dev':
@@ -186,6 +215,20 @@ template environment='local' component='all':
 [group('helpers')]
 template-component environment='local' component='':
 	helmfile -f ./deployment/helmfile.yaml template -e {{environment}} --selector component={{component}}
+
+# Render the shared operator layer (deploy-operators)
+[group('helpers')]
+template-operators environment='local':
+	helmfile -f ./deployment/helmfile-operators.yaml template -e {{environment}}
+
+# Render a single instance layer (deploy-instance); optional ad-hoc slug override
+[group('helpers')]
+template-instance environment='local' slug='':
+	if [ -n "{{slug}}" ]; then \
+		helmfile -f ./deployment/helmfile-instance.yaml.gotmpl template -e {{environment}} --state-values-set instanceSlug={{slug}}; \
+	else \
+		helmfile -f ./deployment/helmfile-instance.yaml.gotmpl template -e {{environment}}; \
+	fi
 
 # Print APIsix admin password
 [group('helpers')]

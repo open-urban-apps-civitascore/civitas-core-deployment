@@ -1,6 +1,6 @@
 .idea
 tests/.venv
-deployment
+/deployment
 .env
 .gitlab-ci-local/
 __pycache__/

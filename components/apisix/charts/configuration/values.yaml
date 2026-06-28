@@ -23,7 +23,10 @@ routes:
   #   scheme: 'https'  # Optional: set to 'https' for HTTPS upstreams (auto-disables TLS verify)
 
 domain: 'example.com'
-realm: 'civitas'
+# Always overridden per instance (set to global.instanceSlug in
+# values/configuration/base-values.yaml.gotmpl). Empty default => fail fast if the
+# override is ever missing instead of silently using a wrong realm.
+realm: ''
 
 # Container image configuration for the route display job
 image:

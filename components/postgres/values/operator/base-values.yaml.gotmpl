@@ -12,5 +12,9 @@
 # - [ ] Named ports
 # - [ ] Ingress with TLS
 
+# clusterWide=true makes the CNPG operator watch ALL namespaces (empty WATCH_NAMESPACE),
+# so a single shared operator reconciles the Postgres clusters of every instance.
+# Driven by global.operators.watchAllNamespaces via default-environment.yaml.gotmpl;
+# defaults to false (operator watches only its own namespace) for legacy single-instance.
 config:
-  clusterWide: false
+  clusterWide: {{ $this.clusterWide | default false }}
