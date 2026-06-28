@@ -28,6 +28,28 @@ global:
     type: linkerd
     # Auto-inject Linkerd sidecars into namespaces
     patchNamespaces: true
+    # mTLS enforcement level, applied as the namespace's Linkerd
+    # `config.linkerd.io/default-inbound-policy` annotation:
+    #   all-unauthenticated   - opportunistic mTLS (Linkerd default): meshed-to-meshed
+    #                           traffic is encrypted, but plaintext/unmeshed inbound is
+    #                           still accepted.
+    #   cluster-authenticated - mandatory mTLS: only authenticated, meshed clients from
+    #                           within this cluster may connect (recommended).
+    #   all-authenticated     - mandatory mTLS from any valid mesh identity.
+    #   audit                 - log-only; reports what *would* be denied without enforcing
+    #                           (use as a safe rollout step before switching to enforce).
+    # Kubelet liveness/readiness probes are auto-authorized by Linkerd regardless of this
+    # setting. Genuinely public/unmeshed edges (the APISIX data plane behind nginx-ingress)
+    # are carved out explicitly via Linkerd `Server` policies, so mandatory mTLS does not
+    # break ingress.
+    defaultInboundPolicy: cluster-authenticated
+    # Whether the cluster's nginx ingress controller may reach the APISIX data
+    # plane WITHOUT mTLS. This drives the `accessPolicy` of the APISIX `Server`:
+    #   true  - ingress is unmeshed; the data-plane edge is `all-unauthenticated`
+    #           so plaintext ingress traffic is accepted (default).
+    #   false - the ingress controller is meshed; ingress->APISIX is mTLS, so the
+    #           data-plane edge is `all-authenticated` and rejects plaintext.
+    allowUnauthenticatedIngress: true
 
   ingress:
     # Use your available cluster issuer for production, e.g. 'letsencrypt-prod'

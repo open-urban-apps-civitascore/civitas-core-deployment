@@ -1,0 +1,45 @@
+{{- /*
+  Linkerd `Server` scoping the APISIX data-plane edge.
+
+  End-user traffic enters via the cluster's nginx ingress controller. With a
+  mandatory `config.linkerd.io/default-inbound-policy` on the application
+  namespace, inbound traffic on the data-plane port would be rejected unless it
+  carries a valid mesh identity. This `Server` scopes that public port; its
+  `accessPolicy` is driven by `serviceMesh.allowUnauthenticatedIngress`:
+
+    true  -> `all-unauthenticated`: plaintext from an UNMESHED nginx ingress
+             controller is accepted (the ingress edge is authorized explicitly).
+    false -> `all-authenticated`: only authenticated mesh identities may connect,
+             i.e. the nginx ingress controller must itself be meshed (mTLS).
+
+  All other APISIX ports (admin 9180, control 9090, ...) remain governed by the
+  namespace default policy, i.e. mandatory mTLS.
+
+  Equivalent in spirit to the NiFi `Server` resources in
+  components/nifi/charts/nifi-bootstrap/templates/linkerd-server.yaml.
+
+  `with` guards a missing `serviceMesh` value so the chart renders cleanly even
+  when linted/templated in isolation; the inner `default`s keep the resource
+  valid if only `enabled` is supplied.
+*/}}
+{{- with .Values.serviceMesh }}
+{{- if .enabled }}
+{{- /* Resolve the bool explicitly: `| default true` would flip an intentional
+       `false` (Helm treats false as empty), so read the merged value via hasKey. */}}
+{{- $allowUnauthenticated := true }}
+{{- if hasKey . "allowUnauthenticatedIngress" }}{{- $allowUnauthenticated = .allowUnauthenticatedIngress }}{{- end }}
+apiVersion: policy.linkerd.io/v1beta3
+kind: Server
+metadata:
+  name: {{ include "configuration.fullname" $ }}-apisix-gateway
+  labels:
+    {{- include "configuration.labels" $ | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- toYaml (.podSelector | default (dict "app.kubernetes.io/name" "apisix")) | nindent 6 }}
+  port: {{ .dataPlanePort | default 9080 }}
+  proxyProtocol: HTTP/1
+  accessPolicy: {{ if $allowUnauthenticated }}all-unauthenticated{{ else }}all-authenticated{{ end }}
+{{- end }}
+{{- end }}
