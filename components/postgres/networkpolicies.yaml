@@ -10,59 +10,112 @@ postgres:
         - podSelector:
             matchLabels:
               app.kubernetes.io/name: cloudnative-pg
+          componentNamespace: postgres
     - from:
         - podSelector:
             matchLabels:
               cnpg.io/jobRole: join
+          componentNamespace: postgres
     # Portal backend - auto-inject instanceSlug namespace
     - from:
         - podSelector:
             matchLabels:
               app.kubernetes.io/name: portal
+          componentNamespace: portal
         - podSelector:
             matchLabels:
               app.kubernetes.io/component: backend
+          componentNamespace: portal
     # Keycloak - auto-inject instanceSlug namespace
     - from:
         - podSelector:
             matchLabels:
               app.kubernetes.io/instance: keycloak-app
+          componentNamespace: keycloak
     # Authz - auto-inject instanceSlug namespace
     - from:
         - podSelector:
             matchLabels:
               app.kubernetes.io/name: authz-repo
+          componentNamespace: authz
         - podSelector:
             matchLabels:
               app.kubernetes.io/name: authz
+          componentNamespace: authz
     # Frost - auto-inject instanceSlug namespace
     - from:
         - podSelector:
             matchLabels:
               app.kubernetes.io/instance: frost-frost
+          componentNamespace: frost
     # Database role setup jobs - auto-inject instanceSlug namespace
     - from:
         - podSelector:
             matchLabels:
               app.kubernetes.io/component: database-role-setup
+          componentNamespace: postgres
+    # Nifi
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: nifi
+          componentNamespace: nifi
+    # Config adapter
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: config-adapter
+          componentNamespace: config-adapters
     # Portal database job (authz readonly role creation)
     - from:
         - podSelector:
             matchLabels:
               batch.kubernetes.io/job-name: portal-db-create-role-authz-readonly
+          componentNamespace: portal
     # Geoserver
     - from:
         - podSelector:
-          matchLabels:
-            app.kubernetes.io/component: rest
-            app.kubernetes.io/instance: geoserver-geoserver
+            matchLabels:
+              app.kubernetes.io/component: rest
+              app.kubernetes.io/instance: geoserver-geoserver
+          componentNamespace: geoserver
     - from:
         - podSelector:
             matchLabels:
               app.kubernetes.io/component: wcs
               app.kubernetes.io/instance: geoserver-geoserver
+          componentNamespace: geoserver
     - from:
         - podSelector:
             matchLabels:
               app.kubernetes.io/component: wms
               app.kubernetes.io/instance: geoserver-geoserver
+          componentNamespace: geoserver
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/component: wfs
+              app.kubernetes.io/instance: geoserver-geoserver
+          componentNamespace: geoserver
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/component: webui
+              app.kubernetes.io/instance: geoserver-geoserver
+          componentNamespace: geoserver
+    # Superset
+    - from:
+        - podSelector:
+            matchLabels:
+              app: superset
+          componentNamespace: superset
+    - from:
+        - podSelector:
+            matchLabels:
+              app: superset-worker
+          componentNamespace: superset
+    - from:
+        - podSelector:
+            matchLabels:
+              job-name: superset-superset-init-db
+          componentNamespace: superset

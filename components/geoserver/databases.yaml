@@ -7,7 +7,9 @@ geoserver:
     name: 'db-geoserver'
     key: 'password'
     generate: true # indicates that this value should be generated
-  host: 'postgres-cluster-rw' # set to external hostname, if an external database is used
+  # TODO: hostServiceName may break external databases,
+  # as it is used to construct the hostname for the database connection.
+  hostServiceName: 'postgres-cluster-rw' # set to external hostname, if an external database is used
   port: 5432
 payload_data:
   name: 'payload_data'
@@ -17,7 +19,7 @@ payload_data:
     name: 'db-payload-data'
     key: 'password'
     generate: true
-  host: 'postgres-cluster-rw'
+  hostServiceName: 'postgres-cluster-rw'
   port: 5432
   extensions:
     - name: postgis

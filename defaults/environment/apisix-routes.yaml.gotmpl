@@ -1,2 +1,2 @@
 routes:
-  {{ include "civitas.configFiles" (dict "components" .Values.components "file" "apisix-routes.yaml") }}
+{{ include "civitas.configFiles" (dict "components" .Values.components "file" "apisix-routes.yaml" "global" .) | nindent 2 }}

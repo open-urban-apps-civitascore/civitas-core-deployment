@@ -1,0 +1,8 @@
+---
+superset:
+  name: Superset
+  description: CIVITAS Superset Application
+  subdomain: dashboard
+  redirectPath: /oauth-authorized/keycloak
+  additionalRedirectPaths:
+    - /

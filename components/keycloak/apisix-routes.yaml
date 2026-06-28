@@ -2,6 +2,6 @@
 keycloak:
   name: keycloak
   description: Keycloak API
-  upstream: keycloak-app-keycloakx-http:80
+  upstream: keycloak-app-keycloakx-http.{{ include "civitas.namespace" (dict "global" .Values.global "suffix" "keycloak") }}.svc.cluster.local:80 # yamllint disable-line rule:line-length
   subDomain: idm
   uri: '/*'

@@ -7,7 +7,7 @@ portal:
     name: 'db-portal'
     key: 'password'
     generate: true
-  host: 'postgres-cluster-rw'
+  hostServiceName: 'postgres-cluster-rw'
   port: 5432
   additionalRoles:
     - name: 'authz'

@@ -1,0 +1,5 @@
+---
+valkey:
+  valkey:
+    enabled: true
+    namespace: {{ include "civitas.namespace" (dict "global" .Values.global "suffix" "valkey") }}

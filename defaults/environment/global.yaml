@@ -14,12 +14,12 @@ global:
   # Controls resource limits, replica counts, scaling
   profile: development
 
-  # Whether Helmfile should create the namespace automatically
+  # Whether Helmfile should create the namespaces automatically
   createNamespaces: true
 
   # Namespace strategy:
   #   true  = all components in a single namespace (e.g. "dev")
-  #   false = each component in its own namespace (e.g. "dev-postgres", "dev-keycloak"; currently not supported)
+  #   false = each component in its own namespace (e.g. "dev-postgres", "dev-keycloak")
   singleNamespace: true
 
   # Service mesh configuration
@@ -62,10 +62,10 @@ components:
   - keycloak
   - authz
   - apisix
-  - apicurio
   - frost
-  - model-atlas
   - nifi
   - config-adapters
   - portal
   - geoserver
+  - valkey
+  - superset

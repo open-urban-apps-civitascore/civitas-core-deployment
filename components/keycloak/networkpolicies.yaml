@@ -9,12 +9,26 @@ keycloak:
         - podSelector:
             matchLabels:
               app.kubernetes.io/name: apisix
+          componentNamespace: apisix
         - podSelector:
             matchLabels:
               app.kubernetes.io/name: config-adapter
+          componentNamespace: config-adapters
         - podSelector:
             matchLabels:
               app.kubernetes.io/name: keycloak-config-cli
+          componentNamespace: keycloak
         - podSelector:
             matchLabels:
               app.kubernetes.io/name: nifi-bootstrap
+          componentNamespace: nifi
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/instance: keycloak-app
+          componentNamespace: keycloak
+      ports:
+        - protocol: TCP
+          port: 7800
+        - protocol: TCP
+          port: 57800

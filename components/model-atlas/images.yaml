@@ -1,9 +1,0 @@
----
-modelAtlas:
-  app:
-    repository: eclipsefennec/model.atlas
-    tag: 'apicurio-0.0.1'
-    # TODO: check tag schema and add it to renovate.json
-  init:
-    repository: busybox
-    tag: '1.37'
