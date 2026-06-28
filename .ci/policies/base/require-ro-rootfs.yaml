@@ -1,4 +1,10 @@
 ---
+# upstream content is vendored verbatim, so long lines are tolerated:
+# yamllint disable rule:line-length
+# Vendored from github.com/kyverno/policies
+# path: best-practices/require-ro-rootfs/require-ro-rootfs.yaml
+# ref: 76be98a25d49ae01278a94ecde8f50f9e08577ef
+# Do not edit by hand; re-run .ci/policies/vendor-upstream-policies.sh instead.
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
 metadata:

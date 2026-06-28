@@ -3,3 +3,4 @@ tests/.venv
 deployment
 .env
 .gitlab-ci-local/
+__pycache__/
