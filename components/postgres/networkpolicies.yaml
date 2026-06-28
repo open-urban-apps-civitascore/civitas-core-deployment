@@ -25,12 +25,14 @@ postgres:
         - podSelector:
             matchLabels:
               app.kubernetes.io/component: backend
+              app.kubernetes.io/name: portal
           componentNamespace: portal
     # Keycloak - auto-inject instanceSlug namespace
     - from:
         - podSelector:
             matchLabels:
               app.kubernetes.io/instance: keycloak-app
+              app.kubernetes.io/name: keycloakx
           componentNamespace: keycloak
     # Authz - auto-inject instanceSlug namespace
     - from:
@@ -47,12 +49,14 @@ postgres:
         - podSelector:
             matchLabels:
               app.kubernetes.io/instance: frost-frost
+              app: frost-server
           componentNamespace: frost
     # Database role setup jobs - auto-inject instanceSlug namespace
     - from:
         - podSelector:
             matchLabels:
               app.kubernetes.io/component: database-role-setup
+              app.kubernetes.io/name: databases
           componentNamespace: postgres
     # Nifi
     - from:
@@ -78,41 +82,48 @@ postgres:
             matchLabels:
               app.kubernetes.io/component: rest
               app.kubernetes.io/instance: geoserver-geoserver
+              app.kubernetes.io/name: gsc
           componentNamespace: geoserver
     - from:
         - podSelector:
             matchLabels:
               app.kubernetes.io/component: wcs
               app.kubernetes.io/instance: geoserver-geoserver
+              app.kubernetes.io/name: gsc
           componentNamespace: geoserver
     - from:
         - podSelector:
             matchLabels:
               app.kubernetes.io/component: wms
               app.kubernetes.io/instance: geoserver-geoserver
+              app.kubernetes.io/name: gsc
           componentNamespace: geoserver
     - from:
         - podSelector:
             matchLabels:
               app.kubernetes.io/component: wfs
               app.kubernetes.io/instance: geoserver-geoserver
+              app.kubernetes.io/name: gsc
           componentNamespace: geoserver
     - from:
         - podSelector:
             matchLabels:
               app.kubernetes.io/component: webui
               app.kubernetes.io/instance: geoserver-geoserver
+              app.kubernetes.io/name: gsc
           componentNamespace: geoserver
     # Superset
     - from:
         - podSelector:
             matchLabels:
               app: superset
+              release: superset-superset
           componentNamespace: superset
     - from:
         - podSelector:
             matchLabels:
               app: superset-worker
+              release: superset-superset
           componentNamespace: superset
     - from:
         - podSelector:

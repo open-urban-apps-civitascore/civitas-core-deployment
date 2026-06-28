@@ -17,10 +17,12 @@ postgres-allow-linkerd:
         - podSelector:
             matchLabels:
               app.kubernetes.io/component: backend
+              app.kubernetes.io/name: portal
           componentNamespace: portal
         - podSelector:
             matchLabels:
               app.kubernetes.io/instance: keycloak-app
+              app.kubernetes.io/name: keycloakx
           componentNamespace: keycloak
         - podSelector:
             matchLabels:
@@ -33,10 +35,12 @@ postgres-allow-linkerd:
         - podSelector:
             matchLabels:
               app.kubernetes.io/instance: frost-frost
+              app: frost-server
           componentNamespace: frost
         - podSelector:
             matchLabels:
               app.kubernetes.io/component: database-role-setup
+              app.kubernetes.io/name: databases
           componentNamespace: postgres
         - podSelector:
             matchLabels:
@@ -45,10 +49,12 @@ postgres-allow-linkerd:
         - podSelector:
             matchLabels:
               app: superset
+              release: superset-superset
           componentNamespace: superset
         - podSelector:
             matchLabels:
               app: superset-worker
+              release: superset-superset
           componentNamespace: superset
         - podSelector:
             matchLabels:

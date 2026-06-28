@@ -26,6 +26,7 @@ keycloak:
         - podSelector:
             matchLabels:
               app.kubernetes.io/instance: keycloak-app
+              app.kubernetes.io/name: keycloakx
           componentNamespace: keycloak
       ports:
         - protocol: TCP

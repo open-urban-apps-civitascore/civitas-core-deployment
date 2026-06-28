@@ -41,6 +41,7 @@ config-adapter-egress:
         - podSelector:
             matchLabels:
               app.kubernetes.io/instance: keycloak-app
+              app.kubernetes.io/name: keycloakx
           componentNamespace: keycloak
       ports:
         - port: 8080
@@ -51,6 +52,7 @@ config-adapter-egress:
         - podSelector:
             matchLabels:
               app.kubernetes.io/instance: frost-frost
+              app: frost-server
           componentNamespace: frost
       ports:
         - port: 8080
@@ -101,6 +103,7 @@ config-adapter-egress:
         - podSelector:
             matchLabels:
               app.kubernetes.io/instance: nifi-nifi
+              app.kubernetes.io/name: nifi
           componentNamespace: nifi
       ports:
         - port: 8443
