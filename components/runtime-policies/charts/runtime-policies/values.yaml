@@ -1,0 +1,9 @@
+---
+operators:
+  enabled: true
+
+linkerd:
+  enabled: true
+
+# Kyverno failureAction for all policies: Audit (log only) or Enforce (block)
+failureAction: Audit

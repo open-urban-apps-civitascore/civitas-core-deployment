@@ -1,0 +1,5 @@
+{{- if .Values.operators.enabled }}
+{{ .Files.Get "files/protect-operator-owned-labels.yaml" | replace "KYVERNO_FAILURE_ACTION" .Values.failureAction }}
+{{ .Files.Get "files/restrict-cnpg-operator-pod-labels.yaml" | replace "KYVERNO_FAILURE_ACTION" .Values.failureAction }}
+{{ .Files.Get "files/restrict-strimzi-operator-pod-labels.yaml" | replace "KYVERNO_FAILURE_ACTION" .Values.failureAction }}
+{{- end }}

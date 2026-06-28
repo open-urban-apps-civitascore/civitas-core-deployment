@@ -48,6 +48,12 @@ global:
   metrics:
     enabled: false
 
+  # Kyverno runtime policy enforcement mode
+  # Audit: log violations only; Enforce: block violating resources
+  runtimePolicies:
+    enabled: true
+    failureAction: Audit
+
 # List of components to deploy (order matters for dependencies)
 # To "disable" a component, remove it from the list.
 # To add custom components/addons, add them to the list.

@@ -1,0 +1,58 @@
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: restrict-strimzi-operator-pod-labels
+  annotations:
+    policies.kyverno.io/title: Restrict Pod Labels Created by the Strimzi Operator
+    policies.kyverno.io/category: NetworkPolicy
+    policies.kyverno.io/severity: high
+    policies.kyverno.io/subject: Pod
+    policies.kyverno.io/description: >-
+      The strimzi-cluster-operator can create arbitrary Pods. Because the
+      cluster's NetworkPolicies authorize traffic by the app.kubernetes.io/name
+      label, a Strimzi-created Pod carrying a foreign value (portal, apisix,
+      cloudnative-pg, ...) would inherit that workload's network reachability —
+      label spoofing. This restricts the app.kubernetes.io/name values a
+      Strimzi-created Pod may carry to Strimzi's own components.
+spec:
+  # request.userInfo (the creating identity) is only available at admission,
+  # so this rule cannot run as a background scan.
+  background: false
+  rules:
+    - name: strimzi-name-label-allowlist
+      match:
+        any:
+          - resources:
+              kinds: [Pod]
+      preconditions:
+        all:
+          # SA name regardless of namespace: system:serviceaccount:<ns>:<name>
+          - key: "{{ request.userInfo.username | split(@, ':') | [-1] }}"
+            operator: Equals
+            value: strimzi-cluster-operator
+          # only act when the name label is actually set (absent can't spoof)
+          - key: '{{ request.object.metadata.labels."app.kubernetes.io/name" || '''' }}'
+            operator: NotEquals
+            value: ''
+      validate:
+        failureAction: KYVERNO_FAILURE_ACTION
+        message: >-
+          Strimzi-created Pod sets a non-Strimzi app.kubernetes.io/name —
+          possible NetworkPolicy label spoofing. Allowed values: kafka,
+          entity-operator, strimzi-kafka-operator, kafka-exporter,
+          cruise-control.
+        deny:
+          conditions:
+            all:
+              - key: '{{ request.object.metadata.labels."app.kubernetes.io/name" }}'
+                operator: NotIn
+                value:
+                  - kafka
+                  - entity-operator
+                  # operator's own pod (created via the Helm Deployment, not the
+                  # operator SA) — harmless to allow:
+                  - strimzi-kafka-operator
+                  # uncomment if you enable these Strimzi features:
+                  - kafka-exporter
+                  - cruise-control

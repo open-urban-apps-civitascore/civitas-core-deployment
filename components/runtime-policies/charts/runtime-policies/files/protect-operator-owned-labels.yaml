@@ -1,0 +1,109 @@
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: protect-operator-owned-labels
+  annotations:
+    policies.kyverno.io/title: Operator-Owned NetworkPolicy Labels May Only Be Set by Their Operator
+    policies.kyverno.io/category: NetworkPolicy
+    policies.kyverno.io/severity: high
+    policies.kyverno.io/subject: Pod
+    policies.kyverno.io/description: >-
+      Complements the per-operator allowlists by protecting the label *value*
+      itself. The app.kubernetes.io/name values that belong to an operator's
+      data plane (kafka, entity-operator) may only be set by a Pod the matching
+      operator created. Any other creator — a different operator, a stray
+      Deployment, a compromised SA — claiming such a value is denied, closing
+      the inbound side of label spoofing against operator-managed workloads.
+      Note: statically deployed workloads (apisix, portal, ...) are created by
+      kube-controller-manager and cannot be pinned to a creator identity this
+      way; they are covered by the rendered-manifest review in .ci/policies.
+spec:
+  # request.userInfo (the creating identity) is only available at admission.
+  background: false
+  rules:
+    - name: kafka-labels-only-from-strimzi
+      match:
+        any:
+          - resources:
+              kinds: [Pod]
+      preconditions:
+        all:
+          - key: '{{ request.object.metadata.labels."app.kubernetes.io/name" || '''' }}'
+            operator: AnyIn
+            value: [kafka, entity-operator]
+          - key: "{{ request.userInfo.username | split(@, ':') | [-1] }}"
+            operator: NotEquals
+            value: strimzi-cluster-operator
+      validate:
+        failureAction: KYVERNO_FAILURE_ACTION
+        message: >-
+          Pod claims a Strimzi-owned app.kubernetes.io/name (kafka or
+          entity-operator) but was not created by the strimzi-cluster-operator —
+          NetworkPolicy label spoofing.
+        deny: {}
+    - name: cnpg-labels-only-from-cnpg
+      match:
+        any:
+          - resources:
+              kinds: [Pod]
+      preconditions:
+        all:
+          - key: '{{ request.object.metadata.labels."app.kubernetes.io/name" || '''' }}'
+            operator: AnyIn
+            value: [postgresql]
+          - key: "{{ request.userInfo.username | split(@, ':') | [-1] }}"
+            operator: NotEquals
+            value: postgres-operator-cloudnative-pg
+      validate:
+        failureAction: KYVERNO_FAILURE_ACTION
+        message: >-
+          Pod claims a CloudNativePG-owned app.kubernetes.io/name (postgresql)
+          but was not created by the CloudNativePG operator — NetworkPolicy
+          label spoofing.
+        deny: {}
+    # Some NetworkPolicies authorize external workloads that carry no
+    # app.kubernetes.io/name (superset, frost) via the bare `app` label. The
+    # operators never set `app`, so an operator-created Pod carrying it is an
+    # attempt to impersonate one of those workloads.
+    - name: operators-must-not-set-bare-app-label
+      match:
+        any:
+          - resources:
+              kinds: [Pod]
+      preconditions:
+        all:
+          - key: "{{ request.userInfo.username | split(@, ':') | [-1] }}"
+            operator: AnyIn
+            value: [strimzi-cluster-operator, postgres-operator-cloudnative-pg]
+          - key: "{{ request.object.metadata.labels.app || '' }}"
+            operator: NotEquals
+            value: ''
+      validate:
+        failureAction: KYVERNO_FAILURE_ACTION
+        message: >-
+          Operator-created Pod sets the bare `app` label, which NetworkPolicies
+          use to authorize superset/frost traffic. Operators never set this label
+          — possible NetworkPolicy label spoofing.
+        deny: {}
+    # cnpg.io/jobRole=join authorizes PostgreSQL access; only the CNPG operator
+    # legitimately sets cnpg.io/* labels.
+    - name: cnpg-jobrole-only-from-cnpg
+      match:
+        any:
+          - resources:
+              kinds: [Pod]
+      preconditions:
+        all:
+          - key: '{{ request.object.metadata.labels."cnpg.io/jobRole" || '''' }}'
+            operator: NotEquals
+            value: ''
+          - key: "{{ request.userInfo.username | split(@, ':') | [-1] }}"
+            operator: NotEquals
+            value: postgres-operator-cloudnative-pg
+      validate:
+        failureAction: KYVERNO_FAILURE_ACTION
+        message: >-
+          Pod carries cnpg.io/jobRole but was not created by the CloudNativePG
+          operator — possible NetworkPolicy label spoofing for PostgreSQL access.
+        deny: {}
