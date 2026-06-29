@@ -4,6 +4,8 @@ kind: ClusterPolicy
 metadata:
   name: require-linkerd-sidecar
   annotations:
+    # Evaluate the live Pod only.
+    pod-policies.kyverno.io/autogen-controllers: none
     policies.kyverno.io/title: Require Linkerd Sidecar in Meshed Namespaces
     policies.kyverno.io/category: Linkerd
     policies.kyverno.io/severity: high
