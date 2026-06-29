@@ -53,6 +53,7 @@ spec:
                   # operator's own pod (created via the Helm Deployment, not the
                   # operator SA) — harmless to allow:
                   - strimzi-kafka-operator
-                  # uncomment if you enable these Strimzi features:
+                  # pre-allowed for when these Strimzi features get enabled
+                  # (kafka-connect, cruise-control, ...) — extend as needed:
                   - kafka-exporter
                   - cruise-control
