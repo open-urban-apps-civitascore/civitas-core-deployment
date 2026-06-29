@@ -119,3 +119,8 @@ postgres:
             matchLabels:
               job-name: superset-superset-init-db
           componentNamespace: superset
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/instance: nifi-nifi
+          componentNamespace: nifi

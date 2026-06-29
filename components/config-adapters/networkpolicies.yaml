@@ -70,7 +70,7 @@ config-adapter-egress:
     - to:
         - podSelector:
             matchLabels:
-              app.kubernetes.io/name: postgresql
+              cnpg.io/cluster: postgres-cluster
           componentNamespace: postgres
       ports:
         - port: 5432

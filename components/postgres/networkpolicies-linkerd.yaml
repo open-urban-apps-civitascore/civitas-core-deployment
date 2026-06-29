@@ -54,6 +54,10 @@ postgres-allow-linkerd:
             matchLabels:
               job-name: superset-superset-init-db
           componentNamespace: superset
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/instance: nifi-nifi
+          componentNamespace: nifi
       ports:
         - port: 4143
           protocol: TCP
