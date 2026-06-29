@@ -2,8 +2,9 @@
 
 In-cluster Kyverno `ClusterPolicy` resources that enforce/report on things that
 **only exist at runtime** — injected sidecars, namespace annotations applied by
-the `prepare` hook, opt-out markers. They are deliberately **not** part of the
-helmfile deployment.
+the `prepare` hook, opt-out markers, dynamically created operator Pods. They are
+shipped as the `runtime-policies` helmfile component (a small Helm chart under
+`charts/runtime-policies/`) and deployed alongside the rest of the platform.
 
 ## Why separate from `.ci/policies/`
 
@@ -24,23 +25,48 @@ These policies are evaluated by Kyverno *in the cluster*:
 
 ## Prerequisite
 
-Kyverno must be running **in the cluster**. This repo does not deploy it (it
-only uses the `kyverno` CLI in CI). Install it separately, e.g. the upstream
-Helm chart, before applying these policies.
+Kyverno must be running **in the cluster** — this chart only ships the
+`ClusterPolicy` objects, not Kyverno itself. The smoke-test CI bootstraps it
+into the vcluster via `.ci/kyverno/helmfile.yaml.gotmpl`
+(`scripts/ci/install-kyverno-if-missing.sh`). For any other environment, install
+Kyverno separately (e.g. the upstream Helm chart) before this component syncs.
 
 ## Deploy
 
-```sh
-# apply every policy in this directory (kubectl ignores README.md)
-kubectl apply -f runtime-policies/
+The policies are deployed by the `runtime-policies` helmfile component (listed in
+`components:` in `defaults/environment/global.yaml`). Two global knobs in
+`global.runtimePolicies` control it:
 
-# check what is being flagged
+```yaml
+global:
+  runtimePolicies:
+    enabled: true        # set the release's `installed:` flag
+    failureAction: Audit # Audit (report only) or Enforce (block at admission)
+```
+
+The Linkerd policies additionally switch on automatically only when the Linkerd
+service mesh is enabled (`global.serviceMesh.type: linkerd`). It is deployed with
+the rest of the platform:
+
+```sh
+helmfile -f ./deployment/ sync
+```
+
+Inspect what is being flagged:
+
+```sh
 kubectl get clusterpolicyreport,policyreport -A
 kubectl describe clusterpolicyreport <name>
 ```
 
-Or point a GitOps controller (Argo CD / Flux) at this directory — it has no
-dependency on the helmfile release, so it can be reconciled independently.
+To deploy the raw policies outside helmfile (e.g. a GitOps controller or a quick
+manual apply), render them through the chart first so the `failureAction`
+placeholder is resolved — `kubectl apply` against the raw `files/` would apply
+the literal `KYVERNO_FAILURE_ACTION` placeholder:
+
+```sh
+helm template ./charts/runtime-policies | kubectl apply -f -
+```
 
 ## Enforcement level
 
@@ -54,24 +80,43 @@ relevant rule to `Enforce` to block at admission.
 
 ## Adding a policy
 
-Drop a new `*.yaml` `ClusterPolicy` into this directory and re-apply — no other
-file needs editing. Conventions to keep the set consistent:
+Drop a new `*.yaml` `ClusterPolicy` into `charts/runtime-policies/files/` and
+reference it from the matching template so it is rendered into the release:
 
-- `background: true` so existing resources are scanned, not just new ones.
-- `validate.failureAction: Audit` to start.
+- `templates/linkerd-policies.yaml` (gated by `.Values.linkerd.enabled`), or
+- `templates/operator-policies.yaml` (gated by `.Values.operators.enabled`).
+
+Each template line wraps the file with the failure-action placeholder, e.g.:
+
+```gotmpl
+{{ .Files.Get "files/<policy>.yaml" | replace "KYVERNO_FAILURE_ACTION" .Values.failureAction }}
+```
+
+Conventions to keep the set consistent:
+
+- Use `failureAction: KYVERNO_FAILURE_ACTION` (the template substitutes the
+  configured value) rather than hard-coding `Audit`/`Enforce`.
+- `background: true` so existing resources are scanned, not just new ones —
+  unless the rule reads `request.userInfo` (admission-only → `background: false`).
 - Fill in the `policies.kyverno.io/*` annotations (title, category, severity,
   subject, description) as the existing policies do.
 - Validate before committing (see below).
 
 ## Validate locally
 
+The `files/` policies carry the literal `KYVERNO_FAILURE_ACTION` placeholder, so
+render them through the chart first (or substitute the placeholder) before
+feeding them to the `kyverno` CLI:
+
 ```sh
+helm template ./charts/runtime-policies --show-only templates/operator-policies.yaml > /tmp/policies.yaml
+
 # offline: works for policies that only read request.object
-kyverno apply runtime-policies/<policy>.yaml --resource <fixture>.yaml
+kyverno apply /tmp/policies.yaml --resource <fixture>.yaml
 
 # policies that read the creating identity (restrict-*-operator-pod-labels,
 # protect-operator-owned-labels) need a mocked userInfo offline:
-kyverno apply runtime-policies/restrict-strimzi-operator-pod-labels.yaml \
+kyverno apply /tmp/policies.yaml \
   --resource pods.yaml --userinfo userinfo.yaml
 # where userinfo.yaml is:
 #   apiVersion: cli.kyverno.io/v1alpha1
@@ -81,7 +126,7 @@ kyverno apply runtime-policies/restrict-strimzi-operator-pod-labels.yaml \
 
 # policies using an apiCall context (e.g. require-linkerd-sidecar reads the
 # namespace annotation) need a live cluster to resolve the context:
-kyverno apply runtime-policies/require-linkerd-sidecar.yaml --cluster -n <ns>
+kyverno apply /tmp/policies.yaml --cluster -n <ns>
 ```
 
 ## Protecting against NetworkPolicy label spoofing
@@ -109,14 +154,3 @@ risk. Two complementary controls, both keyed on the *creating identity*
 > false positives. Extend both the allowlists and the protected-value sets when
 > you enable more Strimzi features (kafka-connect, cruise-control, …) or add an
 > operator — copy a `restrict-*-operator-pod-labels.yaml` as the template.
-
-## Inventory
-
-| Policy                                    | Kind      | Flags when …                                                                                  |
-| ----------------------------------------- | --------- | --------------------------------------------------------------------------------------------- |
-| `require-linkerd-sidecar`                 | Pod       | a Pod in a `linkerd.io/inject=enabled` namespace has no `linkerd-proxy` (classic *or* native sidecar), unless it opted out with `linkerd.io/inject=disabled`. *(uses an apiCall context → needs a live cluster; the offline CLI cannot resolve it.)* |
-| `require-meshed-namespace-inbound-policy` | Namespace | a `linkerd.io/inject=enabled` namespace does not set `config.linkerd.io/default-inbound-policy` (would fall back to all-unauthenticated). |
-| `justify-linkerd-inject-opt-out`          | Pod       | a Pod sets `linkerd.io/inject=disabled` without a `mesh.civitas-core/opt-out-reason` annotation. |
-| `restrict-strimzi-operator-pod-labels`    | Pod       | the `strimzi-cluster-operator` creates a Pod whose `app.kubernetes.io/name` is not a Strimzi component. *(admission-only, `background: false`)* |
-| `restrict-cnpg-operator-pod-labels`       | Pod       | the CloudNativePG operator creates a Pod whose `app.kubernetes.io/name` is not a CNPG component. *(admission-only, `background: false`)* |
-| `protect-operator-owned-labels`           | Pod       | a Pod carries an operator-owned authorization label but was not created by that operator: `app.kubernetes.io/name` ∈ {`kafka`,`entity-operator`,`postgresql`}, the bare `app` label (superset/frost — operators never set it), or `cnpg.io/jobRole`. *(admission-only, `background: false`)* |
