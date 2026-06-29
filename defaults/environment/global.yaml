@@ -62,6 +62,7 @@ components:
   - prepare
   - secrets
   - networkpolicies
+  - runtime-policies
   - postgres
   - etcd
   - kafka

@@ -6,10 +6,11 @@ bases:
 {{- $linkerdEnabled := and ($root.global.serviceMesh.enable | default false) (eq ($root.global.serviceMesh.type | default "") "linkerd") }}
 {{- $failureAction := index ($root.global.runtimePolicies | default dict) "failureAction" | default "Audit" }}
 {{- $enabled := index ($root.global.runtimePolicies | default dict) "enabled" | default false }}
+{{- $namespace := index $root "runtime-policies" "runtime-policies" "namespace" }}
 
 releases:
   - name: runtime-policies
-    namespace: {{ $root.global.operators.namespace }}
+    namespace: {{ $namespace }}
     chart: ./charts/runtime-policies
     createNamespace: {{ $root.global.createNamespaces }}
     installed: {{ $enabled }}

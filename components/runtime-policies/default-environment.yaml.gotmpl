@@ -1,0 +1,5 @@
+---
+runtime-policies:
+  runtime-policies:
+    enabled: true
+    namespace: {{ include "civitas.namespace" (dict "global" .Values.global "suffix" "runtime-policies") }}
