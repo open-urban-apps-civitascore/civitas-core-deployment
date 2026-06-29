@@ -40,7 +40,7 @@ spec:
           - key: '{{ request.object.metadata.labels."app.kubernetes.io/name" || '''' }}'
             operator: AnyIn
             value: [kafka]
-          - key: "{{ request.userInfo.username }}"
+          - key: '{{ request.userInfo.username }}'
             operator: NotEquals
             value: STRIMZI_OPERATOR_USERNAME
       validate:
@@ -59,7 +59,7 @@ spec:
           - key: '{{ request.object.metadata.labels."app.kubernetes.io/name" || '''' }}'
             operator: AnyIn
             value: [postgresql]
-          - key: "{{ request.userInfo.username }}"
+          - key: '{{ request.userInfo.username }}'
             operator: NotEquals
             value: CNPG_OPERATOR_USERNAME
       validate:
@@ -80,7 +80,7 @@ spec:
               kinds: [Pod]
       preconditions:
         all:
-          - key: "{{ request.userInfo.username }}"
+          - key: '{{ request.userInfo.username }}'
             operator: AnyIn
             value: [STRIMZI_OPERATOR_USERNAME, CNPG_OPERATOR_USERNAME]
           - key: "{{ request.object.metadata.labels.app || '' }}"
@@ -105,7 +105,7 @@ spec:
           - key: '{{ request.object.metadata.labels."cnpg.io/jobRole" || '''' }}'
             operator: NotEquals
             value: ''
-          - key: "{{ request.userInfo.username }}"
+          - key: '{{ request.userInfo.username }}'
             operator: NotEquals
             value: CNPG_OPERATOR_USERNAME
       validate:
