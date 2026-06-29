@@ -197,7 +197,7 @@ env:
 
   # GeoServer configuration
   - name: GEOSERVER_URL
-    value: "http://geoserver-geoserver-rest{{ .Values.geoserver.geoserver.namespace }}.svc.cluster.local/geoserver"
+    value: "http://geoserver-geoserver-rest.{{ .Values.geoserver.geoserver.namespace }}.svc.cluster.local/geoserver"
   - name: GEOSERVER_PUBLIC_URL
     value: "https://api.{{ $global.domain }}/v1/datasets"
   - name: GEOSERVER_ADMIN_USER
