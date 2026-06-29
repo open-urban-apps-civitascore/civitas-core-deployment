@@ -30,6 +30,8 @@ image:
 extraEnv: |
   - name: KC_HOSTNAME_STRICT
     value: "false"
+  - name: KC_HOSTNAME_BACKCHANNEL_DYNAMIC
+    value: "true"
   - name: JGROUPS_DISCOVERY_PROTOCOL
     value: kubernetes.KUBE_PING
   - name: JGROUPS_DISCOVERY_PROPERTIES
