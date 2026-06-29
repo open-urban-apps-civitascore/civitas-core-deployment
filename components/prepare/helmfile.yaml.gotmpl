@@ -62,6 +62,9 @@ hooks:
         {{- if $defaultInboundPolicy }}
         kubectl annotate namespace {{ $ns | quote }} config.linkerd.io/default-inbound-policy={{ $defaultInboundPolicy | quote }} --overwrite
         echo "Set Linkerd default-inbound-policy={{ $defaultInboundPolicy }} on namespace {{ $ns | quote }}."
+        {{- else }}
+        kubectl annotate namespace {{ $ns | quote }} config.linkerd.io/default-inbound-policy-
+        echo "Cleared Linkerd default-inbound-policy on namespace {{ $ns | quote }}."
         {{- end }}
         {{- end }}
         {{- end }}
