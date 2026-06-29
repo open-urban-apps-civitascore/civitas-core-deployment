@@ -57,6 +57,7 @@ postgres-allow-linkerd:
         - podSelector:
             matchLabels:
               app.kubernetes.io/instance: nifi-nifi
+              app.kubernetes.io/name: nifi
           componentNamespace: nifi
       ports:
         - port: 4143
