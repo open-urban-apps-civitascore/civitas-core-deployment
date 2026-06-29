@@ -58,12 +58,6 @@ postgres:
               app.kubernetes.io/component: database-role-setup
               app.kubernetes.io/name: databases
           componentNamespace: postgres
-    # Nifi
-    - from:
-        - podSelector:
-            matchLabels:
-              app.kubernetes.io/name: nifi
-          componentNamespace: nifi
     # Config adapter
     - from:
         - podSelector:
@@ -130,3 +124,9 @@ postgres:
             matchLabels:
               job-name: superset-superset-init-db
           componentNamespace: superset
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/instance: nifi-nifi
+              app.kubernetes.io/name: nifi
+          componentNamespace: nifi
