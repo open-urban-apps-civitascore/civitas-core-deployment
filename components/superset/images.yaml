@@ -7,4 +7,4 @@ superset:
   init:
     registry: docker.io
     repository: alpine
-    tag: 3.23.3
+    tag: 3.23.5

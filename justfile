@@ -176,6 +176,16 @@ update-components:
 verify-policies:
 	.ci/policies/verify-kyverno-policies.sh
 
+# Run Kyverno policy regression tests (good/bad fixtures)
+[group('test & lint')]
+test-policies:
+	kyverno test .ci/policies
+
+# Re-vendor upstream Kyverno policies (pinned ref in the script)
+[group('helpers')]
+vendor-policies:
+	.ci/policies/vendor-upstream-policies.sh
+
 # Render helmfile for specific environment
 [group('helpers')]
 template environment='local' component='all':

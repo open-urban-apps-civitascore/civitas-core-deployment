@@ -295,3 +295,48 @@ destroy-smoke-test-mr:
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
       when: manual
+
+# Regression tests for kyverno policies themselves (good/bad fixtures per policy).
+test-kyverno-policies:
+  stage: lint
+  image: registry.gitlab.com/civitas-connect/civitas-core/docker-images/cicd:2.0.0-beta
+  needs: []
+  rules:
+    - when: always
+  script:
+    - kyverno test .ci/policies
+
+scan-kyverno-policies:
+  stage: lint
+  image: registry.gitlab.com/civitas-connect/civitas-core/docker-images/cicd:2.0.0-beta
+  needs: []
+  # Transitional: the production rendering currently has ~49 known findings
+  # (rolling-update, resources, ro-rootfs, capabilities, probes, and the
+  # explicit-securityContext requirements of the PSS restricted profile).
+  # The job reports them as JUnit results without blocking the pipeline.
+  # Remove allow_failure once the existing findings are fixed or covered by
+  # PolicyExceptions, so new violations block again.
+  allow_failure: true
+  rules:
+    - when: always
+  parallel:
+    matrix:
+      - ENVIRONMENT: local
+        POLICIES: .ci/policies/base
+      - ENVIRONMENT: production
+        POLICIES: .ci/policies/base .ci/policies/production
+  script:
+    - *helm-docker-hub-login
+    - cp -r defaults/deployment deployment
+    # Render and scan in separate steps: piping helmfile into kyverno would
+    # swallow render failures (kyverno exits 0 on empty input) and turn the
+    # job green without a single resource scanned.
+    - helmfile template -f deployment/helmfile.yaml -e "$ENVIRONMENT" > rendered.yaml
+    - kyverno apply $POLICIES -p --resource rendered.yaml > policy-report.yaml || SCAN_EXIT=$?
+    - python3 .ci/policies/report_to_junit.py policy-report.yaml > "kyverno-policy-scan-${ENVIRONMENT}.xml"
+    - exit ${SCAN_EXIT:-0}
+  artifacts:
+    when: always
+    expire_in: 1 week
+    reports:
+      junit: kyverno-policy-scan-*.xml

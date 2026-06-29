@@ -18,3 +18,16 @@ geoserver-rabbitmq:
               app.kubernetes.io/instance: geoserver-geoserver
               app.kubernetes.io/component: webui
           componentNamespace: geoserver
+geoserver:
+  podSelector:
+    app.kubernetes.io/component: rest
+    app.kubernetes.io/instance: geoserver-geoserver
+    app.kubernetes.io/name: gsc
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: apisix
+          componentNamespace: apisix
