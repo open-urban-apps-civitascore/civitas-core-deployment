@@ -73,4 +73,29 @@ Once the cluster prerequisites are met, create the environment configuration in 
        ingressClass: 'nginx'
    ```
 
-*To be continued as the deployment progresses...*
+## Deployment Logbuch & Troubleshooting
+*(Dokumentiert während des Live-Deployments am 25./29.06.2026)*
+
+- **[Problem]** Beim Ausführen von `kubectl` Befehlen (`connection refused` auf `127.0.0.1`) zeigte der Kontext auf das falsche (lokale) Cluster.
+  - *Lösung:* Kubeconfig von Infomaniak muss in der Terminal-Session entweder über die Umgebungsvariable `export KUBECONFIG=/path/to/kubeconfig` gesetzt oder explizit mit `--kubeconfig` bei jedem Befehl übergeben werden.
+- **[Problem]** Zwei-Cluster-Falle bei der Nutzung von Terminals und k9s.
+  - *Ursache:* Befehle wie `just sync infomaniak` fielen (ohne explizite KUBECONFIG) auf lokale Configs wie `~/.kube/config` zurück. Dadurch wurden Teile in ein lokales Cluster und Teile ins Infomaniak-Cluster installiert.
+  - *Lösung:* **Best Practice:** Immer inline die Kubeconfig setzen: `KUBECONFIG=~/k8s/kubeconfigs/... just sync infomaniak` und `k9s` analog mit `--kubeconfig` Flag starten.
+- **[Problem]** Während des Deployments hängen Pods: `postgres-cluster-3` bleibt auf `Pending`, `kafka-cluster-controllers` auf `ContainerCreating` und `kafka-broker` im `CrashLoopBackOff`.
+  - *Ursache (Postgres):* `Insufficient cpu, Insufficient memory`. Die 2 Server (8 CPU / 32 GB RAM) sind komplett ausgelastet. Das `production` Profil fordert mehr Ressourcen an, als vorhanden sind.
+  - *Lösung:* Wechsel in der `global.yaml.gotmpl` von `profile: production` auf `profile: development`, um die Anzahl der Replicas und den Ressourcenbedarf zu senken.
+- **[Problem]** Zweiter Lauf von `just sync infomaniak` schlägt fehl mit `can't shrink existing storage from 50Gi to 1Gi` (und ähnliches bei ETCD mit `Forbidden: updates to statefulset spec`).
+  - *Ursache:* Das `production` Profil hatte beim ersten Lauf bereits riesige Festplatten (z.B. 50 GB für Postgres) und StatefulSets angelegt. Das `development` Profil will diese verkleinern, was Kubernetes blockiert.
+  - *Lösung:* Das alte StatefulSet und die dazugehörigen PVCs (Persistent Volume Claims) für Postgres, ETCD und Kafka in `k9s` löschen, damit Helmfile sie mit dem neuen Profil von Grund auf neu anlegen kann.
+- **[Problem]** Deployment bricht bei `keycloak-config` nach exakt 5 Minuten mit einem Timeout ab (`context deadline exceeded`), Pod hängt im Status `CreateContainerConfigError`.
+  - *Ursache:* Dem Konfigurations-Job fehlt das Secret `keycloak-smtp` (E-Mail-Zugangsdaten). Bei lokalen Test-Läufen legt der `just deploy` Shell-Wrapper dieses Secret automatisch als Dummy an, was beim manuellen `just sync` für Infomaniak fehlt.
+  - *Lösung:* Das `keycloak-smtp` Secret manuell als Dummy-Secret anlegen:
+    ```bash
+    kubectl create secret generic keycloak-smtp \
+      --from-literal=host='smtp.example.com' --from-literal=port='587' \
+      --from-literal=from='noreply' --from-literal=user='noreply' \
+      --from-literal=password='YOUR_SMTP_PASSWORD' -n infomaniak
+    ```
+- **[Problem]** Deployment bricht bei `nifi-nifi` mit Timeout ab. Der Pod bleibt dauerhaft auf `Init:0/2` hängen (`FailedAttachVolume`).
+  - *Ursache:* Infomaniak-Cloud-Bug! Infomaniak verschluckt sich teilweise beim parallelen Erstellen der vielen NiFi-Festplatten. Die Festplatten hängen bei OpenStack im Status `creating` fest (`Invalid volume status`).
+  - *Lösung:* Genau dasselbe Manöver wie bei ETCD: Das `nifi-nifi` StatefulSet und alle 6 dazugehörigen NiFi-PVCs in `k9s` löschen, um den Festplatten-Bestellvorgang bei Infomaniak neu auszulösen. Danach `just sync infomaniak` erneut ausführen.
