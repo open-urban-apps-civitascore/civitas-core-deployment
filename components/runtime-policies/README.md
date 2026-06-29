@@ -26,10 +26,14 @@ These policies are evaluated by Kyverno *in the cluster*:
 ## Prerequisite
 
 Kyverno must be running **in the cluster** — this chart only ships the
-`ClusterPolicy` objects, not Kyverno itself. The smoke-test CI bootstraps it
-into the vcluster via `.ci/kyverno/helmfile.yaml.gotmpl`
-(`scripts/ci/install-kyverno-if-missing.sh`). For any other environment, install
-Kyverno separately (e.g. the upstream Helm chart) before this component syncs.
+`ClusterPolicy` objects, not Kyverno itself. Both the smoke-test CI and the local
+`just deploy` bootstrap it via `.ci/kyverno/helmfile.yaml.gotmpl`
+(`scripts/ci/install-kyverno-if-missing.sh`, idempotent). To install it
+standalone — e.g. on a cluster you sync into manually — run:
+
+```sh
+just kyverno   # or: helmfile -f .ci/kyverno/helmfile.yaml.gotmpl sync
+```
 
 ## Deploy
 
