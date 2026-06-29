@@ -9,4 +9,4 @@ keycloak:
     tag: '6.4.0-26'
   dbchecker:
     repository: 'docker.io/busybox'
-    tag: '1.32'
+    tag: '1.38'
