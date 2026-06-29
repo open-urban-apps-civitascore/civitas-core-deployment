@@ -14,3 +14,21 @@
 
 config:
   clusterWide: false
+  # Propagate the Linkerd skip-inbound-ports annotation from the Cluster CR onto the
+  # CNPG-managed INSTANCE pods. Their instance-manager health/probe server on :8000
+  # serves the instance's own TLS, so the kubelet probe arrives unmeshed (tls=None)
+  # and mandatory mTLS (cluster-authenticated) would deny it -> instance CrashLoop.
+  # The matching annotation value lives on the Cluster (see cluster base-values).
+  data:
+    INHERITED_ANNOTATIONS: config.linkerd.io/skip-inbound-ports
+
+# The CNPG manager serves its admission webhook AND its health/probe endpoints on
+# port 9443 over its own TLS (`--webhook-port=9443`, webhook-certificates). Both
+# callers are UNMESHED: the kubelet probe (`https://:9443/readyz`) and the
+# kube-apiserver webhook arrive without a Linkerd identity (tls=None). Under the
+# namespace's mandatory mTLS (`config.linkerd.io/default-inbound-policy:
+# cluster-authenticated`) the proxy denies them, so the manager fails its startup
+# probe and CrashLoopBackOffs. Skip the proxy for inbound 9443 so probe + webhook
+# reach the manager's TLS directly; outbound stays meshed. (Inert without Linkerd.)
+podAnnotations:
+  config.linkerd.io/skip-inbound-ports: "9443"
