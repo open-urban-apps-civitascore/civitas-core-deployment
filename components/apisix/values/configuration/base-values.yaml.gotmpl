@@ -41,7 +41,7 @@ realm: {{ $global.instanceSlug }}
 # namespace enforces mandatory mTLS via the Linkerd default-inbound-policy.
 # `allowUnauthenticatedIngress` mirrors the global setting: true accepts plaintext
 # from an unmeshed ingress, false requires the ingress controller to be meshed.
-{{- $allowUnauthIngress := true }}
+{{- $allowUnauthIngress := false }}
 {{- if hasKey ($global.serviceMesh | default dict) "allowUnauthenticatedIngress" }}
 {{- $allowUnauthIngress = $global.serviceMesh.allowUnauthenticatedIngress }}
 {{- end }}

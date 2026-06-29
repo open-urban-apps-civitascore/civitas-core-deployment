@@ -46,10 +46,14 @@ global:
     # Whether the cluster's nginx ingress controller may reach the APISIX data
     # plane WITHOUT mTLS. This drives the `accessPolicy` of the APISIX `Server`:
     #   true  - ingress is unmeshed; the data-plane edge is `all-unauthenticated`
-    #           so plaintext ingress traffic is accepted (default).
+    #           so plaintext ingress traffic is accepted.
     #   false - the ingress controller is meshed; ingress->APISIX is mTLS, so the
-    #           data-plane edge is `all-authenticated` and rejects plaintext.
-    allowUnauthenticatedIngress: true
+    #           data-plane edge is `all-authenticated` and rejects plaintext (default).
+    # Defaults to mandatory mTLS on the ingress edge: the nginx ingress controller
+    # must be meshed (Linkerd-injected). Environments with an unmeshed ingress
+    # (e.g. the CI vcluster, whose ingress lives in the host cluster) must override
+    # this to true.
+    allowUnauthenticatedIngress: false
 
   ingress:
     # Use your available cluster issuer for production, e.g. 'letsencrypt-prod'

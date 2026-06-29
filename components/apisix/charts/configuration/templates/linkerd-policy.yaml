@@ -24,9 +24,10 @@
 */}}
 {{- with .Values.serviceMesh }}
 {{- if .enabled }}
-{{- /* Resolve the bool explicitly: `| default true` would flip an intentional
-       `false` (Helm treats false as empty), so read the merged value via hasKey. */}}
-{{- $allowUnauthenticated := true }}
+{{- /* Resolve the bool explicitly: a numeric/`default` fallback would mishandle
+       an intentional `false` (Helm treats false as empty), so read the merged
+       value via hasKey. Falls back to the secure `false` when unset. */}}
+{{- $allowUnauthenticated := false }}
 {{- if hasKey . "allowUnauthenticatedIngress" }}{{- $allowUnauthenticated = .allowUnauthenticatedIngress }}{{- end }}
 apiVersion: policy.linkerd.io/v1beta3
 kind: Server

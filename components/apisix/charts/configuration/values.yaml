@@ -83,4 +83,4 @@ serviceMesh:
   #            unmeshed nginx ingress controller is accepted.
   #   false -> Server accessPolicy `all-authenticated`: only authenticated mesh
   #            identities may connect, i.e. the ingress controller must be meshed.
-  allowUnauthenticatedIngress: true
+  allowUnauthenticatedIngress: false
