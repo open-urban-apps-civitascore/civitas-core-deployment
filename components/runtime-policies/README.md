@@ -149,12 +149,26 @@ risk. Two complementary controls, both keyed on the *creating identity*
   `apisix`, etc. The SA name is extracted namespace-agnostically via
   `split(request.userInfo.username, ':') | [-1]`.
 - **Reverse** (`protect-operator-owned-labels`): an operator-owned value
-  (`kafka`, `entity-operator`, `postgresql`) may only be set by a Pod that
-  operator created — any other creator claiming it is denied.
+  (`kafka`, `postgresql`) may only be set by a Pod that operator created — any
+  other creator claiming it is denied.
 
-> The operators' *own* pods (`strimzi-kafka-operator`, `cloudnative-pg`) are
-> created by the Helm Deployment via kube-controller-manager, not by the operator
-> SA, so those values are deliberately left out of the reverse policy to avoid
-> false positives. Extend both the allowlists and the protected-value sets when
-> you enable more Strimzi features (kafka-connect, cruise-control, …) or add an
-> operator — copy a `restrict-*-operator-pod-labels.yaml` as the template.
+> **Only Pods the operator creates *directly* can be reverse-protected.** The
+> reverse check keys on `request.userInfo`, so it only works for values carried
+> by Pods the operator's ServiceAccount creates itself — e.g. Kafka
+> brokers/controllers, which Strimzi creates via a StrimziPodSet. **Deployment-
+> managed** components (the Strimzi `entity-operator`, `kafka-exporter`,
+> `cruise-control`, and the operators' *own* pods like `strimzi-kafka-operator` /
+> `cloudnative-pg`) have their Pods created by kube-controller-manager's
+> replicaset-controller, **not** the operator SA — so their values can never
+> satisfy the check and must be left out of the reverse protected-value set to
+> avoid an unavoidable false positive. The forward allowlists are unaffected
+> (they only fire on Pods the operator *does* create directly).
+
+> **Note — protected values vs. actual NetworkPolicy selectors.** The reverse
+> policy currently protects `kafka` and `postgresql`, but neither is presently
+> used as an `app.kubernetes.io/name` authorizing selector in any NetworkPolicy
+> (Kafka is authorized via `strimzi.io/name`, CNPG via `cnpg.io/cluster`). The
+> protections that map to *real* authorizers are the bare `app` label
+> (`superset`, `frost-server`) and `cnpg.io/jobRole`. Revisit the
+> `kafka`/`postgresql` name protections if they don't correspond to a live
+> selector — they may be guarding values that grant no reachability.

@@ -10,11 +10,12 @@ metadata:
     policies.kyverno.io/subject: Pod
     policies.kyverno.io/description: >-
       Complements the per-operator allowlists by protecting the label *value*
-      itself. The app.kubernetes.io/name values that belong to an operator's
-      data plane (kafka, entity-operator) may only be set by a Pod the matching
-      operator created. Any other creator — a different operator, a stray
-      Deployment, a compromised SA — claiming such a value is denied, closing
-      the inbound side of label spoofing against operator-managed workloads.
+      itself. The app.kubernetes.io/name values an operator creates *directly*
+      (e.g. kafka, via a StrimziPodSet) may only be set by a Pod that operator
+      created. Any other creator — a different operator, a stray Deployment, a
+      compromised SA — claiming such a value is denied, closing the inbound side
+      of label spoofing against operator-managed workloads. Deployment-managed
+      components (entity-operator, …) cannot be pinned this way and are excluded.
       Note: statically deployed workloads (apisix, portal, ...) are created by
       kube-controller-manager and cannot be pinned to a creator identity this
       way; they are covered by the rendered-manifest review in .ci/policies.
@@ -29,18 +30,24 @@ spec:
               kinds: [Pod]
       preconditions:
         all:
+          # Only values that Strimzi creates *directly* (Kafka brokers/controllers
+          # via StrimziPodSet) can be pinned to the operator's identity. Deployment-
+          # managed components (entity-operator, and kafka-exporter / cruise-control
+          # when enabled) have their Pods created by kube-controller-manager's
+          # replicaset-controller, not the Strimzi SA, so they could never satisfy
+          # this check — same reason the operators' own pods are excluded. Leave
+          # such values out here to avoid an unavoidable false positive.
           - key: '{{ request.object.metadata.labels."app.kubernetes.io/name" || '''' }}'
             operator: AnyIn
-            value: [kafka, entity-operator]
+            value: [kafka]
           - key: "{{ request.userInfo.username | split(@, ':') | [-1] }}"
             operator: NotEquals
             value: strimzi-cluster-operator
       validate:
         failureAction: KYVERNO_FAILURE_ACTION
         message: >-
-          Pod claims a Strimzi-owned app.kubernetes.io/name (kafka or
-          entity-operator) but was not created by the strimzi-cluster-operator —
-          NetworkPolicy label spoofing.
+          Pod claims the Strimzi-owned app.kubernetes.io/name 'kafka' but was not
+          created by the strimzi-cluster-operator — NetworkPolicy label spoofing.
         deny: {}
     - name: cnpg-labels-only-from-cnpg
       match:
