@@ -4,7 +4,7 @@ set dotenv-load
 
 # MINIKUBE_IP := $(shell minikube ip)
 marker := 'LOCAL_CIVITAS_HOSTS'
-hosts := 'idm.civitas.test portal.civitas.test api.civitas.test'
+hosts := 'idm.civitas.test portal.civitas.test api.civitas.test dashboard.civitas.test'
 
 default:
 	@just --list
@@ -30,6 +30,31 @@ sync-component environment='local' component='':
 destroy-component environment='local' component='':
 	echo "Destroying component: {{component}} in environment: {{environment}}"
 	helmfile -f ./deployment/helmfile.yaml destroy -e {{environment}} --selector component={{component}}
+
+# Get Keycloak Realm
+[group('helpers')]
+_get-keycloak-realm profile='local':
+	@yq '.global.instanceSlug' deployment/environments/{{ profile }}/global.yaml.gotmpl || yq '.global.instanceSlug' defaults/environment/global.yaml
+
+# Get domain
+[group('helpers')]
+_get-domain profile='local':
+	@yq '.global.domain' deployment/environments/{{ profile }}/global.yaml.gotmpl || yq '.global.domain' defaults/environment/global.yaml
+
+# Get Keycloak namespace
+[group('helpers')]
+_get-keycloak-namespace:
+	@helmfile template -f deployment/helmfile.yaml -e local --selector component=keycloak --skip-deps -q | yq 'select(.kind == "StatefulSet") | .metadata.namespace'
+
+# Get APISix namespace
+[group('helpers')]
+_get-apisix-namespace:
+	@helmfile template -f deployment/helmfile.yaml -e local --selector component=apisix --skip-deps -q | yq 'select(.kind == "Deployment" ) | .metadata.namespace'
+
+# Get Postgres namespace
+[group('helpers')]
+_get-postgres-namespace:
+	@helmfile template -f deployment/helmfile.yaml -e local --selector component=postgres --skip-deps -q | yq 'select(.kind == "Deployment") | .metadata.namespace'
 
 # Deploy minikube
 [group('deployment')]
@@ -141,6 +166,16 @@ update-components:
 verify-policies:
 	.ci/policies/verify-kyverno-policies.sh
 
+# Run Kyverno policy regression tests (good/bad fixtures)
+[group('test & lint')]
+test-policies:
+	kyverno test .ci/policies
+
+# Re-vendor upstream Kyverno policies (pinned ref in the script)
+[group('helpers')]
+vendor-policies:
+	.ci/policies/vendor-upstream-policies.sh
+
 # Render helmfile for specific environment
 [group('helpers')]
 template environment='local' component='all':
@@ -195,13 +230,19 @@ deploy cri='k3d' namespace='dev' profile='local':
 		cp -r defaults/deployment deployment; \
 	fi
 	@( timeout 30 bash -c 'until kubectl get ns {{namespace}} >/dev/null 2>&1; do sleep 1; done'; \
+	KEYCLOAK_NS=$( \
+		helmfile template \
+		-f deployment/helmfile.yaml \
+		-e {{profile}} \
+		--selector component=keycloak -q | \
+		yq eval -r 'select(.kind == "StatefulSet" and .metadata.name == "keycloak-app-keycloakx") | .metadata.namespace'); \
 	kubectl create secret generic keycloak-smtp \
 		--from-literal=host='smtp.example.com' \
 		--from-literal=port='587' \
 		--from-literal=from='noreply@example.com' \
 		--from-literal=user='noreply@example.com' \
 		--from-literal=password='YOUR_SMTP_PASSWORD' \
-		-n {{namespace}} ) &
+		-n ${KEYCLOAK_NS} ) &
 	@helmfile -f deployment/helmfile.yaml sync -e {{profile}}
 
 # Remove local cluster
@@ -290,13 +331,12 @@ install-dependencies:
 # Get Admin Credentials
 [group('helpers')]
 get-admin-credentials:
-    NS=$(yq '.global.instanceSlug' defaults/environment/global.yaml); \
-    APISIX_PASSWORD=$(kubectl get secret -n "$NS" apisix-admin-credentials -o jsonpath='{.data.admin}' | base64 -d && echo); \
+    @APISIX_PASSWORD=$(kubectl get secret -n "$(just _get-apisix-namespace)" apisix-admin-credentials -o jsonpath='{.data.admin}' | base64 -d && echo); \
     KEYCLOAK_USERNAME=$(yq '.global.initialUserEmail' defaults/environment/global.yaml | cut -d '@' -f 1); \
-    KEYCLOAK_PASSWORD=$(kubectl get secret -n "$NS" keycloak-admin-user -o jsonpath='{.data.password}' | base64 -d && echo); \
-    POSTGRES_USER=$(kubectl get secret -n "$NS" postgres-cluster-superuser -o jsonpath='{.data.username}' | base64 -d && echo); \
-    POSTGRES_PASSWORD=$(kubectl get secret -n "$NS" postgres-cluster-superuser -o jsonpath='{.data.password}' | base64 -d && echo); \
-    TESTUSER_USERNAME="test@$(yq '.global.domain' defaults/environment/global.yaml)"; \
+    KEYCLOAK_PASSWORD=$(kubectl get secret -n "$(just _get-keycloak-namespace)" keycloak-admin-user -o jsonpath='{.data.password}' | base64 -d && echo); \
+    POSTGRES_USER=$(kubectl get secret -n "$(just _get-postgres-namespace)" postgres-cluster-superuser -o jsonpath='{.data.username}' | base64 -d && echo); \
+    POSTGRES_PASSWORD=$(kubectl get secret -n "$(just _get-postgres-namespace)" postgres-cluster-superuser -o jsonpath='{.data.password}' | base64 -d && echo); \
+    TESTUSER_USERNAME="test@$(just _get-domain)"; \
     TESTUSER_PASSWORD="TestTest1234!"; \
     echo "APISix Admin Password: $APISIX_PASSWORD"; \
     echo "Keycloak Admin Username: $KEYCLOAK_USERNAME"; \
@@ -305,9 +345,9 @@ get-admin-credentials:
     echo "Postgres Password: $POSTGRES_PASSWORD"; \
     echo "Test User Username: $TESTUSER_USERNAME"; \
     echo "Test User Password: $TESTUSER_PASSWORD"; \
-    if kubectl get secret -n "$NS" devicemanagement-db-credentials >/dev/null 2>&1; then \
-        DEVICEMGMT_USER=$(kubectl get secret -n "$NS" devicemanagement-db-credentials -o jsonpath='{.data.username}' | base64 -d && echo); \
-        DEVICEMGMT_PASSWORD=$(kubectl get secret -n "$NS" devicemanagement-db-credentials -o jsonpath='{.data.password}' | base64 -d && echo); \
+    if kubectl get secret -n "$(just _get-postgres-namespace)" devicemanagement-db-credentials >/dev/null 2>&1; then \
+        DEVICEMGMT_USER=$(kubectl get secret -n "$(just _get-postgres-namespace)" devicemanagement-db-credentials -o jsonpath='{.data.username}' | base64 -d && echo); \
+        DEVICEMGMT_PASSWORD=$(kubectl get secret -n "$(just _get-postgres-namespace)" devicemanagement-db-credentials -o jsonpath='{.data.password}' | base64 -d && echo); \
         echo "Device-Management DB User: $DEVICEMGMT_USER"; \
         echo "Device-Management DB Password: $DEVICEMGMT_PASSWORD"; \
     fi
@@ -319,9 +359,10 @@ create-device-management-db:
     set -euo pipefail
 
     # Read configuration from global.yaml
-    NS=$(yq '.global.instanceSlug' defaults/environment/global.yaml)
+    NS=$(helmfile template -f deployment/helmfile.yaml -e local --selector component=postgres --skip-deps -q | yq 'select(.kind == "Deployment") | .metadata.namespace')
 
     echo "Creating device-management database in namespace: $NS"
+
 
     # Get postgres credentials
     POSTGRES_USER=$(kubectl get secret -n "$NS" postgres-cluster-superuser -o jsonpath='{.data.username}' | base64 -d)
@@ -400,26 +441,79 @@ create-device-management-db:
     echo "  User: devicemanagement"
     echo "  Password stored in secret: devicemanagement-db-credentials"
 
-# Create test user in Keycloak
+# Create demo database and import demo data
 [group('helpers')]
-create-test-user:
+create-demo-db profile='local':
     #!/usr/bin/env bash
     set -euo pipefail
 
     # Read configuration from global.yaml
-    NS=$(yq '.global.instanceSlug' defaults/environment/global.yaml)
-    DOMAIN=$(yq '.global.domain' defaults/environment/global.yaml)
-    REALM="$NS"
+    NS=$(helmfile template -f deployment/helmfile.yaml -e {{profile}} --selector component=postgres --skip-deps -q | yq 'select(.kind == "Deployment") | .metadata.namespace')
+
+    echo "Creating demo database in namespace: $NS"
+
+    # Get postgres superuser username
+    POSTGRES_USER=$(kubectl get secret -n "$NS" postgres-cluster-superuser -o jsonpath='{.data.username}' | base64 -d)
+
+    # Use the primary pod (writes are not allowed on read-only replicas)
+    POD=$(kubectl get pods -n "$NS" -l cnpg.io/cluster=postgres-cluster,cnpg.io/instanceRole=primary -o jsonpath='{.items[0].metadata.name}')
+
+    if [ -z "$POD" ]; then
+        echo "ERROR: Primary Postgres pod not found in namespace $NS"
+        exit 1
+    fi
+
+    echo "Using primary Postgres pod: $POD"
+
+    # Fixed password for demo user
+    DB_PASSWORD="secret"
+
+    # Create user and database
+    echo "Creating database user 'demo'..."
+    kubectl exec -n "$NS" "$POD" -c postgres -- psql -U "$POSTGRES_USER" -c "CREATE USER demo WITH PASSWORD '$DB_PASSWORD';" 2>/dev/null || echo "User 'demo' may already exist"
+
+    echo "Creating database 'demo' with owner 'demo'..."
+    kubectl exec -n "$NS" "$POD" -c postgres -- psql -U "$POSTGRES_USER" -c "CREATE DATABASE demo WITH OWNER demo;" 2>/dev/null || echo "Database 'demo' may already exist"
+
+    # Grant necessary permissions
+    echo "Granting permissions..."
+    kubectl exec -n "$NS" "$POD" -c postgres -- psql -U "$POSTGRES_USER" -d demo -c "GRANT ALL ON SCHEMA public TO demo;"
+
+    # Import SQL file
+    echo "Importing tests/03-demo.sql..."
+    cat tests/03-demo.sql | kubectl exec -i -n "$NS" "$POD" -c postgres -- psql -U "$POSTGRES_USER" -d demo
+
+    # Change ownership of the demo table to the demo user
+    echo "Updating ownership..."
+    kubectl exec -n "$NS" "$POD" -c postgres -- psql -U "$POSTGRES_USER" -d demo -c "ALTER TABLE public.demo_sensor_readings OWNER TO demo;"
+
+    echo "✓ Database 'demo' created and SQL imported successfully!"
+    echo "  Database: demo"
+    echo "  User: demo"
+    echo "  Password: $DB_PASSWORD"
+    # In-cluster connection URL (e.g. how the nifi pod reaches this db)
+    echo "  In-cluster URL: postgresql://demo:$DB_PASSWORD@postgres-cluster-rw.$NS.svc.cluster.local:5432/demo"
+
+# Create test user in Keycloak
+
+[group('helpers')]
+create-test-user profile='local':
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+
+    # Read configuration from global.yaml
+    NS=$(helmfile template -f deployment/helmfile.yaml -e local --selector component=keycloak --skip-deps -q | yq 'select(.kind == "StatefulSet") | .metadata.namespace')
+    DOMAIN=$(just _get-domain {{profile}})
+    REALM=$(just _get-keycloak-realm {{profile}})
     TEST_EMAIL="test@$DOMAIN"
     TEST_PASSWORD="TestTest1234!"
 
     echo "Creating test user: $TEST_EMAIL in realm: $REALM"
 
-    # Get
     ADMIN_USER=$(yq '.global.initialUserEmail' defaults/environment/global.yaml | cut -d '@' -f 1)
     ADMIN_PASSWORD=$(kubectl get secret -n "$NS" keycloak-admin-user -o jsonpath='{.data.password}' | base64 -d)
 
-    # Get Keycloak pod name
     POD=$(kubectl get pods -n "$NS" -l app.kubernetes.io/name=keycloakx -o jsonpath='{.items[0].metadata.name}')
 
     if [ -z "$POD" ]; then
@@ -429,7 +523,6 @@ create-test-user:
 
     echo "Using Keycloak pod: $POD"
 
-    # Create user using kcadm.sh
     kubectl exec -n "$NS" "$POD" -- bash -c "
         /opt/keycloak/bin/kcadm.sh config credentials \
             --server http://localhost:8080 \

@@ -1,0 +1,32 @@
+---
+{{- $this := .Values.geoserver.rabbitmq }}
+{{- $global := .Values.global }}
+# Checklist:
+# - [x] Containers run as non-root with `readOnlyRootFilesystem` -> default
+# - [c] Health probes
+# - [ ] Graceful shutdown -> ignore for now, implement later
+# - [ ] Standard labels -> ignore for now, implement later
+# - [x] ServiceAccount with least privilege where required -> SA is created by default
+# - [x] Named ports
+# - [x] Ingress with TLS -> not required
+
+global:
+  security:
+    allowInsecureImages: true
+
+image:
+  registry: {{ .Values.images.geoserver.rabbitmq.registry }}
+  repository: {{ .Values.images.geoserver.rabbitmq.repository }}
+  tag: {{ .Values.images.geoserver.rabbitmq.tag }}
+
+# set auth secret
+auth:
+  username: geoserver
+  existingPasswordSecret: geoserver-rabbitmq-admin
+
+persistence:
+  enabled: true
+  storageClass: {{ .Values.global.storage.storageClass.rwo }}
+
+networkPolicy:
+  enabled: false  # handled separately by civitas/core

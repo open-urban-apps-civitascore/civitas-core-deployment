@@ -89,6 +89,16 @@ extraEnv:
       secretKeyRef:
         name: config-adapter-keycloak-user
         key: password
+  - name: NIFI_ADMIN_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        name: nifi-admin-keycloak-user
+        key: password
+  - name: NIFI_CONFIG_ADAPTER_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        name: nifi-config-adapter-keycloak-user
+        key: password
 
 config:
   {{ $global.instanceSlug }}:
@@ -306,9 +316,71 @@ config:
         clientSessionMaxLifespan: "0"
         clientOfflineSessionIdleTimeout: "0"
       userManagedAccessAllowed: false
-      # Dedicated service user for the config-adapter — granted realm-admin via realm-management client role
-      # username must equal email because registrationEmailAsUsername is enabled on this realm
+      # TR-03187 AR-11: ES256-only token signing.
+      # Explicitly declare the realm key providers so keycloak-config-cli manages them
+      # authoritatively.
+      components:
+        org.keycloak.keys.KeyProvider:
+          # ES256 signing key — the only active signature provider.
+          - name: ecdsa-generated
+            providerId: ecdsa-generated
+            config:
+              priority:
+                - "100"
+              enabled:
+                - "true"
+              active:
+                - "true"
+              ecdsaEllipticCurveKey:
+                - "P-256"
+          # Disable the auto-generated RS256 signing key.
+          - name: rsa-generated
+            providerId: rsa-generated
+            config:
+              priority:
+                - "-100"
+              enabled:
+                - "false"
+              active:
+                - "false"
+          # Disable the auto-generated HS512 signing key.
+          - name: hmac-generated
+            providerId: hmac-generated
+            config:
+              priority:
+                - "-100"
+              enabled:
+                - "false"
+              active:
+                - "false"
+              algorithm:
+                - "HS512"
+          # Keep RSA-OAEP encryption key (use=enc, not used for token signatures).
+          - name: rsa-enc-generated
+            providerId: rsa-enc-generated
+            config:
+              priority:
+                - "100"
+              enabled:
+                - "true"
+              active:
+                - "true"
+              algorithm:
+                - "RSA-OAEP"
+          # Keep AES encryption key (use=enc, not used for token signatures).
+          - name: aes-generated
+            providerId: aes-generated
+            config:
+              priority:
+                - "100"
+              enabled:
+                - "true"
+              active:
+                - "true"
+      # Dedicated service users for in-cluster machine identities.
+      # Usernames must equal emails because registrationEmailAsUsername is enabled on this realm.
       users:
+        # config-adapter — realm-admin via realm-management client role
         - username: config-adapter@internal.local
           enabled: true
           emailVerified: true
@@ -323,6 +395,32 @@ config:
           clientRoles:
             realm-management:
               - realm-admin
+        # nifi-admin — NiFi "Initial Admin Identity"; used by the nifi-bootstrap
+        # Job to provision NiFi access policies via the REST API.
+        - username: nifi-admin@internal.local
+          enabled: true
+          emailVerified: true
+          email: nifi-admin@internal.local
+          firstName: NiFi
+          lastName: Admin
+          requiredActions: []
+          credentials:
+            - type: password
+              value: "$(NIFI_ADMIN_PASSWORD)"
+              temporary: false
+        # nifi-config-adapter — identity used by the config-adapter when calling
+        # the NiFi REST API.
+        - username: nifi-config-adapter@internal.local
+          enabled: true
+          emailVerified: true
+          email: nifi-config-adapter@internal.local
+          firstName: NiFi
+          lastName: Config Adapter
+          requiredActions: []
+          credentials:
+            - type: password
+              value: "$(NIFI_CONFIG_ADAPTER_PASSWORD)"
+              temporary: false
       clients:
         {{- range $clientId, $client := .Values.keycloakClients }}
         {{- $subdomain := $client.subdomain | default $clientId }}
@@ -331,6 +429,15 @@ config:
         {{- $redirectUris := list (printf "https://%s.%s%s" $subdomain $global.domain $redirectPath) }}
         {{- range (index $client "additionalRedirectPaths" | default list) }}
         {{- $redirectUris = append $redirectUris (printf "https://%s.%s%s" $subdomain $global.domain .) }}
+        {{- end }}
+        # Opt-in ":443" variant for apps that emit the default HTTPS port in their
+        # redirect_uri (e.g. NiFi 2.x); Keycloak does strict port matching.
+        {{- if index $client "includePort443Variant" | default false }}
+        {{- $port443Uris := list }}
+        {{- range $redirectUris }}
+        {{- $port443Uris = append $port443Uris (. | replace (printf "https://%s.%s/" $subdomain $global.domain) (printf "https://%s.%s:443/" $subdomain $global.domain)) }}
+        {{- end }}
+        {{- $redirectUris = concat $redirectUris $port443Uris }}
         {{- end }}
         {{- $rawValues := index $client "rawValues" | default dict }}
         {{- $isPublicClient := false }}
@@ -466,3 +573,4 @@ config:
       passwordPolicy: "length(20) and upperCase(1) and lowerCase(1) and digits(1) and specialChars(1)"
       # TR-03187 AR-11: Use SHA256 for OTP
       otpPolicyAlgorithm: HmacSHA256
+

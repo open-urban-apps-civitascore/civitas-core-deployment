@@ -9,30 +9,51 @@ postgres-allow-linkerd:
         - podSelector:
             matchLabels:
               app.kubernetes.io/name: cloudnative-pg
+          componentNamespace: postgres
         - podSelector:
             matchLabels:
               app.kubernetes.io/name: portal
+          componentNamespace: portal
         - podSelector:
             matchLabels:
               app.kubernetes.io/component: backend
+          componentNamespace: portal
         - podSelector:
             matchLabels:
               app.kubernetes.io/instance: keycloak-app
+          componentNamespace: keycloak
         - podSelector:
             matchLabels:
               app.kubernetes.io/name: authz-repo
+          componentNamespace: authz
         - podSelector:
             matchLabels:
               app.kubernetes.io/name: authz
+          componentNamespace: authz
         - podSelector:
             matchLabels:
               app.kubernetes.io/instance: frost-frost
+          componentNamespace: frost
         - podSelector:
             matchLabels:
               app.kubernetes.io/component: database-role-setup
+          componentNamespace: postgres
         - podSelector:
             matchLabels:
               batch.kubernetes.io/job-name: portal-db-create-role-authz-readonly
+          componentNamespace: portal
+        - podSelector:
+            matchLabels:
+              app: superset
+          componentNamespace: superset
+        - podSelector:
+            matchLabels:
+              app: superset-worker
+          componentNamespace: superset
+        - podSelector:
+            matchLabels:
+              job-name: superset-superset-init-db
+          componentNamespace: superset
       ports:
         - port: 4143
           protocol: TCP

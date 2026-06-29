@@ -17,6 +17,18 @@
         "type": "string",
         "minLength": 1
       },
+      "additionalRedirectPaths": {
+        "description": "Optional extra paths (appended to the computed rootUrl) to register as additional redirect URIs alongside the primary redirectPath.",
+        "type": "array",
+        "items": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "includePort443Variant": {
+        "description": "If true, mirror every computed redirect URI with an explicit `:443` variant. Use for clients whose upstream app emits the default HTTPS port verbatim in the OAuth2 `redirect_uri` (e.g. Apache NiFi 2.x). Off by default.",
+        "type": "boolean"
+      },
       "name": {
         "description": "Human-friendly client name. Defaults to the clientId key.",
         "type": "string"
@@ -72,6 +84,10 @@
             "additionalProperties": {
               "type": ["string", "number", "boolean", "null", "object", "array"]
             }
+          },
+          "protocolMappers": {
+            "type": "array",
+            "items": { "type": "object" }
           }
         }
       }

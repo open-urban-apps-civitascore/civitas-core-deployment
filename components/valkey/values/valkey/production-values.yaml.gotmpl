@@ -1,0 +1,49 @@
+---
+{{- $this := .Values.valkey.valkey }}
+{{- $global := .Values.global }}
+# Checklist:
+# - [x] Resources (requests and limits)
+# - [x] Larger Storage
+# - [x] 2+ Replicas or HorizontalPodAutoscaler
+# - [x] Rolling updates `maxUnavailable: 0`, `maxSurge: 25%`
+# - [x] PodDisruptionBudget (at least `minAvailable: 1`)
+
+resources:
+  limits:
+    cpu: 300m
+    memory: 512Mi
+  requests:
+    cpu: 200m
+    memory: 256Mi
+
+initResources:
+  limits:
+    cpu: 200m
+    memory: 256Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+replica:
+  enabled: true
+
+  replicas: 2
+
+  persistence:
+    size: "10Gi"
+    storageClass: ""
+
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+  maxUnavailable: 1
+
+metrics:
+  exporter:
+    resources:
+      limits:
+        cpu: 200m
+        memory: 256Mi
+      requests:
+        cpu: 100m
+        memory: 128Mi

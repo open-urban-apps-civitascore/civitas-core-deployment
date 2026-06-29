@@ -5,20 +5,24 @@ metadata:
   name: validate-probes
   annotations:
     pod-policies.kyverno.io/autogen-controllers: none
-    policies.kyverno.io/title: Validate Probes
-    policies.kyverno.io/category: Sample
+    policies.kyverno.io/title: Validate Health Probes
+    policies.kyverno.io/category: Best Practices
     policies.kyverno.io/severity: medium
-    policies.kyverno.io/minversion: 1.6.0
-    policies.kyverno.io/subject: Pod
+    policies.kyverno.io/minversion: 1.8.0
+    policies.kyverno.io/subject: Deployment,DaemonSet,StatefulSet
+    policies.kyverno.io/scored: 'true'
     policies.kyverno.io/description: >-
-      Liveness and readiness probes accomplish different goals, and setting both to the same
-      is an anti-pattern and often results in app problems in the future. This policy
-      checks that liveness and readiness probes are not equal and that at least one is defined.
+      Health probes enable Kubernetes to detect and recover from unhealthy containers.
+      Every container in a long-running workload (Deployment, DaemonSet, StatefulSet)
+      must define at least one of readinessProbe or livenessProbe. Additionally,
+      liveness and readiness probes must not be identical, as they serve different
+      purposes: readiness gates traffic, liveness triggers restarts. Startup probes
+      are recommended for slow-starting containers but are not enforced here.
+      Jobs and init containers are excluded from this policy.
 spec:
-  validationFailureAction: Audit
-  background: false
+  background: true
   rules:
-    - name: validate-probes-exist
+    - name: require-at-least-one-probe
       match:
         any:
           - resources:
@@ -27,7 +31,9 @@ spec:
                 - DaemonSet
                 - StatefulSet
       validate:
-        message: 'At least one probe (liveness or readiness) must be defined.'
+        failureAction: Audit
+        message: >-
+          Every container must define at least one health probe (readinessProbe or livenessProbe).
         deny:
           conditions:
             any:
@@ -36,7 +42,7 @@ spec:
                 operator: GreaterThan
                 value: 0
 
-    - name: validate-probes-are-different
+    - name: require-different-probes
       match:
         any:
           - resources:
@@ -45,7 +51,10 @@ spec:
                 - DaemonSet
                 - StatefulSet
       validate:
-        message: 'Liveness and readiness probes cannot be identical.'
+        failureAction: Audit
+        message: >-
+          Liveness and readiness probes must not be identical. They serve different purposes:
+          readiness controls traffic routing, liveness triggers container restarts.
         deny:
           conditions:
             any:

@@ -1,0 +1,20 @@
+---
+# rest->DB (in postgres)
+# wcs->DB (in postgres)
+# wms->DB (in postgres)
+# webui->rabbitmq
+# others might be necessary in the future, but this seems to be the minimum for now.
+
+# name must match lower case alphanumeric characters
+geoserver-rabbitmq:
+  podSelector:
+    app.kubernetes.io/instance: geoserver-rabbitmq
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/instance: geoserver-geoserver
+              app.kubernetes.io/component: webui
+          componentNamespace: geoserver

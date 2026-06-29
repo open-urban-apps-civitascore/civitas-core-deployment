@@ -1,0 +1,5 @@
+---
+superset:
+  superset:
+    enabled: true
+    namespace: {{ include "civitas.namespace" (dict "global" .Values.global "suffix" "superset") }}

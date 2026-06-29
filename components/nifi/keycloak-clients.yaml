@@ -1,0 +1,74 @@
+---
+# NiFi OIDC client — Authorization Code flow for the web UI / REST API (browser).
+nifi:
+  name: NiFi
+  description: CIVITAS Apache NiFi OIDC client (Authorization Code flow for web UI / REST API)
+  subdomain: nifi
+  redirectPath: /nifi-api/access/oidc/callback
+  additionalRedirectPaths:
+    - /nifi/logout-complete
+  includePort443Variant: true
+  rawValues:
+    publicClient: false
+    bearerOnly: false
+    standardFlowEnabled: true
+    implicitFlowEnabled: false
+    directAccessGrantsEnabled: false
+    serviceAccountsEnabled: false
+    authorizationServicesEnabled: false
+    defaultClientScopes:
+      - basic
+      - email
+      - profile
+      - roles
+    optionalClientScopes: []
+
+# DAG/password-grant client used by `nifi-admin@internal.local` and
+# `nifi-config-adapter@internal.local`. Public client (no secret — credential
+# is the user's password from a Kubernetes Secret).
+#
+# The `protocolMappers` below override the JWT `sub` claim with the user's
+# email because NiFi 2.x's bearer-token path keys off `sub` (its
+# `oidc.claim.identifying.user` setting only applies to the browser code-flow).
+# Without this, NiFi sees a Keycloak UUID principal and rejects every call
+# with 403 "No applicable policies could be found".
+nifi-direct:
+  name: NiFi Direct Access
+  description: >-
+    CIVITAS NiFi direct-access client used by in-cluster technical identities
+    (bootstrap Job, config-adapter) to obtain a Keycloak token via the
+    Resource Owner Password Credentials grant.
+  subdomain: nifi-direct
+  redirectPath: /
+  rawValues:
+    publicClient: true
+    bearerOnly: false
+    standardFlowEnabled: false
+    implicitFlowEnabled: false
+    directAccessGrantsEnabled: true
+    serviceAccountsEnabled: false
+    authorizationServicesEnabled: false
+    redirectUris: []
+    webOrigins: []
+    defaultClientScopes:
+      - basic
+      - email
+      - profile
+      - roles
+    optionalClientScopes: []
+    attributes:
+      use.refresh.tokens: 'false'
+    protocolMappers:
+      # Rewrite JWT `sub` = user's email (see header comment above).
+      - name: nifi-sub-override
+        protocol: openid-connect
+        protocolMapper: oidc-usermodel-property-mapper
+        consentRequired: false
+        config:
+          user.attribute: email
+          claim.name: sub
+          jsonType.label: String
+          access.token.claim: 'true'
+          id.token.claim: 'false'
+          userinfo.token.claim: 'false'
+          introspection.token.claim: 'true'

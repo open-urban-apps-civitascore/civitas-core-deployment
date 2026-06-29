@@ -1,0 +1,10 @@
+---
+superset:
+  superset:
+    registry: registry.gitlab.com
+    repository: civitas-connect/civitas-core/docker-images/superset
+    tag: 6.1.0-py311
+  init:
+    registry: docker.io
+    repository: alpine
+    tag: 3.23.3
