@@ -54,12 +54,6 @@ postgres:
             matchLabels:
               app.kubernetes.io/component: database-role-setup
           componentNamespace: postgres
-    # Nifi
-    - from:
-        - podSelector:
-            matchLabels:
-              app.kubernetes.io/name: nifi
-          componentNamespace: nifi
     # Config adapter
     - from:
         - podSelector:
