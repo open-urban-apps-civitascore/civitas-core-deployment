@@ -18,6 +18,12 @@ keycloak-allow-linkerd:
         - podSelector:
             matchLabels:
               app.kubernetes.io/name: nifi-bootstrap
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: nifi
+        - podSelector:
+            matchLabels:
+              app: nifi
       ports:
         - port: 4143
           protocol: TCP

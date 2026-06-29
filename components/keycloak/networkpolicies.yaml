@@ -18,6 +18,12 @@ keycloak:
         - podSelector:
             matchLabels:
               app.kubernetes.io/name: nifi-bootstrap
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: nifi
+        - podSelector:
+            matchLabels:
+              app: nifi
     - from:
         - podSelector:
             matchLabels:
