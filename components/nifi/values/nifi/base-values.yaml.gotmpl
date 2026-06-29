@@ -8,7 +8,7 @@ global:
 
   oidc:
     enabled: true
-    oidc_url: 'https://{{ .Values.routes.keycloak.subDomain }}.{{ $global.domain }}{{ .Values.keycloak.app.pathPrefix | trimSuffix "/" }}/realms/{{ $global.instanceSlug }}/.well-known/openid-configuration'
+    oidc_url: 'http://keycloak-app-keycloakx-http.{{ $global.instanceSlug }}.svc:80/realms/{{ $global.instanceSlug }}/.well-known/openid-configuration'
     client_id: nifi
     client_secretFrom:
       name: keycloak-client-nifi
