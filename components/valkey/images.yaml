@@ -3,7 +3,7 @@ valkey:
   valkey:
     registry: docker.io
     repository: valkey/valkey
-    tag: 9.0.2
+    tag: 9.0.4
   metrics:
     registry: ghcr.io
     repository: oliver006/redis_exporter
