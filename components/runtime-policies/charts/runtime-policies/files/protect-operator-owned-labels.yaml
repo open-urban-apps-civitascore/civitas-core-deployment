@@ -40,9 +40,9 @@ spec:
           - key: '{{ request.object.metadata.labels."app.kubernetes.io/name" || '''' }}'
             operator: AnyIn
             value: [kafka]
-          - key: "{{ request.userInfo.username | split(@, ':') | [-1] }}"
+          - key: "{{ request.userInfo.username }}"
             operator: NotEquals
-            value: strimzi-cluster-operator
+            value: STRIMZI_OPERATOR_USERNAME
       validate:
         failureAction: KYVERNO_FAILURE_ACTION
         message: >-
@@ -59,9 +59,9 @@ spec:
           - key: '{{ request.object.metadata.labels."app.kubernetes.io/name" || '''' }}'
             operator: AnyIn
             value: [postgresql]
-          - key: "{{ request.userInfo.username | split(@, ':') | [-1] }}"
+          - key: "{{ request.userInfo.username }}"
             operator: NotEquals
-            value: postgres-operator-cloudnative-pg
+            value: CNPG_OPERATOR_USERNAME
       validate:
         failureAction: KYVERNO_FAILURE_ACTION
         message: >-
@@ -80,9 +80,9 @@ spec:
               kinds: [Pod]
       preconditions:
         all:
-          - key: "{{ request.userInfo.username | split(@, ':') | [-1] }}"
+          - key: "{{ request.userInfo.username }}"
             operator: AnyIn
-            value: [strimzi-cluster-operator, postgres-operator-cloudnative-pg]
+            value: [STRIMZI_OPERATOR_USERNAME, CNPG_OPERATOR_USERNAME]
           - key: "{{ request.object.metadata.labels.app || '' }}"
             operator: NotEquals
             value: ''
@@ -105,9 +105,9 @@ spec:
           - key: '{{ request.object.metadata.labels."cnpg.io/jobRole" || '''' }}'
             operator: NotEquals
             value: ''
-          - key: "{{ request.userInfo.username | split(@, ':') | [-1] }}"
+          - key: "{{ request.userInfo.username }}"
             operator: NotEquals
-            value: postgres-operator-cloudnative-pg
+            value: CNPG_OPERATOR_USERNAME
       validate:
         failureAction: KYVERNO_FAILURE_ACTION
         message: >-

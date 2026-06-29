@@ -150,7 +150,10 @@ risk. Two complementary controls, both keyed on the *creating identity*
   `split(request.userInfo.username, ':') | [-1]`.
 - **Reverse** (`protect-operator-owned-labels`): an operator-owned value
   (`kafka`, `postgresql`) may only be set by a Pod that operator created — any
-  other creator claiming it is denied.
+  other creator claiming it is denied. This matches the operator's **full** SA
+  username (`system:serviceaccount:<ns>:<name>`, namespace injected at render
+  time from the operator's namespace), not just the trailing name, so a
+  same-named SA in another namespace cannot be trusted.
 
 > **Only Pods the operator creates *directly* can be reverse-protected.** The
 > reverse check keys on `request.userInfo`, so it only works for values carried

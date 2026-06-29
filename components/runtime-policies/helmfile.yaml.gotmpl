@@ -7,6 +7,11 @@ bases:
 {{- $failureAction := index ($root.global.runtimePolicies | default dict) "failureAction" | default "Audit" }}
 {{- $enabled := index ($root.global.runtimePolicies | default dict) "enabled" | default false }}
 {{- $namespace := index $root "runtime-policies" "runtime-policies" "namespace" }}
+{{- /* Operator namespaces, used to pin the reverse label-protection rules to the
+       full operator SA username. Fall back to the release namespace if the
+       component is not deployed. */}}
+{{- $strimziOperatorNamespace := ((($root.kafka | default dict).operator | default dict).namespace | default $namespace) }}
+{{- $cnpgOperatorNamespace := ((($root.postgres | default dict).operator | default dict).namespace | default $namespace) }}
 
 releases:
   - name: runtime-policies
@@ -17,6 +22,8 @@ releases:
     values:
       - operators:
           enabled: true
+        strimziOperatorNamespace: {{ $strimziOperatorNamespace }}
+        cnpgOperatorNamespace: {{ $cnpgOperatorNamespace }}
         linkerd:
           enabled: {{ $linkerdEnabled }}
         failureAction: {{ $failureAction }}
