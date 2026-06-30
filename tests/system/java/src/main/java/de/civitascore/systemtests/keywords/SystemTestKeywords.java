@@ -222,9 +222,11 @@ public class SystemTestKeywords {
     body.put("dataStructureVersionSource", "OWN");
     body.put("version", "1.0.0");
     body.put("description", "Initial release for the system test proof of concept");
-    body.put("modelAtlasUri", state.modelAtlasUri);
     body.put("modelName", state.modelName);
-    body.put("model", readResource("/models/simple-model.xmi"));
+    ObjectNode model = mapper.createObjectNode();
+    ObjectNode properties = model.putObject("properties");
+    properties.putObject("value").put("type", "string");
+    body.set("model", model);
     body.set("styles", mapper.createObjectNode());
 
     JsonNode result = portalClient.postJson(
@@ -849,14 +851,13 @@ public class SystemTestKeywords {
         false,
         dataStructure.path("createdFromDataSource").asBoolean(true),
         "dataStructure.createdFromDataSource");
-    assertIsArray(dataStructure.path("dataStructureVersionIds"), "dataStructure.dataStructureVersionIds");
-    assertIsArray(dataStructure.path("assignments"), "dataStructure.assignments");
+    assertIsArray(dataStructure.path("dataStructureVersions"), "dataStructure.dataStructureVersions");
     if (expectVersionReference) {
       ensureDataStructureVersionId();
-      assertArrayContainsText(
-          dataStructure.path("dataStructureVersionIds"),
+      assertArrayContainsObjectWithId(
+          dataStructure.path("dataStructureVersions"),
           state.dataStructureVersionId,
-          "dataStructure.dataStructureVersionIds");
+          "dataStructure.dataStructureVersions");
     }
   }
 
@@ -868,11 +869,8 @@ public class SystemTestKeywords {
     assertTextEquals(
         "Initial release for the system test proof of concept",
         requiredText(version, "description", "dataStructureVersion.description"));
-    assertTextEquals(state.modelAtlasUri, requiredText(version, "modelAtlasUri", "dataStructureVersion.modelAtlasUri"));
     assertTextEquals(state.modelName, requiredText(version, "modelName", "dataStructureVersion.modelName"));
-    assertTrue(
-        requiredText(version, "model", "dataStructureVersion.model").contains("<uml:Model"),
-        "dataStructureVersion.model must contain the serialized UML model");
+    assertIsObject(version.path("model"), "dataStructureVersion.model");
     assertIsObject(version.path("styles"), "dataStructureVersion.styles");
   }
 
@@ -903,11 +901,11 @@ public class SystemTestKeywords {
       ensureDataStructureVersionId();
       assertTextEquals(
           state.dataStructureVersionId,
-          requiredText(dataSource, "dataStructureVersionId", "dataSource.dataStructureVersionId"));
+          requiredText(dataSource.path("dataStructureVersion"), "id", "dataSource.dataStructureVersion.id"));
     } else {
-      assertNullOrEmpty(
-          textOrNull(dataSource, "dataStructureVersionId"),
-          "dataSource.dataStructureVersionId should be empty before the patch");
+      assertTrue(
+          dataSource.path("dataStructureVersion").isNull() || dataSource.path("dataStructureVersion").isMissingNode(),
+          "dataSource.dataStructureVersion should be absent before the patch");
     }
   }
 
@@ -948,7 +946,6 @@ public class SystemTestKeywords {
     assertTextEquals(state.pipelineId, requiredText(pipeline, "id", "pipeline.id"));
     assertTextEquals(state.pipelineName, requiredText(pipeline, "name", "pipeline.name"));
     assertTextEquals(state.pipelineDescription, requiredText(pipeline, "description", "pipeline.description"));
-    assertArrayContainsText(pipeline.path("dataSourceIds"), state.dataSourceId, "pipeline.dataSourceIds");
     assertIsObject(pipeline.path("styles"), "pipeline.styles");
     JsonNode model = pipeline.path("model");
     assertIsObject(model, "pipeline.model");
@@ -1031,6 +1028,16 @@ public class SystemTestKeywords {
       }
     }
     throw new AssertionError(label + " must contain '" + expectedValue + "'. Response: " + arrayNode.toPrettyString());
+  }
+
+  private void assertArrayContainsObjectWithId(JsonNode arrayNode, String expectedId, String label) {
+    assertTrue(arrayNode.isArray(), label + " must be an array");
+    for (JsonNode node : arrayNode) {
+      if (Objects.equals(expectedId, node.path("id").asText(null))) {
+        return;
+      }
+    }
+    throw new AssertionError(label + " must contain an object with id '" + expectedId + "'. Response: " + arrayNode.toPrettyString());
   }
 
   private void assertBooleanEquals(boolean expected, boolean actual, String label) {
