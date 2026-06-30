@@ -3,7 +3,7 @@ global:
   domain: main.civitas2.fw-web.space
   profile: production
   instanceSlug: civitas
-  initialUserEmail: {{ env "GITLAB_USER_EMAIL" | default "admin@civitas.test" }}
+  initialUserEmail: {{ env "GITLAB_USER_EMAIL" | default "admin@example.com" }}
   ingress:
     enabled: true
     clusterIssuer: 'letsencrypt-prod'
