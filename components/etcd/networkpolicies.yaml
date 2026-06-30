@@ -10,6 +10,8 @@ etcd:
         - podSelector:
             matchLabels:
               app.kubernetes.io/name: apisix
+          componentNamespace: apisix
         - podSelector:
             matchLabels:
               app.kubernetes.io/name: etcd
+          componentNamespace: etcd

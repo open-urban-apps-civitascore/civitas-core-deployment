@@ -6,14 +6,14 @@ portal-backend:
     openid-connect:
       client_id: apisix-validator
       client_secret: '${APISIX_VALIDATOR_CLIENT_SECRET}'
-      discovery: http://keycloak-app-keycloakx-http.'${REALM}'.svc.cluster.local:80/realms/'${REALM}'/.well-known/openid-configuration # yamllint disable-line rule:line-length
+      discovery: http://keycloak-app-keycloakx-http.{{ include "civitas.namespace" (dict "global" .Values.global "suffix" "keycloak") }}.svc.cluster.local:80/realms/'${REALM}'/.well-known/openid-configuration # yamllint disable-line rule:line-length
       bearer_only: true
       ssl_verify: false
       set_userinfo_header: true
-      introspection_endpoint: http://keycloak-app-keycloakx-http.'${REALM}'.svc.cluster.local:80/realms/'${REALM}'/protocol/openid-connect/token/introspect # yamllint disable-line rule:line-length
+      introspection_endpoint: http://keycloak-app-keycloakx-http.{{ include "civitas.namespace" (dict "global" .Values.global "suffix" "keycloak") }}.svc.cluster.local:80/realms/'${REALM}'/protocol/openid-connect/token/introspect # yamllint disable-line rule:line-length
       introspection_endpoint_auth_method: post
     opa:
-      host: http://authz-authz-opa:8181
+      host: http://authz-authz-opa.{{ include "civitas.namespace" (dict "global" .Values.global "suffix" "authz") }}.svc.cluster.local:8181 # yamllint disable-line rule:line-length
       policy: civitas/authz/decision
       with_route: true
       with_service: true

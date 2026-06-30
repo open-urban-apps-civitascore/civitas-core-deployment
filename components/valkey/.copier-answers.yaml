@@ -1,0 +1,9 @@
+---
+# Changes here will be overwritten by Copier.
+_commit: v2.0-beta-22-gb3d8c95
+_src_path: ..
+componentName: valkey
+componentSlug: valkey
+releases: valkey
+shortDescription: A flexible distributed key-value database that is optimized for
+  caching and other realtime workloads.

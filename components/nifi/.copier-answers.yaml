@@ -1,0 +1,9 @@
+---
+# Changes here will be overwritten by Copier.
+_commit: ccc09bf
+_src_path: ..
+componentName: Apache NiFi
+componentSlug: nifi
+releases: nifi
+shortDescription: Apache NiFi cluster (Helm-chart based, Kubernetes-native state management,
+  no ZooKeeper, no operator)

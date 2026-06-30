@@ -93,13 +93,6 @@ spec:
               value: {{ .Values.kafka.bootstrapServers | quote }}
             - name: KAFKA_ENABLED
               value: "true"
-            # Model Atlas
-            - name: MODEL_ATLAS_BASE_URL
-              value: {{ .Values.modelAtlas.url }}
-            - name: MODEL_ATLAS_SCOPE
-              value: civitas
-            - name: SPRING_KAFKA_PRODUCER_PROPERTIES_COMPRESSION_TYPE
-              value: lz4
             # Apisix
             - name: CIVITAS_API_BASE_URL
               value: {{ .Values.apisix.apiUrl | quote }}

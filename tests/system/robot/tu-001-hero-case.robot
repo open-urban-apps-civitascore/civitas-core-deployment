@@ -11,6 +11,8 @@ Hero Case - Open and Protected Data
     # TC-001 -> TC-003 -> TC-007
 
     Initialize System Test Run    suffix=open    openDataAccess=${TRUE}
+    TC-038 Create Data Pool
+    TC-039 Verify Data Pool Snapshot
     TC-001 Create Data Structure
     TC-002 Verify Draft Data Structure Snapshot
     TC-003 Create Data Structure Version
@@ -22,6 +24,9 @@ Hero Case - Open and Protected Data
     TC-009 Verify Released Data Structure Snapshot
     TC-010 Create Data Source
     TC-011 Verify Draft Data Source Snapshot
+    TC-040 Set Data Source Datapool Scope
+    TC-041 Verify Data Source Datapool Scope
+    TC-044 Verify Data Sources Filtered By Data Pool
     TC-012 Patch Data Source With Data Structure Version
     TC-013 Verify Data Source References Data Structure Version
     TC-014 Release Data Source
@@ -32,6 +37,8 @@ Hero Case - Open and Protected Data
     TC-017 Verify Draft Data Set Snapshot
     Adopt Frontend Data Set
     TC-018 Create Pipeline
+    TC-042 Assign Data Set To Data Pool
+    TC-043 Verify Data Set Data Pool Assignment
     TC-032 Create Geo Pipeline
     TC-033 Verify Geo Pipeline Snapshot
     TC-034 Create OWS API

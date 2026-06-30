@@ -96,3 +96,25 @@ TC-029 Verify Authenticated Gateway Response Content
 
 TC-030 Verify Anonymous Gateway Rejection
     Verify Gateway Access    401    ${FALSE}
+
+TC-038 Create Data Pool
+    Create Data Pool
+
+TC-039 Verify Data Pool Snapshot
+    Verify Data Pool Snapshot
+
+TC-040 Set Data Source Datapool Scope
+    Set Data Source Datapool Scope
+
+TC-041 Verify Data Source Datapool Scope
+    Verify Data Source Datapool Scope
+
+TC-042 Assign Data Set To Data Pool
+    Assign Data Set To Data Pool
+
+TC-043 Verify Data Set Data Pool Assignment
+    Verify Data Set Data Pool Assignment
+
+TC-044 Verify Data Sources Filtered By Data Pool
+    Verify Data Sources Filtered By Data Pool
+

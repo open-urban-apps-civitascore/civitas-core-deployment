@@ -1,0 +1,25 @@
+---
+superset-allow-linkerd:
+  podSelector:
+    app.kubernetes.io/instance: superset-superset
+    app.kubernetes.io/name: superset
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: valkey
+        - podSelector:
+            matchLabels:
+              app: superset
+        - podSelector:
+            matchLabels:
+              app: superset-worker
+      ports:
+        - port: 4143
+          protocol: TCP
+        - port: 4190
+          protocol: TCP
+        - port: 4191
+          protocol: TCP

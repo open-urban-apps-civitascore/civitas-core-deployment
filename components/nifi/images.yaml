@@ -1,0 +1,9 @@
+---
+nifi:
+  nifi:
+    # Apache NiFi runtime image is pinned via the chart's own values (see values.yaml.gotmpl).
+  bootstrap:
+    # Minimal Alpine-based image containing `curl` + `jq`.
+    repository: 'docker.io/badouralix/curl-jq'
+    tag: 'alpine'
+    digest: 'sha256:f0370deaaf07dc61af9bae7474cbcffee62be5b3e83e1f6dd5d25d340e6c16c4'

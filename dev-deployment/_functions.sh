@@ -106,6 +106,68 @@ format_time() {
     fi
 }
 
+# Selects a Docker context that can reach the Docker daemon for the current OS.
+#
+# macOS (Docker Desktop) exposes the daemon via the "desktop-linux" context,
+# while Linux/WSL use the "default" context.
+select_docker_context() {
+    local preferred=()
+    case "$OSTYPE" in
+        darwin*) preferred=("desktop-linux" "default") ;;
+        *) preferred=("default" "desktop-linux") ;;
+    esac
+
+    local available
+    available=$(docker context ls --format '{{.Name}}' 2>/dev/null || echo "")
+
+    local ctx
+    for ctx in "${preferred[@]}" $available; do
+        if echo "$available" | grep -qx "$ctx" && docker --context "$ctx" info >/dev/null 2>&1; then
+            docker context use "$ctx" >/dev/null
+            echo_green_nl "Using Docker context '${YELLOW}${ctx}${GREEN}'."
+            return 0
+        fi
+    done
+
+    echo_red "Warning: Could not find a Docker context that can reach the Docker daemon."
+    echo_red "Is Docker (Docker Desktop / dockerd) running? Available contexts: ${available:-none}"
+    return 1
+}
+
+# Waits for a pod matching a label selector to exist, then to become Ready.
+#
+# "kubectl wait" fails with "no matching resources found" when the pods do not
+# exist yet, so we first poll until at least one matching pod appears.
+#
+# Arguments:
+#   $1 - namespace
+#   $2 - label selector
+#   $3 - timeout (optional, default: 600s)
+wait_for_ready_pod() {
+    local namespace="$1"
+    local selector="$2"
+    local timeout="${3:-600s}"
+
+    local kube_args=()
+    [ -n "${KUBECONFIG:-}" ] && kube_args+=(--kubeconfig "${KUBECONFIG}")
+    [ -n "${KUBECONTEXT:-}" ] && kube_args+=(--context "${KUBECONTEXT}")
+
+    local attempts=0
+    local max_attempts=120
+    until kubectl "${kube_args[@]}" --namespace "${namespace}" get pod --selector="${selector}" \
+            -o name 2>/dev/null | grep -q .; do
+        attempts=$((attempts + 1))
+        if [ "${attempts}" -ge "${max_attempts}" ]; then
+            echo_red "Timed out waiting for a pod matching '${selector}' to appear in namespace '${namespace}'."
+            return 1
+        fi
+        sleep 1
+    done
+
+    kubectl "${kube_args[@]}" --namespace "${namespace}" wait --for=condition=Ready pod \
+        --selector="${selector}" --timeout="${timeout}"
+}
+
 # Checks if all given commands are available on the system.
 #
 # Arguments:

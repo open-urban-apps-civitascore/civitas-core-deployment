@@ -20,6 +20,7 @@ routes:
   #   upstream: 'frost-server'
   #   uri: '/FROST-Server/v1.1'
   #   plugin_id: 'openid_opa_proxy_rewrite_request_id'
+  #   scheme: 'https'  # Optional: set to 'https' for HTTPS upstreams (auto-disables TLS verify)
 
 domain: 'example.com'
 realm: 'civitas'

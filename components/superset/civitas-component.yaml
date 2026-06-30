@@ -1,0 +1,4 @@
+---
+component: superset
+parts:
+  - name: superset

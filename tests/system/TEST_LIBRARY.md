@@ -105,6 +105,13 @@ Create a data structure for the use case.
 | `TC-035` | Backend and Frontend | Verify OWS API Snapshot | Refresh the dataset overview in the portal and open the OWS API card to inspect the base information snapshot. | The portal shows the WFS/WMS API card, the `ows` slug, and the PostGIS persistence choice. |
 | `TC-036` | Backend | Create Geo Layer | Create the GeoServer layer for the POSTGIS sink. | The layer is stored with the selected table, geometry field, CRS, and layer metadata. |
 | `TC-037` | Backend and Frontend | Verify Geo Layer Snapshot | Open the OWS API detail page in the portal and inspect the layer tab snapshot. | The portal shows the expected layer title, technical name, table, geometry field, and CRS. |
+| `TC-038` | Backend | Create DataPool | Create the datapool resource through the API. | Resource is created and an ID is returned. |
+| `TC-039` | Backend | Verify DataPool Snapshot | Read back the datapool and inspect the payload. | Snapshot matches name and description. |
+| `TC-040` | Backend | Set DataSource Datapool Scope | Update the datasource with a SPECIFIC datapool scope referencing the created datapool. | DataSource is updated and datapoolScope reflects type SPECIFIC with the correct datapool ID. |
+| `TC-041` | Backend | Verify DataSource Datapool Scope | Read the datasource and inspect the datapoolScope field. | datapoolScope type is SPECIFIC and contains the expected datapool ID. |
+| `TC-042` | Backend | Assign DataSet To DataPool | Update the dataset with the datapool ID to place it under the datapool governance boundary. | Dataset is updated and the datapool summary is present in the response. |
+| `TC-043` | Backend | Verify DataSet DataPool Assignment | Read the dataset and inspect the datapool field. | datapool summary contains the expected ID and name. |
+| `TC-044` | Backend | Verify DataSources Filtered By DataPool | Query datasources filtered by the datapool ID. | The datasource scoped to the datapool appears in the result set. |
 
 ## Use In Planning
 

@@ -1,9 +1,0 @@
----
-# Changes here will be overwritten by Copier.
-_commit: 31c6c51
-_src_path: ..
-componentName: Model Atlas
-componentSlug: model-atlas
-releases: modelAtlas
-shortDescription: Eclipse Fennec is an incubator and code-space for EMF and OSGi related
-  topics.

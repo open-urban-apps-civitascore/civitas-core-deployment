@@ -1,0 +1,53 @@
+---
+{{- $this := .Values.nifi.bootstrap }}
+{{- $nifi := .Values.nifi.nifi }}
+{{- $global := .Values.global }}
+# Checklist:
+# - [x] Containers run as non-root with `readOnlyRootFilesystem` (set in chart values)
+# - [x] Health probes -> not applicable for a one-shot Job
+# - [x] Graceful shutdown -> not applicable; idempotent script
+# - [x] Standard labels
+# - [x] ServiceAccount with least privilege required -> uses default SA, no API access
+# - [x] Named ports -> not applicable
+# - [x] Ingress with TLS -> not applicable
+
+# Bootstrap image (curl + jq)
+image:
+  repository: {{ .Values.images.nifi.bootstrap.repository }}
+  tag: {{ .Values.images.nifi.bootstrap.tag }}
+  digest: {{ .Values.images.nifi.bootstrap.digest }}
+
+
+# NiFi REST API endpoint — pod FQDN matching NiFi's self-signed certificate SAN list.
+# Use the StatefulSet pod name to avoid the headless-service hostname mismatch with NiFi's
+# cert. Keep this host aligned with NIFI_WEB_HTTPS_HOST.
+nifi:
+  url: 'https://nifi-nifi-0.nifi-nifi.{{ $nifi.namespace }}:8443'
+  # NiFi's chart-issued cert is signed by an in-cluster CA we don't currently mount in
+  # the bootstrap pod; rely on `-k` for now. The job pod runs in-cluster so the only
+  # threat model here is a malicious sidecar — acceptable.
+  insecureSkipVerify: true
+
+# Keycloak token endpoint (in-cluster, plain HTTP — TLS terminated by APISIX externally).
+# The Job uses DAG/password grant on the `nifi-direct` public client, authenticating
+# as `nifi-admin@internal.local` (NiFi's Initial Admin Identity).
+oidc:
+  tokenUrl: 'http://keycloak-app-keycloakx-http.{{ .Values.keycloak.app.namespace }}.svc.cluster.local:80{{ .Values.keycloak.app.pathPrefix | trimSuffix "/" }}/realms/{{ $global.instanceSlug }}/protocol/openid-connect/token'
+  clientId: nifi-direct
+  adminUsername: {{ $nifi.bootstrapAdminIdentity | quote }}
+  adminPasswordSecretRef:
+
+    name: nifi-admin-keycloak-user
+    key: password
+
+identities:
+  # Keycloak realm has registrationEmailAsUsername=true, so preferred_username == email.
+  humanAdmin: {{ $nifi.initialAdminEmail | quote }}
+  # Realm user the config-adapter uses to talk to NiFi (DAG password grant).
+  configAdapter: nifi-config-adapter@internal.local
+
+# Emit Linkerd `Server` CRDs marking NiFi's TLS ports opaque when the namespace
+# is meshed — see `charts/nifi-bootstrap/templates/linkerd-server.yaml`.
+linkerd:
+  enable: {{ and ($global.serviceMesh.enable | default false) (eq ($global.serviceMesh.type | default "") "linkerd") }}
+

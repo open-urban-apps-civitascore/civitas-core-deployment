@@ -1,0 +1,53 @@
+---
+{{- $this := .Values.nifi.nifi }}
+{{- $global := .Values.global }}
+# Checklist:
+# - [x] Resources (requests and limits)
+# - [x] Larger Storage
+# - [ ] 2+ Replicas -> single-instance deployment (nodeCount: 1); HA disabled by design
+# - [x] Rolling updates `maxUnavailable: 0`, `maxSurge: 25%` -> StatefulSet rolling update (chart default)
+# - [ ] PodDisruptionBudget -> disabled (a single-instance PDB would block voluntary evictions)
+
+jvmHeap:
+  min: 4g
+  max: 6g
+
+resources:
+  requests:
+    cpu: '2'
+    memory: 8Gi
+  limits:
+    cpu: '4'
+    memory: 12Gi
+
+volumeClaims:
+  config:
+    storageClass: ""
+    size: 10Gi
+  state:
+    storageClass: ""
+    size: 10Gi
+  logs:
+    storageClass: ""
+    size: 5Gi
+  flowfile:
+    storageClass: ""
+    size: 20Gi
+  content:
+    storageClass: ""
+    size: 50Gi
+  provenance:
+    storageClass: ""
+    size: 100Gi
+
+# Single-instance deployment: PDB disabled to allow voluntary disruptions
+# (node drain, rolling updates) on the lone NiFi pod.
+pdb:
+  enabled: false
+
+# Pod anti-affinity intentionally omitted: there is only one NiFi pod, so spreading rules
+# have no effect.
+
+nifiMonitor:
+  enabled: {{ $global.metrics.enabled }}
+  replicas: 1

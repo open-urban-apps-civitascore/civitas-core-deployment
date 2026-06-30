@@ -11,6 +11,7 @@ opa:
         - podSelector:
             matchLabels:
               app.kubernetes.io/name: apisix
+          componentNamespace: apisix
 
 # Network policy for authz-repo service
 authz-repo:
@@ -25,3 +26,4 @@ authz-repo:
             matchLabels:
               app.kubernetes.io/name: authz
               app.kubernetes.io/component: opa
+          componentNamespace: authz

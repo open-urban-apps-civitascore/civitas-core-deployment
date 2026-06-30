@@ -2,6 +2,7 @@
 apisix:
   podSelector:
     app.kubernetes.io/name: apisix
+    app.kubernetes.io/instance: apisix-apisix
   policyTypes:
     - Ingress
   ingress:
@@ -10,9 +11,11 @@ apisix:
         - podSelector:
             matchLabels:
               app.kubernetes.io/name: config-adapter
+          componentNamespace: config-adapters
         - podSelector:
             matchLabels:
               app.kubernetes.io/component: apisix-static-configuration
+          componentNamespace: apisix
       ports:
         - protocol: TCP
           port: 9180

@@ -1,0 +1,8 @@
+---
+# Changes here will be overwritten by Copier.
+_commit: v2.0-beta-22-gc2745cb
+_src_path: ..
+componentName: superset
+componentSlug: superset
+releases: superset
+shortDescription: Apache Superset is a Data Visualization and Data Exploration Platform

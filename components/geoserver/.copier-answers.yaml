@@ -1,0 +1,9 @@
+---
+# Changes here will be overwritten by Copier.
+_commit: v2.0-beta-8-gc5efc44
+_src_path: ..
+componentName: Geoserver
+componentSlug: geoserver
+releases: geoserver
+shortDescription: GeoServer is an open-source server for sharing, editing, and managing
+  geospatial data using standardized web services like WMS, WFS, and WCS.

@@ -8,17 +8,18 @@ kafka-cluster:
     - from:
         - podSelector:
             matchLabels:
-              app.kubernetes.io/name: apicurio
-        - podSelector:
-            matchLabels:
               app.kubernetes.io/name: portal
               app.kubernetes.io/component: backend
+          componentNamespace: portal
         - podSelector:
             matchLabels:
               app.kubernetes.io/name: kafka-ui
+          componentNamespace: kafka
         - podSelector:
             matchLabels:
               app.kubernetes.io/name: config-adapter
+          componentNamespace: config-adapters
         - podSelector:
             matchLabels:
-              app.kubernetes.io/name: redpanda-connect
+              app.kubernetes.io/name: nifi
+          componentNamespace: nifi
