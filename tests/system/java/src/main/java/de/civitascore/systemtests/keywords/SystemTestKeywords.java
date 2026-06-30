@@ -1,7 +1,5 @@
-package de.civitascore.systemtests;
+package de.civitascore.systemtests.keywords;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -10,19 +8,21 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
-import java.net.URI;
-import java.net.URLEncoder;
 import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
-import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
+
+import de.civitascore.systemtests.ApiResponse;
+import de.civitascore.systemtests.ResourceSupplier;
+import de.civitascore.systemtests.SystemTestConfig;
+import de.civitascore.systemtests.SystemTestState;
+import de.civitascore.systemtests.TestContext;
+import de.civitascore.systemtests.client.KeycloakClient;
+import de.civitascore.systemtests.client.PortalBackendClient;
 import org.robotframework.javalib.annotation.ArgumentNames;
 import org.robotframework.javalib.annotation.RobotKeyword;
 import org.robotframework.javalib.annotation.RobotKeywords;
@@ -30,14 +30,13 @@ import org.robotframework.javalib.annotation.RobotKeywords;
 @RobotKeywords
 public class SystemTestKeywords {
 
-  private final SystemTestConfig config = SystemTestConfig.fromEnvironment();
-  private final ObjectMapper mapper = new ObjectMapper();
-  private final HttpClient httpClient = HttpClient.newBuilder()
-      .connectTimeout(Duration.ofSeconds(15))
-      .build();
-  private final SystemTestState state = new SystemTestState();
-  private final KeycloakClient keycloakClient = new KeycloakClient(config, httpClient, mapper);
-  private final PortalBackendClient portalClient = new PortalBackendClient(config, httpClient, mapper);
+  private final SystemTestConfig config = TestContext.config();
+  private final ObjectMapper mapper = TestContext.mapper();
+  private final HttpClient httpClient = TestContext.httpClient();
+  private final SystemTestState state = TestContext.state();
+  private final KeycloakClient keycloakClient = TestContext.keycloakClient();
+  private final PortalBackendClient portalClient = TestContext.portalClient();
+  private final DatapoolKeywords datapoolKeywords = new DatapoolKeywords();
 
   @RobotKeyword("Initialize System Test Run")
   @ArgumentNames({"suffix=", "openDataAccess=false"})
@@ -79,7 +78,7 @@ public class SystemTestKeywords {
     safe("dataset", () -> cleanupDataSet());
     safe("datasource", () -> cleanupDataSource());
     safe("datastructure", () -> cleanupDataStructure());
-    safe("datapool", () -> cleanupDataPool());
+    safe("datapool", () -> datapoolKeywords.cleanupDataPool());
   }
 
   @RobotKeyword("Get Generated Data Structure Name")
@@ -562,87 +561,6 @@ public class SystemTestKeywords {
         firstNonBlank(expectedDescription, state.expectedGatewayThingDescription));
   }
 
-  @RobotKeyword("Create Data Pool")
-  public String createDataPool() {
-    ensureInitialized();
-    ObjectNode body = mapper.createObjectNode();
-    body.put("name", state.dataPoolName);
-    body.put("description", "DataPool for the system test proof of concept");
-
-    JsonNode result = portalClient.postJson("/datapools", body, state.accessToken, 201).json();
-    state.dataPoolId = requiredText(result, "id", "dataPool");
-    validateDataPoolPayload(result);
-    return state.dataPoolId;
-  }
-
-  @RobotKeyword("Verify Data Pool Snapshot")
-  public void verifyDataPoolSnapshot() {
-    ensureDataPoolId();
-    JsonNode dataPool = portalClient.getJson("/datapools/" + state.dataPoolId, state.accessToken, 200).json();
-    validateDataPoolPayload(dataPool);
-  }
-
-  @RobotKeyword("Set Data Source Datapool Scope")
-  public void setDataSourceDatapoolScope() {
-    ensureDataSourceId();
-    ensureDataPoolId();
-    ObjectNode body = mapper.createObjectNode();
-    ObjectNode datapoolScope = body.putObject("datapoolScope");
-    datapoolScope.put("type", "SPECIFIC");
-    datapoolScope.putArray("datapoolIds").add(state.dataPoolId);
-
-    JsonNode result = portalClient.patchJson("/datasources/" + state.dataSourceId, body, state.accessToken, 200).json();
-    validateDataSourceDatapoolScope(result);
-  }
-
-  @RobotKeyword("Verify Data Source Datapool Scope")
-  public void verifyDataSourceDatapoolScope() {
-    ensureDataSourceId();
-    ensureDataPoolId();
-    JsonNode dataSource = portalClient.getJson("/datasources/" + state.dataSourceId, state.accessToken, 200).json();
-    validateDataSourceDatapoolScope(dataSource);
-  }
-
-  @RobotKeyword("Assign Data Set To Data Pool")
-  public void assignDataSetToDataPool() {
-    ensureDataSetId();
-    ensureDataPoolId();
-    ObjectNode body = mapper.createObjectNode();
-    body.put("datapoolId", state.dataPoolId);
-
-    JsonNode result = portalClient.patchJson("/datasets/" + state.dataSetId, body, state.accessToken, 200).json();
-    validateDataSetDataPoolAssignment(result);
-  }
-
-  @RobotKeyword("Verify Data Set Data Pool Assignment")
-  public void verifyDataSetDataPoolAssignment() {
-    ensureDataSetId();
-    ensureDataPoolId();
-    JsonNode dataset = portalClient.getJson("/datasets/" + state.dataSetId, state.accessToken, 200).json();
-    validateDataSetDataPoolAssignment(dataset);
-  }
-
-  @RobotKeyword("Verify Data Sources Filtered By Data Pool")
-  public void verifyDataSourcesFilteredByDataPool() {
-    ensureDataSourceId();
-    ensureDataPoolId();
-    JsonNode page = portalClient
-        .getJson("/datasources?datapoolId=" + state.dataPoolId, state.accessToken, 200)
-        .json();
-    JsonNode content = page.path("content");
-    assertTrue(content.isArray() && !content.isEmpty(),
-        "DataSources filtered by DataPool must return at least one result");
-    boolean found = false;
-    for (JsonNode ds : content) {
-      if (Objects.equals(state.dataSourceId, textOrNull(ds, "id"))) {
-        found = true;
-        break;
-      }
-    }
-    assertTrue(found,
-        "DataSource " + state.dataSourceId + " must appear in the DataPool-filtered result");
-  }
-
   private void cleanupDataSet() {
     if (state.dataSetId == null) {
       return;
@@ -763,6 +681,7 @@ public class SystemTestKeywords {
         "Timed out waiting for status " + expectedStatus + " in field " + statusField + ". Last response: "
             + (last == null ? "<none>" : last.toPrettyString()));
   }
+
 
   private void ensureInitialized() {
     if (state.runSuffix == null || state.runSuffix.isBlank()) {
@@ -914,10 +833,6 @@ public class SystemTestKeywords {
       Thread.currentThread().interrupt();
       throw new RuntimeException("Interrupted while waiting for the dataset to become available", ex);
     }
-  }
-
-  private interface ResourceSupplier {
-    JsonNode get();
   }
 
   private void validateDataStructurePayload(JsonNode dataStructure, String expectedStatus, boolean expectVersionReference) {
@@ -1166,48 +1081,6 @@ public class SystemTestKeywords {
     return body;
   }
 
-  private void cleanupDataPool() {
-    if (state.dataPoolId == null) {
-      return;
-    }
-    try {
-      portalClient.delete("/datapools/" + state.dataPoolId, state.accessToken, 204);
-    } finally {
-      state.dataPoolId = null;
-    }
-  }
-
-  private void ensureDataPoolId() {
-    ensureInitialized();
-    if (state.dataPoolId == null) {
-      throw new IllegalStateException("DataPool has not been created yet");
-    }
-  }
-
-  private void validateDataPoolPayload(JsonNode dataPool) {
-    assertTrue(dataPool.isObject(), "dataPool response must be a JSON object");
-    assertTextEquals(state.dataPoolId, requiredText(dataPool, "id", "dataPool.id"));
-    assertTextEquals(state.dataPoolName, requiredText(dataPool, "name", "dataPool.name"));
-    assertTextEquals(
-        "DataPool for the system test proof of concept",
-        requiredText(dataPool, "description", "dataPool.description"));
-  }
-
-  private void validateDataSourceDatapoolScope(JsonNode dataSource) {
-    JsonNode scope = dataSource.path("datapoolScope");
-    assertIsObject(scope, "dataSource.datapoolScope");
-    assertTextEquals("SPECIFIC", requiredText(scope, "type", "dataSource.datapoolScope.type"));
-    assertArrayContainsText(
-        scope.path("datapoolIds"), state.dataPoolId, "dataSource.datapoolScope.datapoolIds");
-  }
-
-  private void validateDataSetDataPoolAssignment(JsonNode dataset) {
-    JsonNode datapool = dataset.path("datapool");
-    assertTrue(datapool.isObject() && !datapool.isNull(), "dataSet.datapool must be present");
-    assertTextEquals(state.dataPoolId, requiredText(datapool, "id", "dataSet.datapool.id"));
-    assertTextEquals(state.dataPoolName, requiredText(datapool, "name", "dataSet.datapool.name"));
-  }
-
   private void validateGeoPipelinePayload(JsonNode pipeline) {
     assertTrue(pipeline.isObject(), "geo pipeline response must be a JSON object");
     assertTextEquals(state.geoPipelineId, requiredText(pipeline, "id", "geoPipeline.id"));
@@ -1278,414 +1151,11 @@ public class SystemTestKeywords {
     assertBooleanEquals(true, layer.path("bboxAutoCalculate").asBoolean(false), "geoLayer.bboxAutoCalculate");
   }
 
-  private static final class SystemTestState {
-    private String runSuffix;
-    private String accessToken;
-    private String dataStructureName;
-    private String dataStructureId;
-    private String dataStructureVersionName;
-    private String dataStructureVersionId;
-    private String dataSourceName;
-    private String dataSourceId;
-    private String dataSourceClientId;
-    private String dataSetName;
-    private String dataSetId;
-    private String pipelineName;
-    private String pipelineDescription;
-    private String pipelineId;
-    private String geoPipelineName;
-    private String geoPipelineDescription;
-    private String geoPipelineId;
-    private String geoDataSinkTableName;
-    private String geoDataSinkId;
-    private String geoApiName;
-    private String geoApiSlug;
-    private String geoApiDescription;
-    private String geoLayerName;
-    private String geoLayerTitle;
-    private String geoLayerDescription;
-    private String geoLayerAttribute;
-    private String geoLayerGeometryColumnRef;
-    private String geoLayerCrs;
-    private String geoLayerId;
-    private String namedApiSlug;
-    private String publicUrl;
-    private String namedApiPreviewUrl;
-    private String pendingSagaType;
-    private String modelAtlasUri;
-    private String modelName;
-    private String expectedGatewayThingName;
-    private String expectedGatewayThingDescription;
-    private boolean openDataAccess;
-    private String dataPoolId;
-    private String dataPoolName;
-
-    private void reset() {
-      runSuffix = null;
-      accessToken = null;
-      dataStructureName = null;
-      dataStructureId = null;
-      dataStructureVersionName = null;
-      dataStructureVersionId = null;
-      dataSourceName = null;
-      dataSourceId = null;
-      dataSourceClientId = null;
-      dataSetName = null;
-      dataSetId = null;
-      pipelineName = null;
-      pipelineDescription = null;
-      pipelineId = null;
-      geoPipelineName = null;
-      geoPipelineDescription = null;
-      geoPipelineId = null;
-      geoDataSinkTableName = null;
-      geoDataSinkId = null;
-      geoApiName = null;
-      geoApiSlug = null;
-      geoApiDescription = null;
-      geoLayerName = null;
-      geoLayerTitle = null;
-      geoLayerDescription = null;
-      geoLayerAttribute = null;
-      geoLayerGeometryColumnRef = null;
-      geoLayerCrs = null;
-      geoLayerId = null;
-      namedApiSlug = null;
-      publicUrl = null;
-      namedApiPreviewUrl = null;
-      pendingSagaType = null;
-      modelAtlasUri = null;
-      modelName = null;
-      expectedGatewayThingName = null;
-      expectedGatewayThingDescription = null;
-      openDataAccess = false;
-      dataPoolId = null;
-      dataPoolName = null;
-    }
-  }
-
-  private static final class SystemTestConfig {
-    private final String backendBaseUrl;
-    private final String keycloakBaseUrl;
-    private final String keycloakRealm;
-    private final String keycloakClientId;
-    private final String gatewayBaseUrl;
-    private final String frostBaseUrl;
-    private final String authUser;
-    private final String authPassword;
-    private final Duration requestTimeout;
-
-    private SystemTestConfig(
-        String backendBaseUrl,
-        String keycloakBaseUrl,
-        String keycloakRealm,
-        String keycloakClientId,
-        String gatewayBaseUrl,
-        String frostBaseUrl,
-        String authUser,
-        String authPassword,
-        Duration requestTimeout) {
-      this.backendBaseUrl = backendBaseUrl;
-      this.keycloakBaseUrl = keycloakBaseUrl;
-      this.keycloakRealm = keycloakRealm;
-      this.keycloakClientId = keycloakClientId;
-      this.gatewayBaseUrl = gatewayBaseUrl;
-      this.frostBaseUrl = frostBaseUrl;
-      this.authUser = authUser;
-      this.authPassword = authPassword;
-      this.requestTimeout = requestTimeout;
-    }
-
-    private static SystemTestConfig fromEnvironment() {
-      Map<String, String> env = System.getenv();
-      String backendBaseUrl = SystemTestKeywords.firstNonBlank(
-          env.get("PORTAL_BACKEND_URL"),
-          SystemTestKeywords.firstNonBlank(env.get("API_BASE_URL"), "http://localhost:8089/v1"));
-      String keycloakBaseUrl = SystemTestKeywords.firstNonBlank(env.get("KEYCLOAK_URL"), "http://localhost:8080");
-      String keycloakRealm = SystemTestKeywords.firstNonBlank(env.get("KEYCLOAK_REALM"), "civitas-core");
-      String keycloakClientId = SystemTestKeywords.firstNonBlank(env.get("KEYCLOAK_CLIENT_ID"), "portal-frontend");
-      String gatewayBaseUrl = SystemTestKeywords.firstNonBlank(
-          env.get("APISIX_GATEWAY_URL"),
-          SystemTestKeywords.firstNonBlank(env.get("PUBLIC_GATEWAY_URL"), "http://localhost:9080"));
-      String frostBaseUrl = SystemTestKeywords.firstNonBlank(
-          env.get("FROST_BASE_URL"),
-          "http://frost-frost-frost-server-http.frost/FROST-Server/v1.1");
-      String authUser = SystemTestKeywords.firstNonBlank(
-          env.get("SYSTEM_TEST_AUTH_USER"),
-          SystemTestKeywords.firstNonBlank(env.get("AUTH_USER"), "dev@civitas.local"));
-      String authPassword = SystemTestKeywords.firstNonBlank(
-          env.get("SYSTEM_TEST_AUTH_PASSWORD"),
-          SystemTestKeywords.firstNonBlank(env.get("AUTH_PASSWORD"), "dev123"));
-      Duration requestTimeout = Duration.ofSeconds(
-          SystemTestKeywords.parseLongOrDefault(env.get("SYSTEM_TEST_HTTP_TIMEOUT_SECONDS"), 30));
-      return new SystemTestConfig(
-          backendBaseUrl,
-          keycloakBaseUrl,
-          keycloakRealm,
-          keycloakClientId,
-          gatewayBaseUrl,
-          frostBaseUrl,
-          authUser,
-          authPassword,
-          requestTimeout);
-    }
-  }
-
-  private static final class KeycloakClient {
-    private final SystemTestConfig config;
-    private final HttpClient httpClient;
-    private final ObjectMapper mapper;
-
-    private KeycloakClient(SystemTestConfig config, HttpClient httpClient, ObjectMapper mapper) {
-      this.config = config;
-      this.httpClient = httpClient;
-      this.mapper = mapper;
-    }
-
-    private String getAccessToken() {
-      if (config.authUser == null || config.authUser.isBlank()) {
-        throw new IllegalStateException("SYSTEM_TEST_AUTH_USER or AUTH_USER must be set");
-      }
-      if (config.authPassword == null || config.authPassword.isBlank()) {
-        throw new IllegalStateException("SYSTEM_TEST_AUTH_PASSWORD or AUTH_PASSWORD must be set");
-      }
-      String formBody = form(
-          Map.of(
-              "grant_type", "password",
-              "client_id", config.keycloakClientId,
-              "username", config.authUser,
-              "password", config.authPassword));
-      HttpRequest request = HttpRequest.newBuilder()
-          .uri(URI.create(config.keycloakBaseUrl
-              + "/realms/"
-              + encodePath(config.keycloakRealm)
-              + "/protocol/openid-connect/token"))
-          .timeout(config.requestTimeout)
-          .header("Content-Type", "application/x-www-form-urlencoded")
-          .POST(HttpRequest.BodyPublishers.ofString(formBody))
-          .build();
-      ApiResponse response = send(request, 200);
-      JsonNode json = response.json();
-      String token = json.path("access_token").asText(null);
-      if (token == null || token.isBlank()) {
-        throw new AssertionError("Keycloak token response did not contain access_token: " + response.body());
-      }
-      return token;
-    }
-
-    private ApiResponse send(HttpRequest request, int expectedStatus) {
-      try {
-        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-        return ApiResponse.fromResponse("Keycloak token request", response, mapper, expectedStatus);
-      } catch (IOException ex) {
-        throw new UncheckedIOException("Keycloak request failed", ex);
-      } catch (InterruptedException ex) {
-        Thread.currentThread().interrupt();
-        throw new RuntimeException("Keycloak request was interrupted", ex);
-      }
-    }
-  }
-
-  private static final class PortalBackendClient {
-    private final SystemTestConfig config;
-    private final HttpClient httpClient;
-    private final ObjectMapper mapper;
-
-    private PortalBackendClient(SystemTestConfig config, HttpClient httpClient, ObjectMapper mapper) {
-      this.config = config;
-      this.httpClient = httpClient;
-      this.mapper = mapper;
-    }
-
-    private ApiResponse getJson(String path, String bearerToken, int expectedStatus) {
-      return send("GET", path, bearerToken, Map.of(), null, expectedStatus);
-    }
-
-    private ApiResponse getText(String absoluteUrl, String bearerToken, int expectedStatus) {
-      return sendAbsolute("GET", absoluteUrl, bearerToken, Map.of(), null, expectedStatus);
-    }
-
-    private ApiResponse getText(String absoluteUrl, String bearerToken, Map<String, String> headers, int expectedStatus) {
-      return sendAbsolute("GET", absoluteUrl, bearerToken, headers, null, expectedStatus);
-    }
-
-    private ApiResponse postJson(String path, JsonNode body, String bearerToken, int expectedStatus) {
-      return send("POST", path, bearerToken, Map.of(), body, expectedStatus);
-    }
-
-    private ApiResponse patchJson(String path, JsonNode body, String bearerToken, int expectedStatus) {
-      return send("PATCH", path, bearerToken, Map.of(), body, expectedStatus);
-    }
-
-    private ApiResponse putJson(String path, JsonNode body, String bearerToken, int expectedStatus) {
-      return send("PUT", path, bearerToken, Map.of(), body, expectedStatus);
-    }
-
-    private ApiResponse postVoid(String path, String bearerToken, int expectedStatus) {
-      return send("POST", path, bearerToken, Map.of(), null, expectedStatus);
-    }
-
-    private ApiResponse delete(String path, String bearerToken, int expectedStatus) {
-      return send("DELETE", path, bearerToken, Map.of(), null, expectedStatus);
-    }
-
-    private ApiResponse send(
-        String method,
-        String path,
-        String bearerToken,
-        Map<String, String> headers,
-        JsonNode body,
-        int expectedStatus) {
-      Map<String, String> allHeaders = new LinkedHashMap<>(headers);
-      allHeaders.put("X-Allowed-Scope-Ids", "*");
-      return sendAbsolute(method, config.backendBaseUrl + path, bearerToken, allHeaders, body, expectedStatus);
-    }
-
-    private ApiResponse sendAbsolute(
-        String method,
-        String absoluteUrl,
-        String bearerToken,
-        Map<String, String> headers,
-        JsonNode body,
-        int expectedStatus) {
-      HttpRequest.Builder builder = HttpRequest.newBuilder()
-          .uri(URI.create(absoluteUrl))
-          .timeout(config.requestTimeout);
-      if (bearerToken != null && !bearerToken.isBlank()) {
-        builder.header("Authorization", "Bearer " + bearerToken);
-      }
-      if (headers != null) {
-        for (Map.Entry<String, String> entry : headers.entrySet()) {
-          builder.header(entry.getKey(), entry.getValue());
-        }
-      }
-      if (body != null) {
-        builder.header("Content-Type", "application/json");
-        try {
-          builder.method(method, HttpRequest.BodyPublishers.ofString(mapper.writeValueAsString(body)));
-        } catch (JsonProcessingException ex) {
-          throw new RuntimeException("Failed to serialise JSON request body", ex);
-        }
-      } else {
-        builder.method(method, HttpRequest.BodyPublishers.noBody());
-      }
-      try {
-        HttpResponse<String> response = httpClient.send(builder.build(), HttpResponse.BodyHandlers.ofString());
-        return ApiResponse.fromResponse(method + " " + absoluteUrl, response, mapper, expectedStatus);
-      } catch (IOException ex) {
-        throw new UncheckedIOException("HTTP request failed for " + absoluteUrl, ex);
-      } catch (InterruptedException ex) {
-        Thread.currentThread().interrupt();
-        throw new RuntimeException("HTTP request interrupted for " + absoluteUrl, ex);
-      }
-    }
-  }
-
-  private static final class ApiResponse {
-    private final String requestLabel;
-    private final int statusCode;
-    private final String body;
-    private final JsonNode json;
-    private final String contentType;
-
-    private ApiResponse(String requestLabel, int statusCode, String body, JsonNode json, String contentType) {
-      this.requestLabel = requestLabel;
-      this.statusCode = statusCode;
-      this.body = body == null ? "" : body;
-      this.json = json == null ? JsonNodeFactory.instance.nullNode() : json;
-      this.contentType = contentType == null ? "" : contentType;
-    }
-
-    private static ApiResponse fromResponse(
-        String requestLabel,
-        HttpResponse<String> response,
-        ObjectMapper mapper,
-        int expectedStatus) {
-      int actualStatus = response.statusCode();
-      String body = response.body();
-      if (actualStatus != expectedStatus) {
-        throw new AssertionError(
-            requestLabel
-                + " expected HTTP "
-                + expectedStatus
-                + " but got "
-                + actualStatus
-                + ". Response body: "
-                + (body == null || body.isBlank() ? "<empty>" : body));
-      }
-      JsonNode json = JsonNodeFactory.instance.nullNode();
-      if (body != null && !body.isBlank()) {
-        String trimmed = body.trim();
-        String contentType = response.headers().firstValue("Content-Type").orElse("");
-        if (contentType.contains("json") || trimmed.startsWith("{") || trimmed.startsWith("[")) {
-          try {
-            json = mapper.readTree(body);
-          } catch (JsonProcessingException ex) {
-            throw new AssertionError(
-                requestLabel + " returned non-JSON content: " + body,
-                ex);
-          }
-        }
-      }
-      String contentType = response.headers().firstValue("Content-Type").orElse("");
-      return new ApiResponse(requestLabel, actualStatus, body, json, contentType);
-    }
-
-    private int statusCode() {
-      return statusCode;
-    }
-
-    private String body() {
-      return body;
-    }
-
-    private JsonNode json() {
-      return json;
-    }
-
-    private String contentType() {
-      return contentType;
-    }
-  }
-
-  private static String form(Map<String, String> values) {
-    StringBuilder builder = new StringBuilder();
-    for (Map.Entry<String, String> entry : values.entrySet()) {
-      if (builder.length() > 0) {
-        builder.append('&');
-      }
-      builder.append(encodeQuery(entry.getKey()))
-          .append('=')
-          .append(encodeQuery(entry.getValue()));
-    }
-    return builder.toString();
-  }
-
-  private static String encodeQuery(String value) {
-    return URLEncoder.encode(value == null ? "" : value, StandardCharsets.UTF_8);
-  }
-
-  private static String encodePath(String value) {
-    return URLEncoder.encode(value == null ? "" : value, StandardCharsets.UTF_8).replace("+", "%20");
-  }
-
-  private static String firstNonBlank(String first, String second) {
+  static String firstNonBlank(String first, String second) {
     if (first != null && !first.isBlank()) {
       return first.trim();
     }
     return second;
-  }
-
-  private static long parseLongOrDefault(String raw, long fallback) {
-    if (raw == null || raw.isBlank()) {
-      return fallback;
-    }
-    try {
-      long value = Long.parseLong(raw.trim());
-      return value > 0 ? value : fallback;
-    } catch (NumberFormatException ex) {
-      return fallback;
-    }
   }
 
   private static String sanitizeSuffix(String suffix) {

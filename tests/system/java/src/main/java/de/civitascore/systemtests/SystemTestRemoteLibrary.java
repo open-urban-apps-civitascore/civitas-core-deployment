@@ -1,10 +1,13 @@
 package de.civitascore.systemtests;
 
+import java.util.List;
 import org.robotframework.javalib.library.AnnotationLibrary;
 
 public class SystemTestRemoteLibrary extends AnnotationLibrary {
 
   public SystemTestRemoteLibrary() {
-    super("de/civitascore/systemtests/SystemTestKeywords.class");
+    super(List.of(
+        "de/civitascore/systemtests/keywords/SystemTestKeywords.class",
+        "de/civitascore/systemtests/keywords/DatapoolKeywords.class"));
   }
 }

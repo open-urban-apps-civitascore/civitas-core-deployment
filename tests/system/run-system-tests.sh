@@ -9,7 +9,7 @@ ROBOT_SUITES=(
 RESULT_DIR="${ROOT_DIR}/tests/system/results"
 SERVER_LOG="${RESULT_DIR}/remote-server.log"
 REMOTE_PORT="${SYSTEM_TEST_REMOTE_PORT:-8270}"
-REMOTE_URL="${SYSTEM_TEST_REMOTE_URL:-http://127.0.0.1:${REMOTE_PORT}}"
+REMOTE_URL="${SYSTEM_TEST_REMOTE_URL:-http://127.0.0.1:${REMOTE_PORT}/}"
 
 mkdir -p "${RESULT_DIR}"
 rm -f "${SERVER_LOG}"
@@ -51,7 +51,7 @@ from xmlrpc.client import ServerProxy
 import os
 import sys
 
-url = os.environ["REMOTE_URL"]
+url = os.environ["REMOTE_URL"].rstrip("/") + "/"
 try:
     ServerProxy(url, allow_none=True).get_keyword_names()
 except Exception:
@@ -68,7 +68,7 @@ from xmlrpc.client import ServerProxy
 import os
 import sys
 
-url = os.environ["REMOTE_URL"]
+url = os.environ["REMOTE_URL"].rstrip("/") + "/"
 try:
     ServerProxy(url, allow_none=True).get_keyword_names()
 except Exception:
