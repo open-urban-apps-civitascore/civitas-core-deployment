@@ -238,6 +238,7 @@ seed-data-smoke-test-branch:
   needs:
     - job: deploy-smoke-test-branch
       artifacts: false
+      optional: true
   variables:
     PIPELINE_SLUG: $CI_COMMIT_REF_SLUG
   rules:
