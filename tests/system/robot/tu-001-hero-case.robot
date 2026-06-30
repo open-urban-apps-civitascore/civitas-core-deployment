@@ -26,11 +26,12 @@ Hero Case - Open and Protected Data
     TC-013 Verify Data Source References Data Structure Version
     TC-014 Release Data Source
     TC-015 Verify Released Data Source Snapshot
-    TC-018 Create Pipeline
 
     Initialize Frontend Test Run
     TC-016 Create Data Set
     TC-017 Verify Draft Data Set Snapshot
+    Adopt Frontend Data Set
+    TC-018 Create Pipeline
     TC-032 Create Geo Pipeline
     TC-033 Verify Geo Pipeline Snapshot
     TC-034 Create OWS API

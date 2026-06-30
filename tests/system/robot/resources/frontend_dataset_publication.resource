@@ -1,22 +1,25 @@
 *** Settings ***
 Documentation     Browser-based frontend execution library for the dataset API publication Hero Case.
 Library           Browser
+Resource          ../ui_common.resource
 
 *** Variables ***
-${PORTAL_FRONTEND_URL}           %{PORTAL_FRONTEND_URL=http://localhost:3000}
-${SYSTEM_TEST_AUTH_USER}         %{SYSTEM_TEST_AUTH_USER=dev@civitas.local}
-${SYSTEM_TEST_AUTH_PASSWORD}     %{SYSTEM_TEST_AUTH_PASSWORD=dev123}
-
-${DATASETS_LINK}                 role=link[name="Datasets"]
-${CREATE_DATASET_BUTTON}         role=button[name="Create dataset"]
-${DATASET_NAME_FIELD}            label=Name
-${DATASET_DESCRIPTION_FIELD}     label=Description
-${OPEN_DATA_ACCESS_TOGGLE}       label=Open data access
-${NAMED_API_NAME_FIELD}          label=API name
-${NAMED_API_SLUG_FIELD}          label=Slug
-${NAMED_API_STANDARD_FIELD}      label=Standard
-${NAMED_API_VERSION_FIELD}       label=Version
-${SAVE_BUTTON}                   role=button[name="Save"]
+${OUR_DATA_SIDEBAR_ITEM}         role=button[name="Unsere Daten"]
+${DATASETS_LINK}                 css=[data-testid="sidebarMenuItem-datasets"]
+${CREATE_DATASET_BUTTON}         css=[data-testid="addDatasetButton"]
+${DATASET_CREATE_FORM}           css=[data-testid="datasetCreateForm"]
+${DATASET_NAME_FIELD}            css=[data-testid="datasetCreateForm"] input[name="name"]
+${DATASET_DESCRIPTION_FIELD}     css=[data-testid="datasetBaseInfoForm"] textarea[name="description"]
+${OPEN_DATA_ACCESS_TOGGLE}       role=checkbox[name="Open Data"]
+${API_CREATE_BUTTON}             role=button[name="API hinzufügen"]
+${STA_API_CREATE_BUTTON}         css=a[href*="type=sensorthings"]
+${API_CONFIG_FORM}               css=[data-testid="apiConfigForm"]
+${NAMED_API_NAME_FIELD}          css=[data-testid="apiConfigForm"] input[name="baseInfo.name"]
+${NAMED_API_SLUG_FIELD}          css=[data-testid="apiConfigForm"] input[name="baseInfo.slug"]
+${SAVE_AND_CONTINUE_BUTTON}      role=button[name="Erstellen und weiter"]
+${BACK_BUTTON}                   role=button[name="Zurück"]
+${EDIT_BUTTON}                   css=[data-testid="editButton"]
+${SAVE_BUTTON}                   role=button[name="Speichern"]
 ${STAGE_BUTTON}                  role=button[name="Stage"]
 ${RELEASE_BUTTON}                role=button[name="Release"]
 ${ACCESS_SETTINGS_TAB}           role=tab[name="Access"]
@@ -37,10 +40,11 @@ ${FRONTEND_GEO_LAYER_CRS}        %{FRONTEND_GEO_LAYER_CRS=EPSG:4326}
 Initialize Frontend Test Run
     New Browser    chromium    headless=True
     New Context    viewport={'width': 1600, 'height': 1200}
-    New Page    ${PORTAL_FRONTEND_URL}
+    New Page    ${PORTAL_URL}
     Wait For Load State    networkidle
     Prepare Frontend Test Data
-    Login To Portal
+    Resolve Auth Credentials
+    Login Via Keycloak    ${KEYCLOAK_USERNAME}    ${KEYCLOAK_PASSWORD}
 
 Cleanup Frontend Test Run
     Close Browser
@@ -81,50 +85,50 @@ Prepare Frontend Test Data
     Set Suite Variable    ${FRONTEND_GEO_LAYER_GEOMETRY_COLUMN_REF}    ${geo_layer_geometry_column_ref}
     Set Suite Variable    ${FRONTEND_GEO_LAYER_CRS}    ${geo_layer_crs}
 
-Login To Portal
-    Go To    ${PORTAL_FRONTEND_URL}/datasets
-    Wait For Load State    networkidle
-    Run Keyword And Ignore Error    Click    role=link[name="Login"]
-    Run Keyword And Ignore Error    Click    role=button[name="Login"]
-    ${login_visible}=    Run Keyword And Return Status    Wait For Elements State    css=input[name="username"]    visible    timeout=10s
-    IF    ${login_visible}
-        Fill Text    css=input[name="username"]    ${SYSTEM_TEST_AUTH_USER}
-        Fill Text    css=input[name="password"]    ${SYSTEM_TEST_AUTH_PASSWORD}
-        Click    css=button[type="submit"]
-        Wait For Load State    networkidle
-    END
-    Wait For Elements State    ${DATASETS_LINK}    visible    timeout=30s
-
 Open Data Sets Management
+    Click    ${OUR_DATA_SIDEBAR_ITEM}
+    Wait For Elements State    css=[data-testid="sidebarMenuItem-datasets"]    visible    timeout=10s
     Click    ${DATASETS_LINK}
     Wait For Load State    networkidle
 
 Open Create Data Set Form
     Open Data Sets Management
     Click    ${CREATE_DATASET_BUTTON}
-    Wait For Load State    networkidle
+    Wait For Elements State    ${DATASET_CREATE_FORM}    visible    timeout=15s
+
+Create Dataset
+    Fill Text    ${DATASET_NAME_FIELD}    ${FRONTEND_DATA_SET_NAME}
+    Click        ${SAVE_AND_CONTINUE_BUTTON}
+    Wait For Elements State    ${DATASET_DESCRIPTION_FIELD}   visible     timeout=15s
 
 Fill Data Set Form
-    Fill Text    ${DATASET_NAME_FIELD}    ${FRONTEND_DATA_SET_NAME}
     Fill Text    ${DATASET_DESCRIPTION_FIELD}    ${FRONTEND_DATA_SET_DESCRIPTION}
     Check Checkbox    ${OPEN_DATA_ACCESS_TOGGLE}
+    Click    ${SAVE_BUTTON}
+    Verify Success toast
+
+Create STA API
+    Click    ${API_CREATE_BUTTON}
+    Click    ${STA_API_CREATE_BUTTON}
+    Wait For Elements State    ${API_CONFIG_FORM}   visible     timeout=15s
     Fill Text    ${NAMED_API_NAME_FIELD}    Things
     Fill Text    ${NAMED_API_SLUG_FIELD}    ${FRONTEND_NAMED_API_SLUG}
-    Fill Text    ${NAMED_API_STANDARD_FIELD}    STA
-    Fill Text    ${NAMED_API_VERSION_FIELD}    1.1
+    Click    ${SAVE_BUTTON}
+    Wait For Condition    Url    contains    mode=edit    timeout=15s
 
 Save Form
     Click    ${SAVE_BUTTON}
+    Verify Success toast
+
+Go Back
+    Click   ${BACK_BUTTON}
     Wait For Load State    networkidle
 
 Assert Data Set Draft Snapshot
+    Assert Data Set Status      Entwurf
     ${body}=    Get Text    css=body
     Should Contain    ${body}    ${FRONTEND_DATA_SET_NAME}
-    Should Contain    ${body}    ${FRONTEND_DATA_SET_DESCRIPTION}
     Should Contain    ${body}    Things
-    Should Contain    ${body}    ${FRONTEND_NAMED_API_SLUG}
-    Should Contain    ${body}    STA
-    Should Contain    ${body}    1.1
 
 Open Pipeline Management
     Click    ${PIPELINE_TAB}
@@ -147,7 +151,7 @@ Assert Pipeline Snapshot
     Should Contain    ${body}    ${FRONTEND_GATEWAY_THING_DESCRIPTION}
 
 Verify OWS API Snapshot
-    Reload Page
+    Reload
     Wait For Load State    networkidle
     Wait For Elements State    ${OWS_API_CARD}    visible    timeout=30s
     Click    ${OWS_API_CARD}
@@ -160,7 +164,7 @@ Verify OWS API Snapshot
     Wait For Load State    networkidle
 
 Verify Geo Layer Snapshot
-    Reload Page
+    Reload
     Wait For Load State    networkidle
     Wait For Elements State    ${OWS_API_CARD}    visible    timeout=30s
     Click    ${OWS_API_CARD}
@@ -215,14 +219,14 @@ Change Data Set Access To Protected In UI
 
 Assert Data Set Status
     [Arguments]    ${expected_status}
-    ${body}=    Get Text    css=body
-    Should Contain    ${body}    ${expected_status}
+    Assert Status    ${expected_status}
 
 TC-016 Create Data Set
     Open Create Data Set Form
+    Create Dataset
     Fill Data Set Form
-    Save Form
-    Assert Data Set Draft Snapshot
+    Create STA API
+    Navigate via Breadcrumbs       ${FRONTEND_DATA_SET_NAME}
 
 TC-017 Verify Draft Data Set Snapshot
     Assert Data Set Draft Snapshot

@@ -338,6 +338,24 @@ public class SystemTestKeywords {
     return state.dataSetId;
   }
 
+  @RobotKeyword("Adopt Frontend Data Set")
+  public String adoptFrontendDataSet() {
+    ensureInitialized();
+    JsonNode page = portalClient
+        .getJson("/datasets?name=" + encodePath(state.dataSetName), state.accessToken, 200)
+        .json();
+    JsonNode content = page.path("content");
+    assertTrue(content.isArray(), "GET /datasets must return a paged content array");
+    for (JsonNode dataSet : content) {
+      if (Objects.equals(state.dataSetName, dataSet.path("name").asText())) {
+        state.dataSetId = requiredText(dataSet, "id", "dataSet");
+        return state.dataSetId;
+      }
+    }
+    throw new AssertionError(
+        "No data set named '" + state.dataSetName + "' found to adopt. Response: " + page.toPrettyString());
+  }
+
   @RobotKeyword("Verify Data Set Snapshot")
   @ArgumentNames({"expectedStatus=DRAFT", "expectPublicRoutes=false"})
   public void verifyDataSetSnapshot(String expectedStatus, String expectPublicRoutes) {
