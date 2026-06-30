@@ -37,6 +37,7 @@ public class KeycloakClient {
         Map.of(
             "grant_type", "password",
             "client_id", config.keycloakClientId,
+            "client_secret", config.keycloakClientSecret,
             "username", config.authUser,
             "password", config.authPassword));
     HttpRequest request = HttpRequest.newBuilder()

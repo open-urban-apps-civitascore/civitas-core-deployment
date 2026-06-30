@@ -345,7 +345,7 @@ public class SystemTestKeywords {
   public String adoptFrontendDataSet() {
     ensureInitialized();
     JsonNode page = portalClient
-        .getJson("/datasets?name=" + encodePath(state.dataSetName), state.accessToken, 200)
+        .getJson("/datasets?name=" + java.net.URLEncoder.encode(state.dataSetName, java.nio.charset.StandardCharsets.UTF_8), state.accessToken, 200)
         .json();
     JsonNode content = page.path("content");
     assertTrue(content.isArray(), "GET /datasets must return a paged content array");

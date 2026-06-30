@@ -8,6 +8,7 @@ public class SystemTestConfig {
   public final String keycloakBaseUrl;
   public final String keycloakRealm;
   public final String keycloakClientId;
+  public final String keycloakClientSecret;
   public final String gatewayBaseUrl;
   public final String frostBaseUrl;
   public final String authUser;
@@ -19,6 +20,7 @@ public class SystemTestConfig {
       String keycloakBaseUrl,
       String keycloakRealm,
       String keycloakClientId,
+      String keycloakClientSecret,
       String gatewayBaseUrl,
       String frostBaseUrl,
       String authUser,
@@ -28,6 +30,7 @@ public class SystemTestConfig {
     this.keycloakBaseUrl = keycloakBaseUrl;
     this.keycloakRealm = keycloakRealm;
     this.keycloakClientId = keycloakClientId;
+    this.keycloakClientSecret = keycloakClientSecret;
     this.gatewayBaseUrl = gatewayBaseUrl;
     this.frostBaseUrl = frostBaseUrl;
     this.authUser = authUser;
@@ -43,6 +46,8 @@ public class SystemTestConfig {
     String keycloakBaseUrl = nonBlank(env.get("KEYCLOAK_URL"), "http://localhost:8080");
     String keycloakRealm = nonBlank(env.get("KEYCLOAK_REALM"), "civitas-core");
     String keycloakClientId = nonBlank(env.get("KEYCLOAK_CLIENT_ID"), "portal-frontend");
+    String keycloakClientSecret = nonBlank(
+        env.get("KEYCLOAK_CLIENT_SECRET"), "dev-only-portal-frontend-secret");
     String gatewayBaseUrl = nonBlank(
         env.get("APISIX_GATEWAY_URL"),
         nonBlank(env.get("PUBLIC_GATEWAY_URL"), "http://localhost:9080"));
@@ -62,6 +67,7 @@ public class SystemTestConfig {
         keycloakBaseUrl,
         keycloakRealm,
         keycloakClientId,
+        keycloakClientSecret,
         gatewayBaseUrl,
         frostBaseUrl,
         authUser,
