@@ -242,7 +242,7 @@ deploy-mr:
   stage: system-tests
   image: registry.gitlab.com/civitas-connect/civitas-core/civitas-core-v2/civitas-core-deployment/cicd:a1aebd6
   variables:
-    PIPELINE_SLUG: ""
+    PIPELINE_SLUG: ''
     SMOKE_TEST_DOMAIN: ${PIPELINE_SLUG}.${SMOKE_TEST_BASE_DOMAIN}
     API_BASE_URL: https://api.${PIPELINE_SLUG}.${SMOKE_TEST_BASE_DOMAIN}/v1
     KEYCLOAK_URL: https://idm.${PIPELINE_SLUG}.${SMOKE_TEST_BASE_DOMAIN}
@@ -254,7 +254,6 @@ deploy-mr:
   before_script:
     - apk add --no-cache openjdk21-jdk maven
     - python3 -m pip install --break-system-packages robotframework
-
 
 seed-branch:
   extends: .seed-base
@@ -338,7 +337,7 @@ destroy-mr:
 #
 # Domain schema: https://portal.nightly-20260629.<SMOKE_TEST_BASE_DOMAIN>
 #
-# Unlike smoke tests, nightly runs pin a dated nightly build tag 
+# Unlike smoke tests, nightly runs pin a dated nightly build tag
 # `<branch>-nightly-YYYYMMDD` via NIGHTLY_IMAGE_TAG.
 # =============================================================================
 

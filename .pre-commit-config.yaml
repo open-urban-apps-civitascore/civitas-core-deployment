@@ -24,6 +24,10 @@ repos:
     hooks:
       - id: check-file-names
         args: ['--config', '.ci/configs/.naming-convention.yaml']
+        # System tests use language-specific naming conventions (Java PascalCase,
+        # Robot Framework resources) that don't follow kebab-case
+        exclude: '^tests/system/'
+
       - id: check-directory-names
         args: ['--config', '.ci/configs/.naming-convention.yaml']
       - id: check-empty-files
