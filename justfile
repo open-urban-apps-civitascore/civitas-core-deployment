@@ -65,7 +65,7 @@ deploy-operators environment='local':
 deploy-instance environment='local' slug='':
 	if [ -n "{{slug}}" ]; then \
 		echo "Deploying instance '{{slug}}' in environment: {{environment}}"; \
-		helmfile -f ./deployment/helmfile-instance.yaml.gotmpl sync -e {{environment}} --state-values-set instanceSlug={{slug}}; \
+		helmfile -f ./deployment/helmfile-instance.yaml.gotmpl sync -e {{environment}} --state-values-set-string instanceSlug={{slug}}; \
 	else \
 		echo "Deploying instance in environment: {{environment}}"; \
 		helmfile -f ./deployment/helmfile-instance.yaml.gotmpl sync -e {{environment}}; \
@@ -75,7 +75,7 @@ deploy-instance environment='local' slug='':
 [group('deployment')]
 destroy-instance environment='local' slug='':
 	if [ -n "{{slug}}" ]; then \
-		helmfile -f ./deployment/helmfile-instance.yaml.gotmpl destroy -e {{environment}} --state-values-set instanceSlug={{slug}}; \
+		helmfile -f ./deployment/helmfile-instance.yaml.gotmpl destroy -e {{environment}} --state-values-set-string instanceSlug={{slug}}; \
 	else \
 		helmfile -f ./deployment/helmfile-instance.yaml.gotmpl destroy -e {{environment}}; \
 	fi
@@ -195,6 +195,11 @@ verify-policies:
 test-policies:
 	kyverno test .ci/policies
 
+# Smoke-test deployment variants in fresh k3d clusters (no args = all 8; pass triplets/flags or --help)
+[group('test & lint')]
+test-deployment-variants *args:
+	./scripts/test-deployment-variants.sh {{args}}
+
 # Re-vendor upstream Kyverno policies (pinned ref in the script)
 [group('helpers')]
 vendor-policies:
@@ -225,7 +230,7 @@ template-operators environment='local':
 [group('helpers')]
 template-instance environment='local' slug='':
 	if [ -n "{{slug}}" ]; then \
-		helmfile -f ./deployment/helmfile-instance.yaml.gotmpl template -e {{environment}} --state-values-set instanceSlug={{slug}}; \
+		helmfile -f ./deployment/helmfile-instance.yaml.gotmpl template -e {{environment}} --state-values-set-string instanceSlug={{slug}}; \
 	else \
 		helmfile -f ./deployment/helmfile-instance.yaml.gotmpl template -e {{environment}}; \
 	fi
