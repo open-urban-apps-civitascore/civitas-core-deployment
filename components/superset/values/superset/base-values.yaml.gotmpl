@@ -352,6 +352,8 @@ supersetWebsockets:
 init:
   createAdmin: false
   initContainers: *initContainers
+  podLabels:
+    app: superset
   <<: *security
 
 postgresql:

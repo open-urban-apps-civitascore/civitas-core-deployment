@@ -2,7 +2,10 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": ["config:recommended", ":configMigration", "customManagers:dockerfileVersions"],
   "baseBranchPatterns": ["staging"],
-  "enabledManagers": ["custom.regex", "dockerfile", "gitlabci"],
+  "enabledManagers": ["custom.regex", "dockerfile", "gitlabci", "helmfile"],
+  "helmfile": {
+    "managerFilePatterns": ["/^\\.ci/.+/helmfile\\.ya?ml(\\.gotmpl)?$/"]
+  },
   "labels": ["renovate", "v::2", "team devops"],
   "prConcurrentLimit": 10,
   "prHourlyLimit": 5,

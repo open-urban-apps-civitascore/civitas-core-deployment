@@ -34,7 +34,9 @@ bases:
 {{- $createNamespaces := $root.global.createNamespaces | default false }}
 {{- $patchNamespaces := and ($root.global.serviceMesh.enable | default false) ($root.global.serviceMesh.patchNamespaces | default false) }}
 {{- $defaultInboundPolicy := $root.global.serviceMesh.defaultInboundPolicy | default "" }}
-{{- $isDevelopment := eq ($root.global.profile | default "") "development" }}
+{{/* Distribute the in-cluster self-signed CA as `custom-ca-cert` whenever the
+     self-signed issuer is in use */}}
+{{- $isSelfSignedCa := eq ($root.global.ingress.clusterIssuer | default "") "selfsigned-ca" }}
 
 hooks:
   - events: ["prepare"]
@@ -69,7 +71,7 @@ hooks:
         {{- end }}
         {{- end }}
         {{- end }}
-        {{- if $isDevelopment }}
+        {{- if $isSelfSignedCa }}
         if kubectl get secret ca-secret -n cert-manager -o jsonpath='{.data.tls\.crt}' >/dev/null 2>&1; then
           CA_CERT=$(kubectl get secret ca-secret -n cert-manager -o jsonpath='{.data.tls\.crt}')
           {{- range $ns := $namespaceNames }}
