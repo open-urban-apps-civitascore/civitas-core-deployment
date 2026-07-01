@@ -1,5 +1,4 @@
 ---
-{{- $this := .Values.postgres.operator -}}
 {{- $global := .Values.global }}
 
 # values: https://github.com/cloudnative-pg/charts/blob/main/charts/cloudnative-pg/values.yaml
@@ -12,9 +11,7 @@
 # - [ ] Named ports
 # - [ ] Ingress with TLS
 
-# clusterWide=true makes the CNPG operator watch ALL namespaces (empty WATCH_NAMESPACE),
-# so a single shared operator reconciles the Postgres clusters of every instance.
-# Driven by global.operators.watchAllNamespaces via default-environment.yaml.gotmpl;
-# defaults to false (operator watches only its own namespace) for legacy single-instance.
+# clusterWide=true makes the CNPG operator watch ALL namespaces, so a single shared operator
+# reconciles the Postgres clusters of every instance.
 config:
-  clusterWide: {{ $this.clusterWide | default false }}
+  clusterWide: {{ $global.operators.watchAllNamespaces }}

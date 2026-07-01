@@ -2,7 +2,7 @@
 {{- $this := .Values.kafka.operator }}
 {{- $global := .Values.global }}
 
-{{- if (.Values.global.operators | default dict).watchAllNamespaces }}
+{{- if $global.operators.watchAllNamespaces }}
 # Shared operator: watch every namespace so one deployment serves all instances.
 watchAnyNamespace: true
 {{- else if ne $this.namespace .Values.kafka.cluster.namespace }}
