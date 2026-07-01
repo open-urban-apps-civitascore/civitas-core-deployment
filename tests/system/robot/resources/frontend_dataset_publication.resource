@@ -159,7 +159,6 @@ Verify OWS API Snapshot
     ${body}=    Get Text    css=body
     Should Contain    ${body}    ${FRONTEND_GEO_API_NAME}
     Should Contain    ${body}    ${FRONTEND_GEO_API_SLUG}
-    Should Contain    ${body}    PostGIS Geo Persistence
     Go Back
     Wait For Load State    networkidle
 

@@ -39,6 +39,7 @@ Hero Case - Open and Protected Data
     TC-018 Create Pipeline
     TC-042 Assign Data Set To Data Pool
     TC-043 Verify Data Set Data Pool Assignment
+    TC-018 Create Pipeline
     TC-032 Create Geo Pipeline
     TC-033 Verify Geo Pipeline Snapshot
     TC-034 Create OWS API

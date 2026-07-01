@@ -10,6 +10,8 @@ import java.util.Objects;
 import org.robotframework.javalib.annotation.RobotKeyword;
 import org.robotframework.javalib.annotation.RobotKeywords;
 
+import static de.civitascore.systemtests.keywords.KeywordAssertions.*;
+
 @RobotKeywords
 public class DatapoolKeywords {
 
@@ -160,51 +162,5 @@ public class DatapoolKeywords {
     assertTrue(datapool.isObject() && !datapool.isNull(), "dataSet.datapool must be present");
     assertTextEquals(state.dataPoolId, requiredText(datapool, "id", "dataSet.datapool.id"));
     assertTextEquals(state.dataPoolName, requiredText(datapool, "name", "dataSet.datapool.name"));
-  }
-
-  private String requiredText(JsonNode node, String field, String label) {
-    String value = textOrNull(node, field);
-    if (value == null || value.isBlank()) {
-      throw new AssertionError(label + " must be present. Response: " + node.toPrettyString());
-    }
-    return value;
-  }
-
-  private String textOrNull(JsonNode node, String field) {
-    if (node == null || node.isNull()) {
-      return null;
-    }
-    JsonNode fieldNode = node.path(field);
-    if (fieldNode.isMissingNode() || fieldNode.isNull()) {
-      return null;
-    }
-    String value = fieldNode.asText();
-    return value.isBlank() ? null : value;
-  }
-
-  private void assertTrue(boolean condition, String message) {
-    if (!condition) {
-      throw new AssertionError(message);
-    }
-  }
-
-  private void assertTextEquals(String expected, String actual) {
-    if (!Objects.equals(expected, actual)) {
-      throw new AssertionError("Expected '" + expected + "' but got '" + actual + "'");
-    }
-  }
-
-  private void assertIsObject(JsonNode node, String label) {
-    assertTrue(node.isObject(), label + " must be a JSON object");
-  }
-
-  private void assertArrayContainsText(JsonNode arrayNode, String expectedValue, String label) {
-    assertTrue(arrayNode.isArray(), label + " must be an array");
-    for (JsonNode node : arrayNode) {
-      if (Objects.equals(expectedValue, node.asText())) {
-        return;
-      }
-    }
-    throw new AssertionError(label + " must contain '" + expectedValue + "'. Response: " + arrayNode.toPrettyString());
   }
 }
