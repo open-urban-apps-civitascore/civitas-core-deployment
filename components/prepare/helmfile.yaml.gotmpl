@@ -9,6 +9,13 @@ bases:
 
 
 {{- $layer := $root.deployLayer | default "" }}
+{{/* Check for supported deploy layers:
+      - "" (legacy single-instance, manage everynamespace)
+      - "operators" (only the shared operator namespace)"
+      - instance" (everything except operators) */}}
+{{- if and (ne $layer "") (ne $layer "operators") (ne $layer "instance") }}
+  {{- fail (printf "prepare: unsupported deployLayer %q (expected \"\", \"operators\" or \"instance\")" $layer) }}
+{{- end }}
 {{/* Effective shared-operator namespace. Mirrors civitas.operatorNamespaceConfigured
      (defaults/environment/_helpers.tpl); state files cannot use that helper, so the
      "civitas-operators" default is repeated here — keep both in sync. */}}
