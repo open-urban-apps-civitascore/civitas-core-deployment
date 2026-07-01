@@ -86,7 +86,7 @@ public class DataSetKeywords {
   @RobotKeyword("Release Data Set")
   public void releaseDataSet() {
     ensureDataSetId();
-    portalClient.postVoid("/datasets/" + state.dataSetId + "/release", state.accessToken, 200);
+    portalClient.postVoid("/datasets/" + state.dataSetId + "/release", state.accessToken, 202);
   }
 
   @RobotKeyword("Wait For Data Set Status")
