@@ -6,7 +6,8 @@
 # has the civitas-core platform (keycloak, apisix, …) deployed.
 #
 # Callable from:
-#   * GitLab CI (`seed-data-smoke-test` job) — parameters via job env
+#   * GitLab CI (`seed-branch`/`seed-mr` job) — parameters via job env
+
 #     (incl. PIPELINE_SLUG + SMOKE_TEST_BASE_DOMAIN, which together yield
 #     KEYCLOAK_URL).
 #   * Locally via `just seed <keycloak-url> [kubeconfig] [seed-input]` —
@@ -44,7 +45,8 @@ done
 #
 # PIPELINE_SLUG is set by the CI job (branches: $CI_COMMIT_REF_SLUG, MRs:
 # mr-$CI_MERGE_REQUEST_IID) and matches the smoke-test vcluster created by
-# deploy-smoke-test. Locally (via `just seed`) it is unset and KEYCLOAK_URL
+# deploy-branch/deploy-mr. Locally (via `just seed`) it is unset and KEYCLOAK_URL
+
 # is supplied directly as a recipe argument.
 # -----------------------------------------------------------------------------
 NAMESPACE="${NAMESPACE:-civitas}"

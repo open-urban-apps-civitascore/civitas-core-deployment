@@ -6,8 +6,8 @@ default:
 stages:
   - .pre
   - lint
-  - report
   - deploy
+  - report
 
 # TODO: Make this work with rennovate
 .cicd-image: &cicd_image >-
@@ -52,20 +52,6 @@ pre-commit:
   rules:
     - when: always
 
-system-tests-poc:
-  stage: report
-  image: registry.gitlab.com/civitas-connect/civitas-core/civitas-core-v2/civitas-core-deployment/cicd:a1aebd6
-  allow_failure: true
-  when: manual
-  before_script:
-    - apk add --no-cache openjdk21-jdk maven
-    - python3 -m pip install --break-system-packages robotframework
-  script:
-    - bash tests/system/run-system-tests.sh
-  artifacts:
-    when: always
-    paths:
-      - tests/system/results/
 validate-renovate-config:
   stage: lint
   # Pinned validator version; the gitlabci manager keeps this tag up to date.
@@ -168,7 +154,7 @@ deploy-production:
 #   * an auto-stop timer (7d) that triggers the matching destroy job on expiry,
 #   * manual `on_stop` so reviewers can tear it down early.
 
-.smoke-test-base:
+.deploy-vcluster-base:
   extends: .deploy-base
   variables:
     KUBECONFIG_CONTENT: $KUBECONFIG_CONTENT_VCLUSTER_HOST
@@ -195,40 +181,39 @@ deploy-production:
     # 5. Deploy the platform.
     - helmfile -f ./deployment/ sync -e smoke-test
 
-deploy-smoke-test-branch:
-  extends: .smoke-test-base
+deploy-branch:
+  extends: .deploy-vcluster-base
   variables:
     PIPELINE_SLUG: $CI_COMMIT_REF_SLUG
   environment:
     name: smoke-test/$CI_COMMIT_REF_SLUG
     url: https://portal.$CI_COMMIT_REF_SLUG.$SMOKE_TEST_BASE_DOMAIN
-    on_stop: destroy-smoke-test-branch
+    on_stop: destroy-branch
     auto_stop_in: 7 days
   rules:
-    # Don't double-up on MR pipelines (handled by deploy-smoke-test-mr).
+    # Don't double-up on MR pipelines (handled by deploy-mr).
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
       when: never
     # Protected long-lived branches deploy via deploy-staging / deploy-production.
-
     - if: '$CI_COMMIT_BRANCH =~ /^(main|staging|develop)$/'
       when: never
     - if: '$CI_COMMIT_BRANCH'
       when: manual
 
-deploy-smoke-test-mr:
-  extends: .smoke-test-base
+deploy-mr:
+  extends: .deploy-vcluster-base
   variables:
     PIPELINE_SLUG: mr-$CI_MERGE_REQUEST_IID
   environment:
     name: smoke-test/mr-$CI_MERGE_REQUEST_IID
     url: https://portal.mr-$CI_MERGE_REQUEST_IID.$SMOKE_TEST_BASE_DOMAIN
-    on_stop: destroy-smoke-test-mr
+    on_stop: destroy-mr
     auto_stop_in: 7 days
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
       when: manual
 
-.seed-data-smoke-test-base:
+.seed-base:
   # Imports baseline platform seed data into the vcluster smoke-test deployment.
   # Runs automatically once the (manually-triggered) deploy job completes.
   extends: .deploy-base
@@ -251,7 +236,7 @@ deploy-smoke-test-mr:
     reports:
       dotenv: seed-data-auth.env
 
-.system-tests-smoke-test-base:
+.system-tests-base:
   stage: report
   image: registry.gitlab.com/civitas-connect/civitas-core/civitas-core-v2/civitas-core-deployment/cicd:a1aebd6
   variables:
@@ -268,10 +253,10 @@ deploy-smoke-test-mr:
     - apk add --no-cache openjdk21-jdk maven
     - python3 -m pip install --break-system-packages robotframework
 
-system-tests-smoke-test-branch:
-  extends: .system-tests-smoke-test-base
+system-tests-branch:
+  extends: .system-tests-base
   needs:
-    - job: seed-data-smoke-test-branch
+    - job: seed-branch
       artifacts: true
   variables:
     PIPELINE_SLUG: $CI_COMMIT_REF_SLUG
@@ -282,20 +267,20 @@ system-tests-smoke-test-branch:
       when: never
     - if: '$CI_COMMIT_BRANCH'
 
-system-tests-smoke-test-mr:
-  extends: .system-tests-smoke-test-base
+system-tests-mr:
+  extends: .system-tests-base
   needs:
-    - job: seed-data-smoke-test-mr
+    - job: seed-mr
       artifacts: true
   variables:
     PIPELINE_SLUG: mr-$CI_MERGE_REQUEST_IID
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
 
-seed-data-smoke-test-branch:
-  extends: .seed-data-smoke-test-base
+seed-branch:
+  extends: .seed-base
   needs:
-    - job: deploy-smoke-test-branch
+    - job: deploy-branch
       artifacts: false
   variables:
     PIPELINE_SLUG: $CI_COMMIT_REF_SLUG
@@ -306,20 +291,20 @@ seed-data-smoke-test-branch:
       when: never
     - if: '$CI_COMMIT_BRANCH'
 
-seed-data-smoke-test-mr:
-  extends: .seed-data-smoke-test-base
+seed-mr:
+  extends: .seed-base
   needs:
-    - job: deploy-smoke-test-mr
+    - job: deploy-mr
       artifacts: false
   variables:
     PIPELINE_SLUG: mr-$CI_MERGE_REQUEST_IID
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
 
-.destroy-smoke-test-base:
+.destroy-vcluster-base:
   # Triggered by GitLab when the smoke-test environment is stopped, either
   # manually from the MR widget or automatically by auto_stop_in after 7 days
-  # of idleness (no new deploy-smoke-test run in that time).
+  # of idleness (no new deploy run in that time).
   extends: .deploy-base
   variables:
     KUBECONFIG_CONTENT: $KUBECONFIG_CONTENT_VCLUSTER_HOST
@@ -329,8 +314,8 @@ seed-data-smoke-test-mr:
     - kubectl delete namespace smoke-test-${PIPELINE_SLUG} --ignore-not-found
   allow_failure: true
 
-destroy-smoke-test-branch:
-  extends: .destroy-smoke-test-base
+destroy-branch:
+  extends: .destroy-vcluster-base
   variables:
     PIPELINE_SLUG: $CI_COMMIT_REF_SLUG
   environment:
@@ -344,8 +329,8 @@ destroy-smoke-test-branch:
     - if: '$CI_COMMIT_BRANCH'
       when: manual
 
-destroy-smoke-test-mr:
-  extends: .destroy-smoke-test-base
+destroy-mr:
+  extends: .destroy-vcluster-base
   variables:
     PIPELINE_SLUG: mr-$CI_MERGE_REQUEST_IID
   environment:
@@ -415,7 +400,7 @@ verify-nightly-images:
     - ./scripts/ci/verify-nightly-images.sh
 
 deploy-nightly:
-  extends: .smoke-test-base
+  extends: .deploy-vcluster-base
   needs:
     - job: nightly-slug
       artifacts: true
@@ -433,7 +418,7 @@ deploy-nightly:
       when: always
 
 system-tests-nightly:
-  extends: .system-tests-smoke-test-base
+  extends: .system-tests-base
   # No seed step on purpose — run tests directly against the fresh deployment.
   needs:
     - job: nightly-slug
@@ -490,7 +475,7 @@ collect-logs-nightly:
       - nightly-logs/
 
 destroy-nightly:
-  extends: .destroy-smoke-test-base
+  extends: .destroy-vcluster-base
   needs:
     - job: nightly-slug
       artifacts: true
