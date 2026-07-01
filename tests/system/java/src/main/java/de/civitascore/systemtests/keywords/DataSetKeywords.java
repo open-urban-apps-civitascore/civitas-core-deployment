@@ -7,7 +7,10 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import de.civitascore.systemtests.SystemTestState;
 import de.civitascore.systemtests.TestContext;
 import de.civitascore.systemtests.client.PortalBackendClient;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.Objects;
 import org.robotframework.javalib.annotation.ArgumentNames;
 import org.robotframework.javalib.annotation.RobotKeyword;
 import org.robotframework.javalib.annotation.RobotKeywords;
@@ -46,6 +49,24 @@ public class DataSetKeywords {
     state.dataSetId = requiredText(result, "id", "dataSet");
     validateDataSetPayload(result, "DRAFT", false);
     return state.dataSetId;
+  }
+
+  @RobotKeyword("Adopt Frontend Data Set")
+  public String adoptFrontendDataSet() {
+    ensureInitialized();
+    JsonNode page = portalClient
+        .getJson("/datasets?name=" + URLEncoder.encode(state.dataSetName, StandardCharsets.UTF_8), state.accessToken, 200)
+        .json();
+    JsonNode content = page.path("content");
+    assertTrue(content.isArray(), "GET /datasets must return a paged content array");
+    for (JsonNode dataSet : content) {
+      if (Objects.equals(state.dataSetName, dataSet.path("name").asText())) {
+        state.dataSetId = requiredText(dataSet, "id", "dataSet");
+        return state.dataSetId;
+      }
+    }
+    throw new AssertionError(
+        "No data set named '" + state.dataSetName + "' found to adopt. Response: " + page.toPrettyString());
   }
 
   @RobotKeyword("Verify Data Set Snapshot")

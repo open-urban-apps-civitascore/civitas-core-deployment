@@ -36,7 +36,6 @@ Hero Case - Open and Protected Data
     TC-016 Create Data Set
     TC-017 Verify Draft Data Set Snapshot
     Adopt Frontend Data Set
-    TC-018 Create Pipeline
     TC-042 Assign Data Set To Data Pool
     TC-043 Verify Data Set Data Pool Assignment
     TC-018 Create Pipeline
