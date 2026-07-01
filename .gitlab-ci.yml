@@ -355,6 +355,156 @@ destroy-smoke-test-mr:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
       when: manual
 
+# =============================================================================
+# Nightly system tests
+#
+# Triggered by a GitLab pipeline schedule (Settings -> CI/CD -> Schedules):
+#   * Cron: `0 21 * * *` (every day 21:00 / 9pm)
+#   * Schedule variable: IS_NIGHTLY = true
+#
+# Flow (all jobs run automatically — no manual trigger):
+#   1. nightly-slug            -> computes PIPELINE_SLUG = nightly-YYYYMMDD and
+#                                 NIGHTLY_IMAGE_TAG = <branch>-nightly-YYYYMMDD
+#   2. verify-nightly-images   -> hard-fails fast if any image:tag is missing,
+#                                 BEFORE any vcluster is provisioned
+#   3. deploy-nightly          -> spins up an ephemeral vcluster + deploys platform
+#   4. system-tests-nightly    -> runs system tests against the vcluster (NO seed)
+#   5. collect-logs-nightly    -> dumps in-cluster pod logs/events as artifacts
+#   6. destroy-nightly         -> tears the vcluster down (runs even on failure)
+#
+# Domain schema: https://portal.nightly-20260629.<SMOKE_TEST_BASE_DOMAIN>
+#
+# Unlike smoke tests, nightly runs pin a dated nightly build tag 
+# `<branch>-nightly-YYYYMMDD` via NIGHTLY_IMAGE_TAG.
+# =============================================================================
+
+# Compute a per-run date-based slug + image tag shared by all nightly jobs.
+# PIPELINE_SLUG is used as a k8s namespace/release suffix and a domain segment,
+# so it must be slash-free; the GitLab *environment* name uses nightly/<date>.
+nightly-slug:
+  stage: .pre
+  image: alpine:latest
+  variables:
+    # Branch whose nightly images we deploy. Override via CI/CD variable.
+    NIGHTLY_IMAGE_BRANCH: '1687-nightly-builds'
+  rules:
+    - if: '$IS_NIGHTLY == "true"'
+  script:
+    - DATE=$(date +%Y%m%d)
+    - echo "PIPELINE_SLUG=nightly-${DATE}" > nightly.env
+    - echo "NIGHTLY_IMAGE_TAG=${NIGHTLY_IMAGE_BRANCH}-nightly-${DATE}" >> nightly.env
+    - echo "Setting PIPELINE_SLUG=nightly-${DATE}"
+    - echo "Setting NIGHTLY_IMAGE_TAG=${NIGHTLY_IMAGE_BRANCH}-nightly-${DATE}"
+  artifacts:
+    reports:
+      dotenv: nightly.env
+
+# Pre-flight: hard-fail fast if any platform image is missing for the requested
+# nightly tag, BEFORE we provision a vcluster.
+verify-nightly-images:
+  stage: .pre
+  image: registry.gitlab.com/civitas-connect/civitas-core/docker-images/cicd:2.0.0-beta
+  needs:
+    - job: nightly-slug
+      artifacts: true
+  # NIGHTLY_IMAGE_TAG is provided via the nightly-slug dotenv artifact.
+  rules:
+    - if: '$IS_NIGHTLY == "true"'
+      when: always
+  script:
+    - ./scripts/ci/verify-nightly-images.sh
+
+deploy-nightly:
+  extends: .smoke-test-base
+  needs:
+    - job: nightly-slug
+      artifacts: true
+    # Block the (expensive) vcluster provisioning until images are confirmed.
+    - job: verify-nightly-images
+      artifacts: false
+  # PIPELINE_SLUG is provided via the nightly-slug dotenv artifact.
+  environment:
+    name: nightly/$PIPELINE_SLUG
+    url: https://portal.$PIPELINE_SLUG.$SMOKE_TEST_BASE_DOMAIN
+    on_stop: destroy-nightly
+  rules:
+    # Deploy always on the nightly schedule (no manual trigger).
+    - if: '$IS_NIGHTLY == "true"'
+      when: always
+
+system-tests-nightly:
+  extends: .system-tests-smoke-test-base
+  # No seed step on purpose — run tests directly against the fresh deployment.
+  needs:
+    - job: nightly-slug
+      artifacts: true
+    - job: deploy-nightly
+      artifacts: false
+  rules:
+    - if: '$IS_NIGHTLY == "true"'
+      when: always
+  artifacts:
+    when: always
+    expire_in: 30 days
+    paths:
+      - tests/system/results/
+    reports:
+      junit: tests/system/results/xunit.xml
+
+# Collect in-cluster logs/events before the vcluster is destroyed, so failures
+# remain debuggable even though the cluster is gone afterwards.
+collect-logs-nightly:
+  extends: .deploy-base
+  needs:
+    - job: nightly-slug
+      artifacts: true
+    - job: system-tests-nightly
+      artifacts: false
+  variables:
+    KUBECONFIG_CONTENT: $KUBECONFIG_CONTENT_VCLUSTER_HOST
+    SMOKE_TEST_DOMAIN: ${PIPELINE_SLUG}.${SMOKE_TEST_BASE_DOMAIN}
+  rules:
+    - if: '$IS_NIGHTLY == "true"'
+      when: always
+  script:
+    # Point kubectl at the vcluster (still alive at this point).
+    - ./scripts/ci/fetch-vcluster-kubeconfig.sh
+    - mkdir -p nightly-logs
+    # Cluster-wide overview.
+    - kubectl get all --all-namespaces -o wide > nightly-logs/resources.txt 2>&1 || true
+    - kubectl get events --all-namespaces --sort-by=.lastTimestamp > nightly-logs/events.txt 2>&1 || true
+    # Per-pod logs (current + previous container) across all namespaces.
+    - |
+      for ns in $(kubectl get ns -o jsonpath='{.items[*].metadata.name}'); do
+        for pod in $(kubectl -n "$ns" get pods -o jsonpath='{.items[*].metadata.name}' 2>/dev/null); do
+          kubectl -n "$ns" logs "$pod" --all-containers --timestamps \
+            > "nightly-logs/${ns}_${pod}.log" 2>&1 || true
+          kubectl -n "$ns" logs "$pod" --all-containers --timestamps --previous \
+            > "nightly-logs/${ns}_${pod}.previous.log" 2>&1 || true
+        done
+      done
+  artifacts:
+    when: always
+    expire_in: 30 days
+    paths:
+      - nightly-logs/
+
+destroy-nightly:
+  extends: .destroy-smoke-test-base
+  needs:
+    - job: nightly-slug
+      artifacts: true
+    # Tear down only after logs have been collected.
+    - job: collect-logs-nightly
+      artifacts: false
+  environment:
+    name: nightly/$PIPELINE_SLUG
+    action: stop
+  rules:
+    # Always destroy on the nightly schedule, even if earlier jobs failed.
+    - if: '$IS_NIGHTLY == "true"'
+      when: always
+
 # Regression tests for kyverno policies themselves (good/bad fixtures per policy).
 test-kyverno-policies:
   stage: lint
