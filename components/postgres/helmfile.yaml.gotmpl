@@ -67,7 +67,8 @@ releases:
           {{- end }}
         {{- end }}
       {{- end }}
-      {{- if not (and (eq $layer "instance") $depIsOperator) }}
+      {{- /* Emit the dependency only when its release is rendered in this layer. */}}
+      {{- if or (eq $layer "") (and (eq $layer "operators") $depIsOperator) (and (eq $layer "instance") (not $depIsOperator)) }}
         {{- $renderedNeeds = append $renderedNeeds (printf "%s/%s-%s" (index $root $depComponent $depPart "namespace") ($depComponent | kebabcase) $depPart) }}
       {{- end }}
     {{- end }}
