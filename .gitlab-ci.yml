@@ -7,7 +7,9 @@ stages:
   - .pre
   - lint
   - deploy
+  - system-tests
   - report
+  - cleanup
 
 # TODO: Make this work with rennovate
 .cicd-image: &cicd_image >-
@@ -237,7 +239,7 @@ deploy-mr:
       dotenv: seed-data-auth.env
 
 .system-tests-base:
-  stage: report
+  stage: system-tests
   image: registry.gitlab.com/civitas-connect/civitas-core/civitas-core-v2/civitas-core-deployment/cicd:a1aebd6
   variables:
     PIPELINE_SLUG: ""
@@ -440,6 +442,7 @@ system-tests-nightly:
 # remain debuggable even though the cluster is gone afterwards.
 collect-logs-nightly:
   extends: .deploy-base
+  stage: report
   needs:
     - job: nightly-slug
       artifacts: true
@@ -476,6 +479,7 @@ collect-logs-nightly:
 
 destroy-nightly:
   extends: .destroy-vcluster-base
+  stage: cleanup
   needs:
     - job: nightly-slug
       artifacts: true
