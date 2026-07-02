@@ -3,7 +3,7 @@ keycloak:
   app:
     repository: https://codecentric.github.io/helm-charts
     chart: codecentric/keycloakx
-    version: '7.1.11'
+    version: '7.2.0'
   config:
     # TODO: see https://github.com/adorsys/keycloak-config-cli/issues/1287#issuecomment-3338550468
     repository: https://jkroepke.github.io/helm-charts/
