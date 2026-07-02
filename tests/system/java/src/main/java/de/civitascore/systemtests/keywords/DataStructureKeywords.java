@@ -166,6 +166,10 @@ public class DataStructureKeywords {
           dataStructure.path("dataStructureVersions"),
           state.dataStructureVersionId,
           "dataStructure.dataStructureVersions");
+    } else {
+      assertTrue(
+          dataStructure.path("dataStructureVersions").isEmpty(),
+          "dataStructure.dataStructureVersions must be empty before a version exists");
     }
   }
 
