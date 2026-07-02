@@ -4,4 +4,4 @@ frost:
     enabled: true
     namespace: {{ include "civitas.namespace" (dict "global" .Values.global "suffix" "frost") }}
     subdomain: frost
-    realmName: civitas
+    realmName: {{ .Values.global.instanceSlug }}

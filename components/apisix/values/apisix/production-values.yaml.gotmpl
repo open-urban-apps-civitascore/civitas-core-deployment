@@ -10,6 +10,14 @@
 
 replicaCount: 2
 
+apisix:
+  nginx:
+    # Pin worker count to the CPU limit (2000m -> 2). NEVER use the chart default
+    # "auto": nginx reads the host's core count, not the pod CPU limit, so on a
+    # many-core node it spawns one worker per host core. Scale this together with
+    # the CPU and memory limits below.
+    workerProcesses: "2"
+
 resources:
   requests:
     cpu: 500m

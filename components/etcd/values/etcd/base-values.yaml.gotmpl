@@ -10,7 +10,7 @@
 # - [x] Named ports -> default in chart
 # - [x] Ingress with TLS
 etcd:
-  initialClusterToken: 'civitas-etcd-cluster'
+  initialClusterToken: '{{ $global.instanceSlug }}-etcd-cluster'
 
 auth:
   enabled: true

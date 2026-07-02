@@ -60,23 +60,38 @@ releases:
                   {{- $transformedPeer := dict }}
                   {{- range $peerKey, $peerValue := $peer }}
                     {{- if eq $peerKey "componentNamespace" }}
-                      {{- $refComponentData := index $root $peerValue | default dict }}
-                      {{- if not $refComponentData }}
-                        {{- $parts := splitList "-" $peerValue }}
-                        {{- $camelCase := index $parts 0 }}
-                        {{- range $i, $part := $parts }}
-                          {{- if gt $i 0 }}
-                            {{- $camelCase = printf "%s%s" $camelCase ($part | title) }}
+                      {{- /* Resolve $partData: the map (a component part) expected to carry a
+                             "namespace" key. Dotted "component.part" targets a specific part
+                             (e.g. "postgres.operator" -> the operator namespace, which differs
+                             from the cluster namespace in the multi-instance model); a bare
+                             component name resolves to its first namespaced part. */ -}}
+                      {{- $refNamespace := "" }}
+                      {{- $partData := dict }}
+                      {{- $dotted := splitList "." $peerValue }}
+                      {{- if gt (len $dotted) 1 }}
+                        {{- $refComponentData := index $root (index $dotted 0) | default dict }}
+                        {{- $partData = index $refComponentData (index $dotted 1) | default dict }}
+                      {{- else }}
+                        {{- $refComponentData := index $root $peerValue | default dict }}
+                        {{- if not $refComponentData }}
+                          {{- $parts := splitList "-" $peerValue }}
+                          {{- $camelCase := index $parts 0 }}
+                          {{- range $i, $part := $parts }}
+                            {{- if gt $i 0 }}
+                              {{- $camelCase = printf "%s%s" $camelCase ($part | title) }}
+                            {{- end }}
+                          {{- end }}
+                          {{- $refComponentData = index $root $camelCase | default dict }}
+                        {{- end }}
+                        {{- range $partKey, $candidate := $refComponentData }}
+                          {{- if and (kindIs "map" $candidate) (hasKey $candidate "namespace") }}
+                            {{- $partData = $candidate }}
+                            {{- break }}
                           {{- end }}
                         {{- end }}
-                        {{- $refComponentData = index $root $camelCase | default dict }}
                       {{- end }}
-                      {{- $refNamespace := "" }}
-                      {{- range $partKey, $partData := $refComponentData }}
-                        {{- if and (kindIs "map" $partData) (hasKey $partData "namespace") }}
-                          {{- $refNamespace = index $partData "namespace" }}
-                          {{- break }}
-                        {{- end }}
+                      {{- if and (kindIs "map" $partData) (hasKey $partData "namespace") }}
+                        {{- $refNamespace = index $partData "namespace" }}
                       {{- end }}
                       {{- if $refNamespace }}
                         {{- $_ := set $transformedPeer "namespaceSelector" (dict "matchLabels" (dict "kubernetes.io/metadata.name" $refNamespace)) }}
