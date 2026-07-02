@@ -61,8 +61,7 @@ public class GatewayKeywords {
   public void verifyGatewayResponseContent(String expectedThingName, String expectedDescription) {
     ensureNamedApiPreviewUrl();
     String bearerToken = state.openDataAccess ? null : state.accessToken;
-    Map<String, String> headers = state.openDataAccess ? Map.of() : Map.of("X-Allowed-Scope-Ids", "*");
-    ApiResponse response = portalClient.getText(state.namedApiPreviewUrl, bearerToken, headers, 200);
+    ApiResponse response = portalClient.getText(state.namedApiPreviewUrl, bearerToken, Map.of(), 200);
     assertGatewayResponseContainsExpectedThing(
         response.json(),
         KeywordUtils.firstNonBlank(expectedThingName, state.expectedGatewayThingName),
