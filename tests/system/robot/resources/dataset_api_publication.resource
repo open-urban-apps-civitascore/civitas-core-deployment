@@ -92,7 +92,7 @@ TC-028 Verify Authenticated Gateway Access
     Verify Gateway Access    ${expected_status}    ${TRUE}
 
 TC-029 Verify Authenticated Gateway Response Content
-    Verify Gateway Response Content    Test Sensor    test
+    Verify Gateway Response Content    Test Sensor    test    ${TRUE}
 
 TC-030 Verify Anonymous Gateway Rejection
     Verify Gateway Access    401    ${FALSE}

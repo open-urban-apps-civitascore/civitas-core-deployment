@@ -57,10 +57,11 @@ public class GatewayKeywords {
   }
 
   @RobotKeyword("Verify Gateway Response Content")
-  @ArgumentNames({"expectedThingName=", "expectedDescription="})
-  public void verifyGatewayResponseContent(String expectedThingName, String expectedDescription) {
+  @ArgumentNames({"expectedThingName=", "expectedDescription=", "withAuthentication=false"})
+  public void verifyGatewayResponseContent(String expectedThingName, String expectedDescription, String withAuthentication) {
     ensureNamedApiPreviewUrl();
-    String bearerToken = state.openDataAccess ? null : state.accessToken;
+    boolean authenticated = KeywordUtils.parseBoolean(withAuthentication);
+    String bearerToken = authenticated ? state.accessToken : null;
     ApiResponse response = portalClient.getText(state.namedApiPreviewUrl, bearerToken, Map.of(), 200);
     assertGatewayResponseContainsExpectedThing(
         response.json(),
