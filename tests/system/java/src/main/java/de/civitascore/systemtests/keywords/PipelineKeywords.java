@@ -158,6 +158,15 @@ public class PipelineKeywords {
         .getJson("/datasets/" + state.dataSetId + "/pipelines/" + state.geoPipelineId, state.accessToken, 200)
         .json();
     validateGeoPipelinePayload(pipeline);
+
+    JsonNode sink = portalClient
+        .getJson("/datasets/" + state.dataSetId + "/datasinks/" + state.geoDataSinkId, state.accessToken, 200)
+        .json();
+    assertTextEquals("POSTGIS", requiredText(sink, "dataSinkType", "geoDataSink.dataSinkType"));
+    JsonNode config = sink.path("configuration");
+    assertTextEquals(state.geoDataSinkTableName, requiredText(config, "tableName", "geoDataSink.configuration.tableName"));
+    assertTextEquals(state.dataStructureVersionId,
+        requiredText(config.path("dataStructureVersion"), "id", "geoDataSink.configuration.dataStructureVersion.id"));
   }
 
   @RobotKeyword("Create OWS API")
