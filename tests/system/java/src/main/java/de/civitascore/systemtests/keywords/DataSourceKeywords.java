@@ -54,6 +54,8 @@ public class DataSourceKeywords {
     JsonNode result = portalClient.postJson("/datasources", body, state.accessToken, 201).json();
     state.dataSourceId = requiredText(result, "id", "dataSource");
     validateDataSourcePayload(result, "DRAFT", false);
+    JsonNode scope = result.path("datapoolScope");
+    assertTextEquals("ALL", requiredText(scope, "type", "dataSource.datapoolScope.type"));
     return state.dataSourceId;
   }
 
