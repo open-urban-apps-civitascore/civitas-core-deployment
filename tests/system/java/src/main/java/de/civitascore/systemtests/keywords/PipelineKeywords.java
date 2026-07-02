@@ -4,10 +4,13 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import de.civitascore.systemtests.SystemTestConfig;
 import de.civitascore.systemtests.SystemTestState;
 import de.civitascore.systemtests.TestContext;
 import de.civitascore.systemtests.client.PortalBackendClient;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 import org.robotframework.javalib.annotation.RobotKeyword;
 import org.robotframework.javalib.annotation.RobotKeywords;
@@ -18,7 +21,6 @@ import static de.civitascore.systemtests.keywords.KeywordAssertions.*;
 public class PipelineKeywords {
 
   private final SystemTestState state = TestContext.state();
-  private final SystemTestConfig config = TestContext.config();
   private final ObjectMapper mapper = TestContext.mapper();
   private final PortalBackendClient portalClient = TestContext.portalClient();
 
@@ -92,13 +94,44 @@ public class PipelineKeywords {
   public String createPipeline() {
     ensureDataSetId();
     ensureDataSourceId();
-    ObjectNode body = buildPipelinePayload(state.pipelineName, state.pipelineDescription);
+    ensureDataStructureVersionId();
+
+    // FROST sink (empty configuration) — referenced by the Frost node in the pipeline graph.
+    ObjectNode sinkBody = mapper.createObjectNode();
+    sinkBody.put("dataSinkType", "FROST");
+    sinkBody.set("configuration", mapper.createObjectNode());
+    JsonNode sinkResult = portalClient.postJson(
+        "/datasets/" + state.dataSetId + "/datasinks", sinkBody, state.accessToken, 201).json();
+    state.frostDataSinkId = requiredText(sinkResult, "id", "pipeline.dataSink");
+
+    ObjectNode body = buildFrostPipelinePayload();
 
     JsonNode result = portalClient.postJson(
         "/datasets/" + state.dataSetId + "/pipelines", body, state.accessToken, 201).json();
     state.pipelineId = requiredText(result, "id", "pipeline");
     validatePipelinePayload(result);
     return state.pipelineId;
+  }
+
+  /**
+   * Builds the (FROST) pipeline request body from a captured pipeline-editor payload
+   * (React-Flow node/edge graph), substituting the entities created earlier in the run.
+   */
+  private ObjectNode buildFrostPipelinePayload() {
+    String json = readResourceAsString("/models/frost-pipeline.json")
+        .replace("__PIPELINE_NAME__", state.pipelineName)
+        .replace("__PIPELINE_DESCRIPTION__", state.pipelineDescription)
+        .replace("__DATA_SOURCE_ID__", state.dataSourceId)
+        .replace("__DATA_SOURCE_NAME__", state.dataSourceName)
+        .replace("__FROST_SINK_ID__", state.frostDataSinkId)
+        .replace("__DS_NAME__", state.dataStructureName)
+        .replace("__DSV_ID__", state.dataStructureVersionId)
+        .replace("__DS_ID__", state.dataStructureId);
+    try {
+      return (ObjectNode) mapper.readTree(json);
+    } catch (IOException ex) {
+      throw new UncheckedIOException("Failed to parse pipeline payload", ex);
+    }
   }
 
   @RobotKeyword("Verify Pipeline Snapshot")
@@ -128,15 +161,46 @@ public class PipelineKeywords {
         "/datasets/" + state.dataSetId + "/datasinks", sinkBody, state.accessToken, 201).json();
     state.geoDataSinkId = requiredText(sinkResult, "id", "geoPipeline.dataSink");
 
-    ObjectNode body = buildPipelinePayload(state.geoPipelineName, state.geoPipelineDescription);
-    ArrayNode dataSinkIds = body.putArray("dataSinkIds");
-    dataSinkIds.add(state.geoDataSinkId);
+    ObjectNode body = buildGeoPipelinePayload();
 
     JsonNode result = portalClient.postJson(
         "/datasets/" + state.dataSetId + "/pipelines", body, state.accessToken, 201).json();
     state.geoPipelineId = requiredText(result, "id", "geoPipeline");
     validateGeoPipelinePayload(result);
     return state.geoPipelineId;
+  }
+
+  /**
+   * Builds the geo pipeline request body from a captured pipeline-editor payload
+   * (React-Flow node/edge graph), substituting the entities created earlier in the run.
+   */
+  private ObjectNode buildGeoPipelinePayload() {
+    String json = readResourceAsString("/models/geo-pipeline.json")
+        .replace("__PIPELINE_NAME__", state.geoPipelineName)
+        .replace("__PIPELINE_DESCRIPTION__", state.geoPipelineDescription)
+        .replace("__DATA_SOURCE_ID__", state.dataSourceId)
+        .replace("__DATA_SOURCE_NAME__", state.dataSourceName)
+        .replace("__DATA_SINK_ID__", state.geoDataSinkId)
+        .replace("__GEO_TABLE_NAME__", state.geoDataSinkTableName)
+        .replace("__DS_NAME__", state.dataStructureName)
+        .replace("__DSV_ID__", state.dataStructureVersionId)
+        .replace("__DS_ID__", state.dataStructureId);
+    try {
+      return (ObjectNode) mapper.readTree(json);
+    } catch (IOException ex) {
+      throw new UncheckedIOException("Failed to parse geo pipeline payload", ex);
+    }
+  }
+
+  private String readResourceAsString(String path) {
+    try (InputStream input = getClass().getResourceAsStream(path)) {
+      if (input == null) {
+        throw new IllegalStateException("Missing test resource: " + path);
+      }
+      return new String(input.readAllBytes(), StandardCharsets.UTF_8);
+    } catch (IOException ex) {
+      throw new UncheckedIOException("Failed to read test resource: " + path, ex);
+    }
   }
 
   @RobotKeyword("Verify Geo Pipeline Snapshot")
@@ -220,55 +284,14 @@ public class PipelineKeywords {
     validateGeoLayerPayload(layer);
   }
 
-  private ObjectNode buildPipelinePayload(String pipelineName, String pipelineDescription) {
-    ObjectNode body = mapper.createObjectNode();
-    body.put("name", pipelineName);
-    body.put("description", pipelineDescription);
-    ArrayNode dataSourceIds = body.putArray("dataSourceIds");
-    dataSourceIds.add(state.dataSourceId);
-    body.set("styles", mapper.createObjectNode());
-
-    ObjectNode model = body.putObject("model");
-    ObjectNode input = model.putObject("input");
-    ObjectNode generate = input.putObject("generate");
-    generate.put("interval", "1s");
-    generate.put("count", 1);
-    generate.put("mapping", "root = {\"name\": \"Test Sensor\", \"description\": \"test\"}");
-    ObjectNode output = model.putObject("output");
-    ObjectNode httpClient = output.putObject("http_client");
-    httpClient.put("url", config.frostBaseUrl + "/Things");
-    httpClient.put("verb", "POST");
-    ObjectNode headers = httpClient.putObject("headers");
-    headers.put("Content-Type", "application/json");
-    return body;
-  }
-
   private void validatePipelinePayload(JsonNode pipeline) {
     assertTrue(pipeline.isObject(), "pipeline response must be a JSON object");
     assertTextEquals(state.pipelineId, requiredText(pipeline, "id", "pipeline.id"));
     assertTextEquals(state.pipelineName, requiredText(pipeline, "name", "pipeline.name"));
     assertTextEquals(state.pipelineDescription, requiredText(pipeline, "description", "pipeline.description"));
-    assertIsObject(pipeline.path("styles"), "pipeline.styles");
-    JsonNode model = pipeline.path("model");
-    assertIsObject(model, "pipeline.model");
-    JsonNode generate = model.path("input").path("generate");
-    assertIsObject(generate, "pipeline.model.input.generate");
-    assertTextEquals("1s", requiredText(generate, "interval", "pipeline.model.input.generate.interval"));
-    assertTextEquals("1", requiredText(generate, "count", "pipeline.model.input.generate.count"));
-    assertTrue(
-        requiredText(generate, "mapping", "pipeline.model.input.generate.mapping").contains(state.expectedGatewayThingName),
-        "pipeline mapping must contain the expected thing name");
-    JsonNode httpClientConfig = model.path("output").path("http_client");
-    assertIsObject(httpClientConfig, "pipeline.model.output.http_client");
-    assertTextEquals(
-        config.frostBaseUrl + "/Things",
-        requiredText(httpClientConfig, "url", "pipeline.model.output.http_client.url"));
-    assertTextEquals(
-        "POST",
-        requiredText(httpClientConfig, "verb", "pipeline.model.output.http_client.verb"));
-    assertTextEquals(
-        "application/json",
-        requiredText(httpClientConfig.path("headers"), "Content-Type", "pipeline.model.output.http_client.headers.Content-Type"));
+    JsonNode dataSinkIds = pipeline.path("dataSinkIds");
+    assertTrue(dataSinkIds.isArray() && !dataSinkIds.isEmpty(), "pipeline.dataSinkIds must contain at least one entry");
+    assertArrayContainsText(dataSinkIds, state.frostDataSinkId, "pipeline.dataSinkIds");
   }
 
   private void validateGeoPipelinePayload(JsonNode pipeline) {

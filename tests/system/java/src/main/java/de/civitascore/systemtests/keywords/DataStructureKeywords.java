@@ -6,6 +6,9 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import de.civitascore.systemtests.SystemTestState;
 import de.civitascore.systemtests.TestContext;
 import de.civitascore.systemtests.client.PortalBackendClient;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.time.Duration;
 import org.robotframework.javalib.annotation.ArgumentNames;
 import org.robotframework.javalib.annotation.RobotKeyword;
@@ -66,11 +69,9 @@ public class DataStructureKeywords {
     body.put("version", "1.0.0");
     body.put("description", "Initial release for the system test proof of concept");
     body.put("modelName", state.modelName);
-    ObjectNode model = mapper.createObjectNode();
-    ObjectNode properties = model.putObject("properties");
-    properties.putObject("value").put("type", "string");
-    body.set("model", model);
-    body.set("styles", mapper.createObjectNode());
+    JsonNode versionBody = readJsonResource("/models/data-structure-version.json");
+    body.set("model", versionBody.get("model"));
+    body.set("styles", versionBody.get("styles"));
 
     JsonNode result = portalClient.postJson(
         "/datastructures/" + state.dataStructureId + "/versions", body, state.accessToken, 201).json();
@@ -164,6 +165,17 @@ public class DataStructureKeywords {
     assertTextEquals(state.modelName, requiredText(version, "modelName", "dataStructureVersion.modelName"));
     assertIsObject(version.path("model"), "dataStructureVersion.model");
     assertIsObject(version.path("styles"), "dataStructureVersion.styles");
+  }
+
+  private JsonNode readJsonResource(String path) {
+    try (InputStream input = getClass().getResourceAsStream(path)) {
+      if (input == null) {
+        throw new IllegalStateException("Missing test resource: " + path);
+      }
+      return mapper.readTree(input);
+    } catch (IOException ex) {
+      throw new UncheckedIOException("Failed to read test resource: " + path, ex);
+    }
   }
 
   private void ensureInitialized() {

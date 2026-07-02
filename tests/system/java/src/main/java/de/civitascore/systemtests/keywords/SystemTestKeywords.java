@@ -39,8 +39,8 @@ public class SystemTestKeywords {
     state.geoLayerName = "geo_layer_" + state.runSuffix.replace('-', '_');
     state.geoLayerTitle = "Geo Layer " + state.runSuffix;
     state.geoLayerDescription = "Geo layer for the system test proof of concept";
-    state.geoLayerAttribute = "value";
-    state.geoLayerGeometryColumnRef = "value";
+    state.geoLayerAttribute = "name";
+    state.geoLayerGeometryColumnRef = "geom";
     state.geoLayerCrs = "EPSG:4326";
     state.dataSourceClientId = "civitas-saga-demo-" + state.runSuffix;
     state.namedApiSlug = "things";
