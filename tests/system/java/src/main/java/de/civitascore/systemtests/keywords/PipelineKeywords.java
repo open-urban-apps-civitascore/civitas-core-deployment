@@ -137,7 +137,7 @@ public class PipelineKeywords {
         "/datasets/" + state.dataSetId + "/datasinks", sinkBody, state.accessToken, 201).json();
     state.geoDataSinkId = requiredText(sinkResult, "id", "geoPipeline.dataSink");
 
-    ObjectNode body = buildPipelinePayload(state.geoPipelineName, state.geoPipelineDescription);
+    ObjectNode body = buildGeoPipelinePayload(state.geoPipelineName, state.geoPipelineDescription);
     ArrayNode dataSinkIds = body.putArray("dataSinkIds");
     dataSinkIds.add(state.geoDataSinkId);
 
@@ -255,6 +255,30 @@ public class PipelineKeywords {
     return body;
   }
 
+  private ObjectNode buildGeoPipelinePayload(String pipelineName, String pipelineDescription) {
+    ObjectNode body = mapper.createObjectNode();
+    body.put("name", pipelineName);
+    body.put("description", pipelineDescription);
+    body.putArray("dataSourceIds").add(state.dataSourceId);
+    body.set("styles", mapper.createObjectNode());
+
+    ObjectNode model = body.putObject("model");
+    ArrayNode nodes = model.putArray("nodes");
+    nodes.addObject().put("id", "start").put("type", "start").putObject("data");
+    ObjectNode mappingNode = nodes.addObject();
+    mappingNode.put("id", "mapping").put("type", "mapping");
+    ObjectNode mappingConfig = mappingNode.putObject("data").putObject("mappingConfig");
+    ObjectNode geoField = mappingConfig.putObject("fields").putObject("$.value");
+    geoField.put("op", "geoPoint");
+    geoField.putObject("lon").put("op", "copy").put("sourcePath", "$.lon");
+    geoField.putObject("lat").put("op", "copy").put("sourcePath", "$.lat");
+    nodes.addObject().put("id", "end").put("type", "end").putObject("data");
+    ArrayNode edges = model.putArray("edges");
+    edges.addObject().put("id", "e1").put("source", "start").put("target", "mapping");
+    edges.addObject().put("id", "e2").put("source", "mapping").put("target", "end");
+    return body;
+  }
+
   private void validatePipelinePayload(JsonNode pipeline) {
     assertTrue(pipeline.isObject(), "pipeline response must be a JSON object");
     assertTextEquals(state.pipelineId, requiredText(pipeline, "id", "pipeline.id"));
@@ -291,6 +315,19 @@ public class PipelineKeywords {
     JsonNode dataSinkIds = pipeline.path("dataSinkIds");
     assertTrue(dataSinkIds.isArray() && !dataSinkIds.isEmpty(), "geoPipeline.dataSinkIds must contain at least one entry");
     assertArrayContainsText(dataSinkIds, state.geoDataSinkId, "geoPipeline.dataSinkIds");
+
+    JsonNode model = pipeline.path("model");
+    JsonNode nodes = model.path("nodes");
+    JsonNode mappingNode = null;
+    for (JsonNode node : nodes) {
+      if ("mapping".equals(textOrNull(node, "type"))) {
+        mappingNode = node;
+        break;
+      }
+    }
+    assertTrue(mappingNode != null, "geoPipeline.model.nodes must contain a 'mapping' node");
+    JsonNode geoField = mappingNode.path("data").path("mappingConfig").path("fields").path("$.value");
+    assertTextEquals("geoPoint", requiredText(geoField, "op", "geoPipeline mapping $.value.op"));
   }
 
   private void validateGeoLayerPayload(JsonNode layer) {
