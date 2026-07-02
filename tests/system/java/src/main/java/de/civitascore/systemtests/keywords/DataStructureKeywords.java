@@ -73,7 +73,7 @@ public class DataStructureKeywords {
     JsonNode result = portalClient.postJson(
         "/datastructures/" + state.dataStructureId + "/versions", body, state.accessToken, 201).json();
     state.dataStructureVersionId = requiredText(result, "id", "dataStructureVersion");
-    validateDataStructureVersionPayload(result);
+    validateDataStructureVersionPayload(result, "DRAFT");
     return state.dataStructureVersionId;
   }
 
@@ -96,7 +96,8 @@ public class DataStructureKeywords {
   }
 
   @RobotKeyword("Verify Data Structure Version Snapshot")
-  public void verifyDataStructureVersionSnapshot() {
+  @ArgumentNames({"expectedStatus=DRAFT"})
+  public void verifyDataStructureVersionSnapshot(String expectedStatus) {
     ensureDataStructureVersionId();
     JsonNode version = portalClient
         .getJson(
@@ -104,7 +105,7 @@ public class DataStructureKeywords {
             state.accessToken,
             200)
         .json();
-    validateDataStructureVersionPayload(version);
+    validateDataStructureVersionPayload(version, expectedStatus);
   }
 
   @RobotKeyword("Release Data Structure Version")
@@ -173,7 +174,7 @@ public class DataStructureKeywords {
     }
   }
 
-  private void validateDataStructureVersionPayload(JsonNode version) {
+  private void validateDataStructureVersionPayload(JsonNode version, String expectedStatus) {
     assertTrue(version.isObject(), "dataStructureVersion response must be a JSON object");
     assertTextEquals(state.dataStructureVersionId, requiredText(version, "id", "dataStructureVersion.id"));
     assertTextEquals("OWN", requiredText(version, "dataStructureVersionSource", "dataStructureVersion.dataStructureVersionSource"));
@@ -190,6 +191,9 @@ public class DataStructureKeywords {
     assertIsObject(styles, "dataStructureVersion.styles");
     assertIsArray(styles.path("nodes"), "dataStructureVersion.styles.nodes");
     assertTrue(styles.path("nodes").size() > 0, "dataStructureVersion.styles.nodes must not be empty");
+    assertTextEquals(
+        expectedStatus,
+        requiredText(version, "dataStructureVersionStatus", "dataStructureVersion.dataStructureVersionStatus"));
   }
 
   private void ensureInitialized() {
