@@ -20,6 +20,7 @@ public class SystemTestState {
   public String geoPipelineId;
   public String geoDataSinkTableName;
   public String geoDataSinkId;
+  public String frostDataSinkId;
   public String geoApiName;
   public String geoApiSlug;
   public String geoApiDescription;
@@ -62,6 +63,7 @@ public class SystemTestState {
     geoPipelineId = null;
     geoDataSinkTableName = null;
     geoDataSinkId = null;
+    frostDataSinkId = null;
     geoApiName = null;
     geoApiSlug = null;
     geoApiDescription = null;
