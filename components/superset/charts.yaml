@@ -3,4 +3,4 @@ superset:
   superset:
     repository: http://apache.github.io/superset/
     chart: superset/superset
-    version: 0.15.5
+    version: 0.17.2
