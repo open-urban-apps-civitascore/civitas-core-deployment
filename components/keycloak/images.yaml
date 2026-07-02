@@ -3,7 +3,7 @@ keycloak:
   db:
   app:
     repository: 'quay.io/keycloak/keycloak'
-    tag: '26.4.7'
+    tag: '26.6.4'
   configCli:
     repository: 'docker.io/adorsys/keycloak-config-cli'
     tag: '6.5.1-26'
