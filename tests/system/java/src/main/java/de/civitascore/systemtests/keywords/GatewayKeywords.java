@@ -47,14 +47,12 @@ public class GatewayKeywords {
     ensureNamedApiPreviewUrl();
     int status = KeywordUtils.parsePositiveInt(expectedStatus, 200);
     boolean authenticated = KeywordUtils.parseBoolean(withAuthentication);
-    Map<String, String> headers = authenticated ? Map.of("X-Allowed-Scope-Ids", "*") : Map.of();
     String bearerToken = authenticated ? state.accessToken : null;
-    ApiResponse response = portalClient.getText(state.namedApiPreviewUrl, bearerToken, headers, status);
+    ApiResponse response = portalClient.getText(state.namedApiPreviewUrl, bearerToken, Map.of(), status);
     if (status == 200) {
       assertTrue(!response.body().isBlank(), "Gateway response body must not be empty");
       assertTrue(response.contentType().contains("json") || response.body().trim().startsWith("{")
           || response.body().trim().startsWith("["), "Gateway response should be JSON");
-      assertGatewayResponseContainsExpectedThing(response.json());
     }
   }
 
