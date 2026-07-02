@@ -15,6 +15,8 @@ opa:
     repository: {{ .Values.images.authz.opa.repository }}
     tag: {{ .Values.images.authz.opa.tag }}
     pullPolicy: Always
+  # Exposed to OPA policies as data.backends.frost_server.api_host
+  frostServerApiHost: "api.{{ $global.domain }}"
 
 authz:
   image:

@@ -85,6 +85,12 @@ spec:
           mountPath: /data/config.json
           subPath: opa-config.json
           readOnly: true
+        {{- if .Values.opa.frostServerApiHost }}
+        - name: opa-frost-data
+          mountPath: /data/backends/frost_server/data.json
+          subPath: data.json
+          readOnly: true
+        {{- end }}
         - name: tmp
           mountPath: /tmp
         {{- with .Values.opa.extraVolumeMounts }}
@@ -94,6 +100,11 @@ spec:
       - name: opa-config
         configMap:
           name: {{ include "authz.fullname" . }}-opa-config
+      {{- if .Values.opa.frostServerApiHost }}
+      - name: opa-frost-data
+        configMap:
+          name: {{ include "authz.fullname" . }}-opa-frost-data
+      {{- end }}
       - name: tmp
         emptyDir: {}
       {{- with .Values.opa.volumes }}

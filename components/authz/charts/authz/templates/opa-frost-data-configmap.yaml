@@ -1,0 +1,15 @@
+{{- if .Values.opa.frostServerApiHost }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "authz.fullname" . }}-opa-frost-data
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "authz.opa.labels" . | nindent 4 }}
+data:
+  data.json: |
+    {
+      "api_host": {{ .Values.opa.frostServerApiHost | quote }}
+    }
+{{- end }}
