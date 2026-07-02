@@ -29,12 +29,12 @@ destroy-component environment='local' component='':
 # Get Keycloak Realm
 [group('helpers')]
 _get-keycloak-realm profile='local':
-	@yq '.global.instanceSlug' deployment/environments/{{ profile }}/global.yaml.gotmpl || yq '.global.instanceSlug' defaults/environment/global.yaml
+	@yq '(.global.instanceSlug // error("missing"))' deployment/environments/{{ profile }}/global.yaml.gotmpl 2>/dev/null || yq '.global.instanceSlug' defaults/environment/global.yaml
 
 # Get domain
 [group('helpers')]
 _get-domain profile='local':
-	@yq '.global.domain' deployment/environments/{{ profile }}/global.yaml.gotmpl || yq '.global.domain' defaults/environment/global.yaml
+	@yq '(.global.domain // error("missing"))' deployment/environments/local/global.yaml.gotmpl 2>/dev/null || yq '.global.domain' defaults/environment/global.yaml
 
 # Get Keycloak namespace
 [group('helpers')]
