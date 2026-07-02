@@ -59,7 +59,7 @@ validate-renovate-config:
   # actually runs against this repo (renovate-integration).
   # https://gitlab.com/civitas-connect/civitas-core/renovate-integration/-/blob/main/.gitlab-ci.yml?ref_type=heads
   image:
-    name: ghcr.io/renovatebot/renovate:43.220
+    name: ghcr.io/renovatebot/renovate:43.249
     entrypoint: ['']
   needs: []
   rules:
