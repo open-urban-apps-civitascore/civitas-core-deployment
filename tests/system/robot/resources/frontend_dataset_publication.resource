@@ -30,7 +30,7 @@ ${EDIT_BUTTON}                   css=[data-testid="editButton"]
 ${SAVE_BUTTON}                   role=button[name="Speichern"]
 ${STATUS_BUTTON}                 css=[data-testid="statusDropdown"]
 ${READY_BUTTON}                  role=menuitem[name="Fertig"]
-${RELEASE_BUTTON}                role=button[name="Release"]
+${RELEASE_BUTTON}                role=menuitem[name="Verfügbar"]
 ${ACCESS_SETTINGS_TAB}           role=tab[name="Access"]
 ${PIPELINE_LINK}                 role=link[name="Saga Pipeline open"]
 ${PIPELINE_TAB}                  text="Saga Pipeline open"
@@ -140,6 +140,16 @@ Go Back
     Click   ${BACK_BUTTON}
     Wait For Load State    networkidle
 
+Assert Data Set information
+    ${body}=    Get Text    css=body
+    Should Contain    ${body}    ${FRONTEND_DATA_SET_NAME}
+    Should Contain    ${body}    ${FRONTEND_PIPELINE_NAME}
+    Should Contain    ${body}    ${FRONTEND_GEO_PIPELINE_NAME}
+    Should Contain    ${body}    Things
+    Should Contain    ${body}    WFS/WMS API
+    Get Attribute    ${OPEN_DATA_ACCESS_CHECKBOX}    aria-checked    ==    true
+
+
 Assert Data Set Draft Snapshot
     Assert Data Set Status      Entwurf
     ${body}=    Get Text    css=body
@@ -198,34 +208,33 @@ Stage Data Set In UI
     Click    ${EDIT_BUTTON}
     Click    ${STATUS_BUTTON}
     Click    ${READY_BUTTON}
-    Wait For Load State    networkidle
+    Click    ${SAVE_BUTTON}
+    Wait For Elements State    ${EDIT_BUTTON}       visible     timeout=15s
 
 Wait For Ready Data Set Status In UI
-    Wait Until Keyword Succeeds    2 min    5 sec    Assert Data Set Status    READY
+    Reload
+    Get Text        ${STATUS_BUTTON}      contains    Fertig
 
 Assert Ready Data Set Snapshot
-    Assert Data Set Status    READY
-    ${body}=    Get Text    css=body
-    Should Not Contain    ${body}    Public URL
-    Should Not Contain    ${body}    Named API route
+    Assert Data Set Status    Fertig
+    Assert Data Set information
 
 Release Data Set In UI
+    Click    ${EDIT_BUTTON}
+    Click    ${STATUS_BUTTON}
     Click    ${RELEASE_BUTTON}
-    Wait For Load State    networkidle
+    Click    ${SAVE_BUTTON}
+    Wait For Elements State    ${EDIT_BUTTON}       visible     timeout=15s
 
 Wait For Available Data Set Status In UI
-    Wait Until Keyword Succeeds    3 min    5 sec    Assert Data Set Status    AVAILABLE
+    Reload
+    Get Text        ${STATUS_BUTTON}      contains    Verfügbar
 
 Assert Available Data Set Snapshot
-    Assert Data Set Status    AVAILABLE
-    ${body}=    Get Text    css=body
-    Should Contain    ${body}    ${FRONTEND_DATA_SET_NAME}
-    Should Contain    ${body}    Things
-    Should Contain    ${body}    Public URL
+    Assert Data Set Status    Verfügbar
+    Assert Data Set information
 
 Change Data Set Access To Protected In UI
-    Click    ${ACCESS_SETTINGS_TAB}
-    Wait For Load State    networkidle
     Uncheck Checkbox    ${OPEN_DATA_ACCESS_CHECKBOX}
     Click    ${SAVE_BUTTON}
     Wait For Load State    networkidle
