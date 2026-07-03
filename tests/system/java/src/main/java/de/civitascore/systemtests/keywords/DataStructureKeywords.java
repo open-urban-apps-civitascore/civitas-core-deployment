@@ -81,9 +81,13 @@ public class DataStructureKeywords {
     ObjectNode model = mapper.createObjectNode();
     model.put("type", "object");
     ObjectNode properties = model.putObject("properties");
-    ObjectNode value = properties.putObject("value");
-    value.put("$ref", "https://geojson.org/schema/Point.json");
-    value.put("crs", state.geoLayerCrs);
+    properties.putObject("id").put("type", "string");
+    properties.putObject("name").put("type", "string");
+    // The geometry property must carry the GeoJSON $ref and a crs annotation: the frontend reads the
+    // layer's native CRS from the model schema (findNativeCRS scans for a geojson-$ref property + crs).
+    ObjectNode geometry = properties.putObject(state.geoLayerGeometryColumnRef);
+    geometry.put("$ref", "https://geojson.org/schema/Point.json");
+    geometry.put("crs", state.geoLayerCrs);
     return model;
   }
 
@@ -91,7 +95,12 @@ public class DataStructureKeywords {
     ObjectNode styles = mapper.createObjectNode();
     ArrayNode nodes = styles.putArray("nodes");
     ObjectNode element = nodes.addObject().putObject("data").putObject("element");
-    element.putArray("attributes").addObject().put("name", "value");
+    // The geometry-column and attribute selects list these UML attribute names as options, so the
+    // geometry column must appear here for the layer's geometryColumnRef to render as a selection.
+    ArrayNode attributes = element.putArray("attributes");
+    attributes.addObject().put("name", "id");
+    attributes.addObject().put("name", "name");
+    attributes.addObject().put("name", state.geoLayerGeometryColumnRef);
     return styles;
   }
 
@@ -186,7 +195,9 @@ public class DataStructureKeywords {
     JsonNode model = version.path("model");
     assertIsObject(model, "dataStructureVersion.model");
     assertTextEquals("object", requiredText(model, "type", "dataStructureVersion.model.type"));
-    assertIsObject(model.path("properties").path("value"), "dataStructureVersion.model.properties.value");
+    assertIsObject(
+        model.path("properties").path(state.geoLayerGeometryColumnRef),
+        "dataStructureVersion.model.properties." + state.geoLayerGeometryColumnRef);
     JsonNode styles = version.path("styles");
     assertIsObject(styles, "dataStructureVersion.styles");
     assertIsArray(styles.path("nodes"), "dataStructureVersion.styles.nodes");
