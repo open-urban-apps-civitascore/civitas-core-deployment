@@ -399,4 +399,34 @@ public class PipelineKeywords {
       throw new IllegalStateException("Geo layer has not been created yet");
     }
   }
+
+  /**
+   * Deletes any pipelines and data sinks created during this run. Must run before {@code
+   * DataSetKeywords.cleanupDataSet()} deletes the dataset, which otherwise fails with a foreign
+   * key conflict because pipelines/data sinks still reference it.
+   */
+  void cleanupPipelines() {
+    deletePipelineIfPresent(state.pipelineId);
+    deletePipelineIfPresent(state.geoPipelineId);
+    deleteDataSinkIfPresent(state.frostDataSinkId);
+    deleteDataSinkIfPresent(state.geoDataSinkId);
+    state.pipelineId = null;
+    state.geoPipelineId = null;
+    state.frostDataSinkId = null;
+    state.geoDataSinkId = null;
+  }
+
+  private void deletePipelineIfPresent(String pipelineId) {
+    if (pipelineId == null || state.dataSetId == null) {
+      return;
+    }
+    portalClient.delete("/datasets/" + state.dataSetId + "/pipelines/" + pipelineId, state.accessToken, 204);
+  }
+
+  private void deleteDataSinkIfPresent(String dataSinkId) {
+    if (dataSinkId == null || state.dataSetId == null) {
+      return;
+    }
+    portalClient.delete("/datasets/" + state.dataSetId + "/datasinks/" + dataSinkId, state.accessToken, 204);
+  }
 }
