@@ -2,6 +2,7 @@ package de.civitascore.systemtests.keywords;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import de.civitascore.systemtests.SystemTestState;
 import de.civitascore.systemtests.TestContext;
@@ -66,21 +67,37 @@ public class DataStructureKeywords {
     body.put("version", "1.0.0");
     body.put("description", "Initial release for the system test proof of concept");
     body.put("modelName", state.modelName);
-    ObjectNode model = mapper.createObjectNode();
-    ObjectNode properties = model.putObject("properties");
-    properties.putObject("value").put("type", "string");
-    body.set("model", model);
-    body.set("styles", mapper.createObjectNode());
+    body.set("model", buildDataStructureVersionModel());
+    body.set("styles", buildDataStructureVersionStyles());
 
     JsonNode result = portalClient.postJson(
         "/datastructures/" + state.dataStructureId + "/versions", body, state.accessToken, 201).json();
     state.dataStructureVersionId = requiredText(result, "id", "dataStructureVersion");
-    validateDataStructureVersionPayload(result);
+    validateDataStructureVersionPayload(result, "DRAFT");
     return state.dataStructureVersionId;
   }
 
+  private ObjectNode buildDataStructureVersionModel() {
+    ObjectNode model = mapper.createObjectNode();
+    model.put("type", "object");
+    ObjectNode properties = model.putObject("properties");
+    ObjectNode value = properties.putObject("value");
+    value.put("$ref", "https://geojson.org/schema/Point.json");
+    value.put("crs", state.geoLayerCrs);
+    return model;
+  }
+
+  private ObjectNode buildDataStructureVersionStyles() {
+    ObjectNode styles = mapper.createObjectNode();
+    ArrayNode nodes = styles.putArray("nodes");
+    ObjectNode element = nodes.addObject().putObject("data").putObject("element");
+    element.putArray("attributes").addObject().put("name", "value");
+    return styles;
+  }
+
   @RobotKeyword("Verify Data Structure Version Snapshot")
-  public void verifyDataStructureVersionSnapshot() {
+  @ArgumentNames({"expectedStatus=DRAFT"})
+  public void verifyDataStructureVersionSnapshot(String expectedStatus) {
     ensureDataStructureVersionId();
     JsonNode version = portalClient
         .getJson(
@@ -88,7 +105,7 @@ public class DataStructureKeywords {
             state.accessToken,
             200)
         .json();
-    validateDataStructureVersionPayload(version);
+    validateDataStructureVersionPayload(version, expectedStatus);
   }
 
   @RobotKeyword("Release Data Structure Version")
@@ -150,10 +167,14 @@ public class DataStructureKeywords {
           dataStructure.path("dataStructureVersions"),
           state.dataStructureVersionId,
           "dataStructure.dataStructureVersions");
+    } else {
+      assertTrue(
+          dataStructure.path("dataStructureVersions").isEmpty(),
+          "dataStructure.dataStructureVersions must be empty before a version exists");
     }
   }
 
-  private void validateDataStructureVersionPayload(JsonNode version) {
+  private void validateDataStructureVersionPayload(JsonNode version, String expectedStatus) {
     assertTrue(version.isObject(), "dataStructureVersion response must be a JSON object");
     assertTextEquals(state.dataStructureVersionId, requiredText(version, "id", "dataStructureVersion.id"));
     assertTextEquals("OWN", requiredText(version, "dataStructureVersionSource", "dataStructureVersion.dataStructureVersionSource"));
@@ -162,8 +183,17 @@ public class DataStructureKeywords {
         "Initial release for the system test proof of concept",
         requiredText(version, "description", "dataStructureVersion.description"));
     assertTextEquals(state.modelName, requiredText(version, "modelName", "dataStructureVersion.modelName"));
-    assertIsObject(version.path("model"), "dataStructureVersion.model");
-    assertIsObject(version.path("styles"), "dataStructureVersion.styles");
+    JsonNode model = version.path("model");
+    assertIsObject(model, "dataStructureVersion.model");
+    assertTextEquals("object", requiredText(model, "type", "dataStructureVersion.model.type"));
+    assertIsObject(model.path("properties").path("value"), "dataStructureVersion.model.properties.value");
+    JsonNode styles = version.path("styles");
+    assertIsObject(styles, "dataStructureVersion.styles");
+    assertIsArray(styles.path("nodes"), "dataStructureVersion.styles.nodes");
+    assertTrue(styles.path("nodes").size() > 0, "dataStructureVersion.styles.nodes must not be empty");
+    assertTextEquals(
+        expectedStatus,
+        requiredText(version, "dataStructureVersionStatus", "dataStructureVersion.dataStructureVersionStatus"));
   }
 
   private void ensureInitialized() {

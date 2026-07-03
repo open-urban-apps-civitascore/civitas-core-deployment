@@ -16,6 +16,7 @@ public class SystemTestKeywords {
   private final DataSourceKeywords dataSourceKeywords = new DataSourceKeywords();
   private final DataStructureKeywords dataStructureKeywords = new DataStructureKeywords();
   private final DatapoolKeywords datapoolKeywords = new DatapoolKeywords();
+  private final PipelineKeywords pipelineKeywords = new PipelineKeywords();
 
   @RobotKeyword("Initialize System Test Run")
   @ArgumentNames({"suffix=", "openDataAccess=false"})
@@ -39,8 +40,8 @@ public class SystemTestKeywords {
     state.geoLayerName = "geo_layer_" + state.runSuffix.replace('-', '_');
     state.geoLayerTitle = "Geo Layer " + state.runSuffix;
     state.geoLayerDescription = "Geo layer for the system test proof of concept";
-    state.geoLayerAttribute = "value";
-    state.geoLayerGeometryColumnRef = "value";
+    state.geoLayerAttribute = "name";
+    state.geoLayerGeometryColumnRef = "geom";
     state.geoLayerCrs = "EPSG:4326";
     state.dataSourceClientId = "civitas-saga-demo-" + state.runSuffix;
     state.namedApiSlug = "things";
@@ -54,6 +55,7 @@ public class SystemTestKeywords {
 
   @RobotKeyword("Cleanup System Test Run")
   public void cleanupSystemTestRun() {
+    safe("pipelines", () -> pipelineKeywords.cleanupPipelines());
     safe("dataset", () -> dataSetKeywords.cleanupDataSet());
     safe("datasource", () -> dataSourceKeywords.cleanupDataSource());
     safe("datastructure", () -> dataStructureKeywords.cleanupDataStructure());
@@ -63,7 +65,7 @@ public class SystemTestKeywords {
   private void safe(String label, Runnable action) {
     try {
       action.run();
-    } catch (Exception ex) {
+    } catch (Throwable ex) {
       System.err.println("[WARN] Cleanup step failed for " + label + ": " + ex.getMessage());
     }
   }
