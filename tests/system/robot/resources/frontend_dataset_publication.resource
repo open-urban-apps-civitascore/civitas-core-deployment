@@ -10,20 +10,36 @@ ${CREATE_DATASET_BUTTON}         css=[data-testid="addDatasetButton"]
 ${DATASET_CREATE_FORM}           css=[data-testid="datasetCreateForm"]
 ${DATASET_NAME_FIELD}            css=[data-testid="datasetCreateForm"] input[name="name"]
 ${DATASET_DESCRIPTION_FIELD}     css=[data-testid="datasetBaseInfoForm"] textarea[name="description"]
-${OPEN_DATA_ACCESS_TOGGLE}       role=checkbox[name="Open Data"]
+${OPEN_DATA_ACCESS_CHECKBOX}       role=checkbox[name="Open Data"]
 ${API_CREATE_BUTTON}             role=button[name="API hinzufügen"]
 ${STA_API_CREATE_BUTTON}         css=a[href*="type=sensorthings"]
 ${API_CONFIG_FORM}               css=[data-testid="apiConfigForm"]
 ${NAMED_API_NAME_FIELD}          css=[data-testid="apiConfigForm"] input[name="baseInfo.name"]
 ${NAMED_API_SLUG_FIELD}          css=[data-testid="apiConfigForm"] input[name="baseInfo.slug"]
+${LAYER_TAB}                     role=tab[name="Layer"]
+${LAYER_HEADING}                 role=heading[name="Layer"]
+${LAYER_CONFIG_TITLE_FIELD}      css=[data-testid="layers.0.titleTextField"]
+${LAYER_CONFIG_NAME_FIELD}       css=[data-testid="layers.0.layerNameTextField"]
+${LAYER_CONFIG_TABLE_FIELD}      css=[data-testid="layers.0.dataSinkIdSelectTrigger"]
+${LAYER_CONFIG_ATTRIBUTE_FIELD}  css=[data-slot="combobox-chips"]:has(#layerAttribute)
+${LAYER_CONFIG_GEOMETRY_COLUMN_FIELD}     css=[data-testid="layers.0.geometryColumnRefSelectTrigger"]
+${LAYER_CONFIG_CRS_FIELD}                 css=[data-testid="layers.0.crsSelectTrigger"]
 ${SAVE_AND_CONTINUE_BUTTON}      role=button[name="Erstellen und weiter"]
 ${BACK_BUTTON}                   role=button[name="Zurück"]
 ${EDIT_BUTTON}                   css=[data-testid="editButton"]
 ${SAVE_BUTTON}                   role=button[name="Speichern"]
-${STAGE_BUTTON}                  role=button[name="Stage"]
+${STATUS_BUTTON}                 css=[data-testid="statusDropdown"]
+${READY_BUTTON}                  role=menuitem[name="Fertig"]
 ${RELEASE_BUTTON}                role=button[name="Release"]
 ${ACCESS_SETTINGS_TAB}           role=tab[name="Access"]
-${PIPELINE_TAB}                  role=tab[name="Pipeline"]
+${PIPELINE_LINK}                 role=link[name="Saga Pipeline open"]
+${PIPELINE_TAB}                  text="Saga Pipeline open"
+${GEO_PIPELINE_LINK}             role=link[name="Saga Geo Pipeline open"]
+${GEO_PIPELINE_TAB}              text="Saga Geo Pipeline open"
+${PIPELINE_CANVAS}               css=.react-flow__pane
+${PIPELINE_DATASOURCE_NODE}      css=.react-flow__node-dataSource
+${PIPELINE_MAPPING_NODE}         css=.react-flow__node-mapping
+${PIPELINE_FROST_NODE}           css=.react-flow__node-frost
 ${OWS_API_CARD}                  css=[data-testid="apiCard-ows"]
 ${FRONTEND_GEO_API_NAME}         %{FRONTEND_GEO_API_NAME=WFS/WMS API}
 ${FRONTEND_GEO_API_SLUG}         %{FRONTEND_GEO_API_SLUG=ows}
@@ -103,7 +119,7 @@ Create Dataset
 
 Fill Data Set Form
     Fill Text    ${DATASET_DESCRIPTION_FIELD}    ${FRONTEND_DATA_SET_DESCRIPTION}
-    Check Checkbox    ${OPEN_DATA_ACCESS_TOGGLE}
+    Check Checkbox    ${OPEN_DATA_ACCESS_CHECKBOX}
     Click    ${SAVE_BUTTON}
     Verify Success toast
 
@@ -129,10 +145,11 @@ Assert Data Set Draft Snapshot
     ${body}=    Get Text    css=body
     Should Contain    ${body}    ${FRONTEND_DATA_SET_NAME}
     Should Contain    ${body}    Things
+    Get Attribute    ${OPEN_DATA_ACCESS_CHECKBOX}    aria-checked    ==    true
 
 Open Pipeline Management
-    Click    ${PIPELINE_TAB}
-    Wait For Load State    networkidle
+    Click    ${PIPELINE_LINK}
+    Wait For Elements State    ${PIPELINE_CANVAS}       visible     timeout=15s
 
 Fill Pipeline Form
     Fill Text    label=Name    ${FRONTEND_PIPELINE_NAME}
@@ -144,44 +161,43 @@ Fill Pipeline Form
     Fill Text    label=Thing description    ${FRONTEND_GATEWAY_THING_DESCRIPTION}
 
 Assert Pipeline Snapshot
-    ${body}=    Get Text    css=body
-    Should Contain    ${body}    ${FRONTEND_PIPELINE_NAME}
-    Should Contain    ${body}    ${FRONTEND_DATA_SOURCE_NAME}
-    Should Contain    ${body}    ${FRONTEND_GATEWAY_THING_NAME}
-    Should Contain    ${body}    ${FRONTEND_GATEWAY_THING_DESCRIPTION}
+    Get Text    css=body    contains    ${FRONTEND_PIPELINE_NAME}
+    Get Text    ${PIPELINE_DATASOURCE_NODE}    contains    ${FRONTEND_DATA_SOURCE_NAME}
+    Get Text    ${PIPELINE_MAPPING_NODE}    contains    Mapping
+    Get Text    ${PIPELINE_FROST_NODE}    contains    Frost Server
 
 Verify OWS API Snapshot
     Reload
-    Wait For Load State    networkidle
-    Wait For Elements State    ${OWS_API_CARD}    visible    timeout=30s
-    Click    ${OWS_API_CARD}
-    Wait For Load State    networkidle
+    Wait For Elements State    ${OWS_API_CARD}    visible    timeout=15s
     ${body}=    Get Text    css=body
     Should Contain    ${body}    ${FRONTEND_GEO_API_NAME}
     Should Contain    ${body}    ${FRONTEND_GEO_API_SLUG}
-    Go Back
-    Wait For Load State    networkidle
+    Click    ${OWS_API_CARD}
+    Wait For Elements State     ${API_CONFIG_FORM}      visible     timeout=15s
+    ${body}=    Get Text    css=body
+    Should Contain    ${body}    ${FRONTEND_GEO_API_NAME}
+    Should Contain    ${body}    ${FRONTEND_GEO_API_SLUG}
 
 Verify Geo Layer Snapshot
     Reload
-    Wait For Load State    networkidle
-    Wait For Elements State    ${OWS_API_CARD}    visible    timeout=30s
-    Click    ${OWS_API_CARD}
-    Wait For Load State    networkidle
-    Click    role=tab[name="Layer"]
-    Wait For Load State    networkidle
-    ${body}=    Get Text    css=body
-    Should Contain    ${body}    ${FRONTEND_GEO_LAYER_TITLE}
-    Should Contain    ${body}    ${FRONTEND_GEO_LAYER_NAME}
-    Should Contain    ${body}    ${FRONTEND_GEO_TABLE_NAME}
-    Should Contain    ${body}    ${FRONTEND_GEO_LAYER_ATTRIBUTE}
-    Should Contain    ${body}    ${FRONTEND_GEO_LAYER_GEOMETRY_COLUMN_REF}
-    Should Contain    ${body}    ${FRONTEND_GEO_LAYER_CRS}
+    Wait For Elements State    ${API_CONFIG_FORM}    visible    timeout=30s
+    Click    ${LAYER_TAB}
+    Wait For Elements State    ${LAYER_HEADING}    visible    timeout=30s
+    # Text inputs: read the field value. Selects/combobox: the selection is rendered as visible text.
+    Get Property    ${LAYER_CONFIG_TITLE_FIELD}              value       ==          ${FRONTEND_GEO_LAYER_TITLE}
+    Get Property    ${LAYER_CONFIG_NAME_FIELD}              value       ==          ${FRONTEND_GEO_LAYER_NAME}
+    Get Text        ${LAYER_CONFIG_TABLE_FIELD}                         contains    ${FRONTEND_GEO_TABLE_NAME}
+    Get Text        ${LAYER_CONFIG_ATTRIBUTE_FIELD}                     contains    ${FRONTEND_GEO_LAYER_ATTRIBUTE}
+    Get Text        ${LAYER_CONFIG_GEOMETRY_COLUMN_FIELD}               contains    ${FRONTEND_GEO_LAYER_GEOMETRY_COLUMN_REF}
+    Get Text        ${LAYER_CONFIG_CRS_FIELD}                           contains    ${FRONTEND_GEO_LAYER_CRS}
     Go Back
     Wait For Load State    networkidle
 
 Stage Data Set In UI
-    Click    ${STAGE_BUTTON}
+    Navigate via Breadcrumbs       ${FRONTEND_DATA_SET_NAME}
+    Click    ${EDIT_BUTTON}
+    Click    ${STATUS_BUTTON}
+    Click    ${READY_BUTTON}
     Wait For Load State    networkidle
 
 Wait For Ready Data Set Status In UI
@@ -210,7 +226,7 @@ Assert Available Data Set Snapshot
 Change Data Set Access To Protected In UI
     Click    ${ACCESS_SETTINGS_TAB}
     Wait For Load State    networkidle
-    Uncheck Checkbox    ${OPEN_DATA_ACCESS_TOGGLE}
+    Uncheck Checkbox    ${OPEN_DATA_ACCESS_CHECKBOX}
     Click    ${SAVE_BUTTON}
     Wait For Load State    networkidle
     ${body}=    Get Text    css=body
