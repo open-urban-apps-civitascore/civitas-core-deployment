@@ -47,7 +47,7 @@
           "targetVersionId": "__DSV_ID__",
           "targetName": "__DS_NAME__"
         },
-        "measured": { "width": 160, "height": 66 },
+        "measured": { "width": 280, "height": 66 },
         "selected": false,
         "dragging": false
       },
