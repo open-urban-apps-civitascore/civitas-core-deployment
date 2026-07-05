@@ -59,7 +59,7 @@ validate-renovate-config:
   # actually runs against this repo (renovate-integration).
   # https://gitlab.com/civitas-connect/civitas-core/renovate-integration/-/blob/main/.gitlab-ci.yml?ref_type=heads
   image:
-    name: ghcr.io/renovatebot/renovate:43.220
+    name: ghcr.io/renovatebot/renovate:43.249
     entrypoint: ['']
   needs: []
   rules:
@@ -156,6 +156,8 @@ deploy-production:
 
 .smoke-test-base:
   extends: .deploy-base
+  # Smoke-test deploys are convenience environments and must never block mergeability.
+  allow_failure: true
   variables:
     KUBECONFIG_CONTENT: $KUBECONFIG_CONTENT_VCLUSTER_HOST
     # PIPELINE_SLUG is set by the concrete branch/MR variants below.
@@ -218,6 +220,8 @@ deploy-smoke-test-mr:
   # Imports baseline platform seed data into the vcluster smoke-test deployment.
   # Runs automatically once the (manually-triggered) deploy job completes.
   extends: .deploy-base
+  # Seeding belongs to optional smoke-test flow and should not fail the pipeline.
+  allow_failure: true
   variables:
     KUBECONFIG_CONTENT: $KUBECONFIG_CONTENT_VCLUSTER_HOST
     # PIPELINE_SLUG set by the concrete branch/MR variants below.
@@ -253,6 +257,7 @@ seed-data-smoke-test-mr:
   needs:
     - job: deploy-smoke-test-mr
       artifacts: false
+      optional: true
   variables:
     PIPELINE_SLUG: mr-$CI_MERGE_REQUEST_IID
   rules:

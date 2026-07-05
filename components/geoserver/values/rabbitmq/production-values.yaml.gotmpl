@@ -10,6 +10,12 @@
 
 replicaCount: 1
 
+# Cap Erlang scheduler threads to the CPU limit (2). NEVER leave the chart
+# default: the BEAM VM otherwise starts one scheduler per HOST core regardless
+# of the pod CPU limit. Scale this together with the CPU/memory limits below.
+maxAvailableSchedulers: 2
+onlineSchedulers: 2
+
 resources:
   requests:
     cpu: 500m

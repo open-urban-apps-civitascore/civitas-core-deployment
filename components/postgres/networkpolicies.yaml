@@ -5,12 +5,18 @@ postgres:
   policyTypes:
     - Ingress
   ingress:
-    # CloudNative-PG operator and join jobs - allow from all namespaces
+    # CloudNative-PG operator: allow from the operator's namespace only. The shared operator
+    # runs in a separate namespace (global.operators.namespace) in the multi-instance model,
+    # while in single-instance mode it runs in the instance namespace.
+    # componentNamespace: postgres.operator resolves to postgres.operator.namespace, which
+    # civitas.operatorNamespace sets correctly for both models; the podSelector further
+    # restricts the peer to the cnpg operator pod.
     - from:
         - podSelector:
             matchLabels:
               app.kubernetes.io/name: cloudnative-pg
-          componentNamespace: postgres
+          componentNamespace: postgres.operator
+    # Join jobs run in the cluster's (instance) namespace in both models.
     - from:
         - podSelector:
             matchLabels:

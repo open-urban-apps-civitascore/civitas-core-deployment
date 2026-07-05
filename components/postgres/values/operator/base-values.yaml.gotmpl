@@ -1,5 +1,4 @@
 ---
-{{- $this := .Values.postgres.operator -}}
 {{- $global := .Values.global }}
 
 # values: https://github.com/cloudnative-pg/charts/blob/main/charts/cloudnative-pg/values.yaml
@@ -12,8 +11,10 @@
 # - [ ] Named ports
 # - [ ] Ingress with TLS
 
+# clusterWide=true makes the CNPG operator watch ALL namespaces, so a single shared operator
+# reconciles the Postgres clusters of every instance.
 config:
-  clusterWide: false
+  clusterWide: {{ $global.operators.watchAllNamespaces }}
   # Propagate the Linkerd skip-inbound-ports annotation from the Cluster CR onto the
   # CNPG-managed INSTANCE pods. Their instance-manager health/probe server on :8000
   # serves the instance's own TLS, so the kubelet probe arrives unmeshed (tls=None)
