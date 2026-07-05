@@ -67,7 +67,7 @@ frost:
     #  update:
     #  delete:
     #  admin:
-    realmName: {{ .Values.frost.frost.realmName | default "civitas" }}
+    realmName: {{ .Values.frost.frost.realmName | default $global.instanceSlug }}
     plainTextPassword: 'false'
     db:
       autoUpdate: "true"

@@ -1,12 +1,5 @@
 ---
-# rest->DB (in postgres)
-# wcs->DB (in postgres)
-# wms->DB (in postgres)
-# webui->rabbitmq
-# others might be necessary in the future, but this seems to be the minimum for now.
-
-# name must match lower case alphanumeric characters
-geoserver-rabbitmq:
+geoserver-rabbitmq-allow-linkerd:
   podSelector:
     app.kubernetes.io/instance: geoserver-rabbitmq
   policyTypes:
@@ -16,10 +9,15 @@ geoserver-rabbitmq:
         - podSelector:
             matchLabels:
               app.kubernetes.io/instance: geoserver-geoserver
-              app.kubernetes.io/name: gsc
-              app.kubernetes.io/component: webui
           componentNamespace: geoserver
-geoserver:
+      ports:
+        - port: 4143
+          protocol: TCP
+        - port: 4190
+          protocol: TCP
+        - port: 4191
+          protocol: TCP
+geoserver-allow-linkerd:
   podSelector:
     app.kubernetes.io/component: rest
     app.kubernetes.io/instance: geoserver-geoserver
@@ -32,8 +30,14 @@ geoserver:
             matchLabels:
               app.kubernetes.io/name: apisix
           componentNamespace: apisix
-    - from:
         - podSelector:
             matchLabels:
               app.kubernetes.io/name: config-adapter
           componentNamespace: config-adapters
+      ports:
+        - port: 4143
+          protocol: TCP
+        - port: 4190
+          protocol: TCP
+        - port: 4191
+          protocol: TCP
