@@ -70,7 +70,7 @@ nifiMonitor:
 {{- end }}
 extraEnv:
   - name: NIFI_WEB_HTTPS_HOST
-    value: "nifi-nifi-0.nifi-nifi.{{ $this.namespace }}"
+    value: "nifi-nifi-0.nifi-nifi.{{ $this.namespace }}.svc.cluster.local"
 
 extraInitContainers:
   - name: fetch-postgresql-jdbc
