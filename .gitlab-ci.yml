@@ -391,9 +391,8 @@ deploy-nightly:
     # Block the (expensive) vcluster provisioning until images are confirmed.
     - job: verify-nightly-images
       artifacts: false
-  # PIPELINE_SLUG is provided via the nightly-slug dotenv artifact.
   environment:
-    name: nightly/$PIPELINE_SLUG
+    name: nightly/$CI_PIPELINE_ID
     url: https://portal.$PIPELINE_SLUG.$SMOKE_TEST_BASE_DOMAIN
     on_stop: destroy-nightly
   rules:
@@ -469,7 +468,7 @@ destroy-nightly:
     - job: collect-logs-nightly
       artifacts: false
   environment:
-    name: nightly/$PIPELINE_SLUG
+    name: nightly/$CI_PIPELINE_ID
     action: stop
   rules:
     # Always destroy on the nightly schedule, even if earlier jobs failed.
