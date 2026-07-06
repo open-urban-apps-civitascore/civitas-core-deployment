@@ -133,8 +133,8 @@ env:
     value: "de.civitascore.data.thing.created,de.civitascore.data.thing.updated,de.civitascore.data.thing.deleted,de.civitascore.data.location.created,de.civitascore.data.location.updated,de.civitascore.data.location.deleted,de.civitascore.data.sensor.created,de.civitascore.data.sensor.updated,de.civitascore.data.sensor.deleted,de.civitascore.data.observedproperty.created,de.civitascore.data.observedproperty.updated,de.civitascore.data.observedproperty.deleted,de.civitascore.data.datastream.created,de.civitascore.data.datastream.updated,de.civitascore.data.datastream.deleted,de.civitascore.data.project.created,de.civitascore.data.project.updated,de.civitascore.data.project.deleted"
 
   # NiFi configuration — uses `nifi-direct` client with DAG/password grant.
-  # $nifiUrl must be the same as in component nifi `NIFI_WEB_HTTPS_HOST`
-  {{- $nifiUrl := printf "https://nifi-nifi-0.nifi-nifi.%s.svc.cluster.local:8443" .Values.nifi.nifi.namespace }}
+  # $nifiUrl must be the same as `NIFI_WEB_HTTPS_HOST="${host_name}"` in apache-nifi-helm/templates/configmap.yaml
+  {{- $nifiUrl := printf "https://nifi-nifi-0.nifi-nifi.%s:8443" .Values.nifi.nifi.namespace }}
   {{- $nifiTokenUrl := printf "%s/realms/%s/protocol/openid-connect/token" $keycloakUrl $realmName }}
   - name: NIFI_URL
     value: {{ $nifiUrl | quote }}

@@ -61,17 +61,6 @@ nifiMonitor:
   enabled: {{ $global.metrics.enabled }}
   replicas: 1
 
-# Override NiFi's bind host (default = bare `$HOSTNAME`, not in cert SAN list, causes
-# TLS hostname verification to fail on NiFi's self-referential OIDC calls).
-# This pins the host to pod-0's stable FQDN and is only valid for a single-node
-# deployment; with nodeCount > 1 each pod would (incorrectly) advertise pod-0.
-{{- if gt (int $this.nodeCount) 1 }}
-{{- fail "components/nifi: NIFI_WEB_HTTPS_HOST override only supports nodeCount=1; multi-node requires a per-pod host (e.g. via Downward API)" }}
-{{- end }}
-extraEnv:
-  - name: NIFI_WEB_HTTPS_HOST
-    value: "nifi-nifi-0.nifi-nifi.{{ $this.namespace }}.svc.cluster.local"
-
 extraInitContainers:
   - name: fetch-postgresql-jdbc
     image: curlimages/curl:8.11.1
