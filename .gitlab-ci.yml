@@ -409,7 +409,7 @@ system-tests-nightly:
       artifacts: false
   rules:
     - if: '$IS_NIGHTLY == "true"'
-      when: always
+      when: on_success
   artifacts:
     when: always
     expire_in: 30 days
