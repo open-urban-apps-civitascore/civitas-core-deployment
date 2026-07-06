@@ -235,11 +235,11 @@ Assert Available Data Set Snapshot
     Assert Data Set information
 
 Change Data Set Access To Protected In UI
+    Click    ${EDIT_BUTTON}
     Uncheck Checkbox    ${OPEN_DATA_ACCESS_CHECKBOX}
     Click    ${SAVE_BUTTON}
-    Wait For Load State    networkidle
-    ${body}=    Get Text    css=body
-    Should Contain    ${body}    Protected
+    Wait For Elements State     ${EDIT_BUTTON}      visible     timeout=15s
+    Get Attribute    ${OPEN_DATA_ACCESS_CHECKBOX}    aria-checked    ==    false
 
 Assert Data Set Status
     [Arguments]    ${expected_status}
