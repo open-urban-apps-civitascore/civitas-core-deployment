@@ -15,8 +15,7 @@ opa:
     repository: {{ .Values.images.authz.opa.repository }}
     tag: {{ .Values.images.authz.opa.tag }}
     pullPolicy: Always
-  # FROST provider host guard, exposed to OPA as FROST_API_HOST.
-  frostApiHost: "api.{{ $global.domain }}"
+  apiHost: "api.{{ $global.domain }}"
 
 authz:
   image:

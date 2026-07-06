@@ -53,9 +53,8 @@ spec:
           containerPort: {{ .Values.opa.service.port | default 8181 }}
           protocol: TCP
         env:
-        # FROST provider host guard (frost_server.rego)
-        - name: FROST_API_HOST
-          value: {{ required "opa.frostApiHost is required: set the public API host (e.g. api.<domain>)." .Values.opa.frostApiHost | quote }}
+        - name: API_HOST
+          value: {{ required "opa.apiHost is required: set the public API host (e.g. api.<domain>)." .Values.opa.apiHost | quote }}
         {{- with .Values.opa.env }}
           {{- toYaml . | nindent 10 }}
         {{- end }}
