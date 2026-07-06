@@ -234,16 +234,23 @@ configOverrides:
         userinfo = self.appbuilder.sm.get_oauth_user_info(provider, resp)
         role_keys = userinfo.get('role_keys', [])
         
-        # If AUTH_ROLES_MAPPING is configured, filter to known groups
-        # Otherwise, allow any authenticated user
-        if AUTH_ROLES_MAPPING:
+        # Apply mapped roles when groups are available, but do not block login
+        # if groups are missing or unmapped. In that case Superset will fall
+        # back to AUTH_USER_REGISTRATION_ROLE for new users.
+        if AUTH_ROLES_MAPPING and role_keys:
           known_groups = [g for g in role_keys if g in AUTH_ROLES_MAPPING]
-          if not known_groups:
+          if known_groups:
+            userinfo['role_keys'] = known_groups
+          else:
             log.warning(
-              f'No valid groups for user {userinfo.get("username")}, groups received: {role_keys}'
+              f'No mapped groups for user {userinfo.get("username")}, groups received: {role_keys}. Falling back to default role.'
             )
-            return redirect(self.appbuilder.get_url_for_login)
-          userinfo['role_keys'] = known_groups
+            userinfo.pop('role_keys', None)
+        elif AUTH_ROLES_MAPPING:
+          log.warning(
+            f'No groups claim for user {userinfo.get("username")}. Falling back to default role.'
+          )
+          userinfo.pop('role_keys', None)
         else:
           log.info(f'No AUTH_ROLES_MAPPING configured, allowing authenticated user {userinfo.get("username")}')
         
@@ -352,6 +359,8 @@ supersetWebsockets:
 init:
   createAdmin: false
   initContainers: *initContainers
+  podLabels:
+    app: superset
   <<: *security
 
 postgresql:

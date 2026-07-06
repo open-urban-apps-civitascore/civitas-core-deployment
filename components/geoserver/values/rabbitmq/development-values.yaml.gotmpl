@@ -6,13 +6,19 @@
 # - [x] Minimal storage
 # - [x] 1 Replica -> default
 
+# Cap Erlang scheduler threads to the CPU limit (2). NEVER leave the chart
+# default: the BEAM VM otherwise starts one scheduler per HOST core regardless
+# of the pod CPU limit. Scale this together with the CPU/memory limits below.
+maxAvailableSchedulers: 1
+onlineSchedulers: 1
+
 resources:
   requests:
     cpu: 100m
     memory: 128Mi
   limits:
     cpu: 250m
-    memory: 256Mi
+    memory: 512Mi
 
 persistence:
   size: 1Gi

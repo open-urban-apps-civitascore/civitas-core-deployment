@@ -3,10 +3,10 @@ keycloak:
   db:
   app:
     repository: 'quay.io/keycloak/keycloak'
-    tag: '26.4.0'
+    tag: '26.6.4'
   configCli:
     repository: 'docker.io/adorsys/keycloak-config-cli'
-    tag: '6.4.0-26'
+    tag: '6.5.1-26'
   dbchecker:
     repository: 'docker.io/busybox'
-    tag: '1.32'
+    tag: '1.38'

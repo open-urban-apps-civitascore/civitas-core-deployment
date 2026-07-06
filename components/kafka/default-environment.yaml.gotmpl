@@ -2,7 +2,7 @@
 kafka:
   operator:
     enabled: true
-    namespace: {{ include "civitas.namespace" (dict "global" .Values.global "suffix" "kafka") }}
+    namespace: {{ include "civitas.operatorNamespace" (dict "global" .Values.global "suffix" "kafka" "deployLayer" .Values.deployLayer) }}
   cluster:
     enabled: true
     namespace: {{ include "civitas.namespace" (dict "global" .Values.global "suffix" "kafka") }}

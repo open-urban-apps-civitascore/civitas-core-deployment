@@ -32,7 +32,7 @@ nifi:
 # The Job uses DAG/password grant on the `nifi-direct` public client, authenticating
 # as `nifi-admin@internal.local` (NiFi's Initial Admin Identity).
 oidc:
-  tokenUrl: 'http://keycloak-app-keycloakx-http.{{ .Values.keycloak.app.namespace }}.svc.cluster.local:80{{ .Values.keycloak.app.pathPrefix | trimSuffix "/" }}/realms/{{ $global.instanceSlug }}/protocol/openid-connect/token'
+  tokenUrl: 'http://keycloak-app-keycloakx-http.{{ .Values.keycloak.app.namespace }}.svc.cluster.local.:80{{ .Values.keycloak.app.pathPrefix | trimSuffix "/" }}/realms/{{ $global.instanceSlug }}/protocol/openid-connect/token'
   clientId: nifi-direct
   adminUsername: {{ $nifi.bootstrapAdminIdentity | quote }}
   adminPasswordSecretRef:
