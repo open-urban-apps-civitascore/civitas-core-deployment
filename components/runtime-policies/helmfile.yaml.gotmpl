@@ -12,8 +12,14 @@ bases:
        component is not deployed. */}}
 {{- $strimziOperatorNamespace := ((($root.kafka | default dict).operator | default dict).namespace | default $namespace) }}
 {{- $cnpgOperatorNamespace := ((($root.postgres | default dict).operator | default dict).namespace | default $namespace) }}
+{{- /* These are cluster-scoped ClusterPolicy objects with fixed names, so they must
+       be created ONCE per cluster. Render them in the shared operator layer (and the
+       legacy all-in-one deployment, deployLayer ""), but NOT per instance — otherwise
+       every instance's release would fight over the same cluster-scoped resources. */}}
+{{- $layer := $root.deployLayer | default "" }}
 
 releases:
+  {{- if or (eq $layer "") (eq $layer "operators") }}
   - name: runtime-policies
     namespace: {{ $namespace }}
     chart: ./charts/runtime-policies
@@ -27,6 +33,7 @@ releases:
         linkerd:
           enabled: {{ $linkerdEnabled }}
         failureAction: {{ $failureAction }}
+  {{- end }}
 
 commonLabels:
   component: runtime-policies

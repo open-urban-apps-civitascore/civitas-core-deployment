@@ -2,4 +2,4 @@
 runtime-policies:
   runtime-policies:
     enabled: true
-    namespace: {{ include "civitas.namespace" (dict "global" .Values.global "suffix" "runtime-policies") }}
+    namespace: {{ include "civitas.operatorNamespace" (dict "global" .Values.global "suffix" "runtime-policies" "deployLayer" .Values.deployLayer) }}
