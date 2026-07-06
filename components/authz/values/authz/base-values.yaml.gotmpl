@@ -15,6 +15,7 @@ opa:
     repository: {{ .Values.images.authz.opa.repository }}
     tag: {{ .Values.images.authz.opa.tag }}
     pullPolicy: Always
+  apiHost: "api.{{ $global.domain }}"
 
 authz:
   image:
