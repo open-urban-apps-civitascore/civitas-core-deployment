@@ -41,7 +41,9 @@ global:
     #     - legacy all-in-one deployment                        -> operators run in the
     #       instance namespace (single-instance behaviour)
     #   "<name>": use this exact namespace for the shared operators.
-    # When set, it must differ from every instanceSlug used on the cluster.
+    # With multiple instances on the cluster it must differ from every instanceSlug
+    # (else destroying that instance tears down the shared operators). For a single
+    # instance, setting it to that instanceSlug is fine (operators + instance in one namespace).
     namespace: ''
     # true -> operators watch ALL namespaces (CNPG clusterWide, Strimzi watchAnyNamespace),
     # so a single operator deployment serves every instance on the cluster.
