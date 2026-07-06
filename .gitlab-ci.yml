@@ -372,7 +372,7 @@ nightly-slug:
 # nightly tag, BEFORE we provision a vcluster.
 verify-nightly-images:
   stage: .pre
-  image: registry.gitlab.com/civitas-connect/civitas-core/docker-images/cicd:2.0.0-beta
+  image: *cicd_image
   needs:
     - job: nightly-slug
       artifacts: true
