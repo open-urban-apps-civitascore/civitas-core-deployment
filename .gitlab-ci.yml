@@ -385,6 +385,7 @@ verify-nightly-images:
 
 deploy-nightly:
   extends: .deploy-vcluster-base
+  allow_failure: false
   needs:
     - job: nightly-slug
       artifacts: true
@@ -394,7 +395,6 @@ deploy-nightly:
   environment:
     name: nightly/$CI_PIPELINE_ID
     url: https://portal.$PIPELINE_SLUG.$SMOKE_TEST_BASE_DOMAIN
-    on_stop: destroy-nightly
   rules:
     # Deploy always on the nightly schedule (no manual trigger).
     - if: '$IS_NIGHTLY == "true"'
@@ -467,9 +467,6 @@ destroy-nightly:
     # Tear down only after logs have been collected.
     - job: collect-logs-nightly
       artifacts: false
-  environment:
-    name: nightly/$CI_PIPELINE_ID
-    action: stop
   rules:
     # Always destroy on the nightly schedule, even if earlier jobs failed.
     - if: '$IS_NIGHTLY == "true"'
