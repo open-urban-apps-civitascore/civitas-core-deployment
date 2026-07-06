@@ -87,12 +87,10 @@ env:
     value: "de.civitascore.idm.user.created,de.civitascore.idm.user.updated,de.civitascore.idm.user.deleted,de.civitascore.idm.user.locked,de.civitascore.idm.user.unlocked,de.civitascore.idm.user.password.changed,de.civitascore.idm.user.password.reset,de.civitascore.idm.realm.created,de.civitascore.idm.realm.updated,de.civitascore.idm.realm.deleted,de.civitascore.idm.client.created,de.civitascore.idm.client.updated,de.civitascore.idm.client.deleted,de.civitascore.idm.role.created,de.civitascore.idm.role.updated,de.civitascore.idm.role.deleted,de.civitascore.idm.group.created,de.civitascore.idm.group.updated,de.civitascore.idm.group.deleted"
 
   # APISIX configuration
-  {{- $apisixHost := printf "%s.%s" (default "" .Values.apisix.apisix.subdomain) $global.domain | trimPrefix "." }}
   {{- $apisixPath := .Values.apisix.apisix.pathPrefix }}
-  {{- $apisixDataHost := printf "apisix-gateway.%s.svc.cluster.local:9080" .Values.apisix.apisix.namespace }}
-  {{- $apisixDataPublicUrl := printf "https://api.%s" $global.domain }}
   {{- $apisixNamespace := .Values.apisix.apisix.namespace }}
   {{- $apisixUrl := printf "http://%s.%s.svc.cluster.local:9180%s" "apisix-admin" $apisixNamespace $apisixPath }}
+  {{- $apisixApiHost := printf "api.%s" $global.domain }}
   - name: APISIX_ADMIN_URL
     value: {{ $apisixUrl | quote }}
   - name: APISIX_ADMIN_KEY
@@ -101,15 +99,18 @@ env:
         name: "apisix-admin-credentials"
         key: "admin"
   - name: APISIX_API_HOST
-    value: {{ $apisixDataHost | quote }}
+    value: {{ $apisixApiHost | quote }}
   - name: APISIX_API_PUBLIC_URL
-    value: {{ $apisixDataPublicUrl | quote }}
+    value: {{ printf "https://%s" $apisixApiHost | quote }}
   - name: APISIX_TOPICS
     value: "de.civitascore.api.backend.created,de.civitascore.api.backend.updated,de.civitascore.api.backend.deleted,de.civitascore.api.route.created,de.civitascore.api.route.updated,de.civitascore.api.route.deleted"
   - name: APISIX_PLUGIN_CONFIG_ID
-    value: "portal-backend"
+    value: "api-template"
+    # TODO: `"frost-server"` currently OPA still uses the name frost, although by now this is the genric service name for the payload_api.
+    #   Once this is refactored, we need to change this here as well.
+    #   see: https://gitlab.com/civitas-connect/civitas-core/civitas-core-v2/civitas-core-platform/-/work_items/1853
   - name: APISIX_SERVICE_ID
-    value: "portal-backend"
+    value: "frost-server"
   - name: APISIX_FROST_BASIC_AUTH_USERNAME
     value: "admin"
   - name: APISIX_FROST_BASIC_AUTH_PASSWORD
