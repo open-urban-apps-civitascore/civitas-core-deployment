@@ -392,6 +392,8 @@ deploy-nightly:
     # Block the (expensive) vcluster provisioning until images are confirmed.
     - job: verify-nightly-images
       artifacts: false
+    - job: pre-commit
+      artifacts: false
   environment:
     name: nightly/$CI_PIPELINE_ID
   rules:
