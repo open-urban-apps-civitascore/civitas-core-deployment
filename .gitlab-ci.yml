@@ -395,7 +395,7 @@ deploy-nightly:
     - job: pre-commit
       artifacts: false
   environment:
-    name: nightly/$CI_PIPELINE_ID
+    name: nightly/$CI_COMMIT_REF_SLUG
   rules:
     # Deploy always on the nightly schedule (no manual trigger).
     - if: '$IS_NIGHTLY == "true"'
