@@ -144,6 +144,8 @@ extraInitContainers: |
     volumeMounts:
       - name: workspace
         mountPath: /app
+      - name: tmp
+        mountPath: /tmp
 
 extraVolumeMounts: |
   - name: workspace
