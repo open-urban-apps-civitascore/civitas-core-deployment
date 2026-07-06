@@ -465,9 +465,13 @@ destroy-nightly:
   needs:
     - job: nightly-slug
       artifacts: true
-    # Tear down only after logs have been collected.
+    # Cleanup must always run once a vcluster was provisioned
+   - job: deploy-nightly
+      artifacts: false
+      optional: true
     - job: collect-logs-nightly
       artifacts: false
+      optional: true
   rules:
     # Always destroy on the nightly schedule, even if earlier jobs failed.
     - if: '$IS_NIGHTLY == "true"'
