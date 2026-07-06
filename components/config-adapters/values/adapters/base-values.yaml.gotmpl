@@ -115,6 +115,8 @@ env:
     value: "admin"
   - name: APISIX_FROST_BASIC_AUTH_PASSWORD
     value: "admin"
+  - name: APISIX_GEOSERVER_URL
+    value: "http://geoserver-geoserver-gsc-gateway.{{ .Values.geoserver.geoserver.namespace }}.svc.cluster.local:8080/geoserver-cloud"
 
   # FROST configuration (accessed via linkerd service mesh, basic auth)
   {{- $frostUrl := printf "http://frost-frost-frost-server-http.%s.svc.cluster.local/FROST-Server/v1.1" .Values.frost.frost.namespace }}
