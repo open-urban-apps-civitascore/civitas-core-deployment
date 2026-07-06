@@ -394,7 +394,6 @@ deploy-nightly:
       artifacts: false
   environment:
     name: nightly/$CI_PIPELINE_ID
-    url: https://portal.$PIPELINE_SLUG.$SMOKE_TEST_BASE_DOMAIN
   rules:
     # Deploy always on the nightly schedule (no manual trigger).
     - if: '$IS_NIGHTLY == "true"'
