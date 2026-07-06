@@ -4,7 +4,8 @@ In-cluster Kyverno `ClusterPolicy` resources that enforce/report on things that
 **only exist at runtime** — injected sidecars, namespace annotations applied by
 the `prepare` hook, opt-out markers, dynamically created operator Pods. They are
 shipped as the `runtime-policies` helmfile component (a small Helm chart under
-`charts/runtime-policies/`) and deployed alongside the rest of the platform.
+`charts/runtime-policies/`). Because they are cluster-scoped `ClusterPolicy`
+objects, they are created **once per cluster** — see [Deploy](#deploy).
 
 ## Why separate from `.ci/policies/`
 
@@ -37,9 +38,23 @@ just kyverno   # or: helmfile -f .ci/kyverno/helmfile.yaml.gotmpl sync
 
 ## Deploy
 
-The policies are deployed by the `runtime-policies` helmfile component (listed in
-`components:` in `defaults/environment/global.yaml`). Two global knobs in
-`global.runtimePolicies` control it:
+The policies are cluster-scoped `ClusterPolicy` objects with fixed names, so they
+must exist **once per cluster** — never per instance (two releases would fight
+over the same cluster-scoped resources). The component's helmfile therefore
+renders the release only in the shared layers, gated by `deployLayer`:
+
+- **Multi-instance clusters** — the release ships with the shared cluster
+  operators (`deployment/helmfile-operators.yaml`, `deployLayer: operators`),
+  deployed *once* via `just deploy-operators`. It is deliberately **skipped** in
+  the per-instance layer (`helmfile-instance.yaml.gotmpl`, `deployLayer:
+  instance`), so `just deploy-instance` does not touch it. The release lives in
+  the shared operator namespace (`global.operators.namespace`, default
+  `civitas-operators`).
+- **Legacy all-in-one** (`deployLayer: ""`, `helmfile -f ./deployment/ sync` /
+  `just deploy`) — the release is rendered as before, into the instance
+  namespace.
+
+Two global knobs in `global.runtimePolicies` control it:
 
 ```yaml
 global:
@@ -49,12 +64,7 @@ global:
 ```
 
 The Linkerd policies additionally switch on automatically only when the Linkerd
-service mesh is enabled (`global.serviceMesh.type: linkerd`). It is deployed with
-the rest of the platform:
-
-```sh
-helmfile -f ./deployment/ sync
-```
+service mesh is enabled (`global.serviceMesh.type: linkerd`).
 
 Inspect what is being flagged:
 
