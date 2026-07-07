@@ -159,7 +159,8 @@ trap cleanup_env EXIT
 
 # --- tooling pre-flight -----------------------------------------------------
 need=(helmfile kubectl helm yq)
-$MANAGE_CLUSTER && need+=(k3d)
+# curl only needed for the managed-cluster HTTP ingress smoke (known 80/443 mapping).
+$MANAGE_CLUSTER && need+=(k3d curl)
 # linkerd CLI only required if any selected variant enables the mesh
 if printf '%s\n' "${COMBOS[@]}" | grep -q ',1$'; then need+=(linkerd); fi
 missing=()
@@ -222,6 +223,50 @@ install_linkerd() {
   linkerd install --crds | kubectl apply -f -
   linkerd install --set proxy.nativeSidecar=true | kubectl apply -f -
   linkerd check
+}
+
+# Mesh the nginx ingress controller so ingress->APISIX is mTLS — required
+# whenever the ingress edge enforces mTLS (serviceMesh.allowUnauthenticatedIngress
+# =false), which is the default in BOTH the development and production profiles.
+# dev-deployment/startup.sh installs an UNMESHED ingress-nginx; without this, the APISIX
+# data-plane Server (all-authenticated) rejects the plaintext ingress with a
+# Linkerd 403, breaking every OIDC call routed through it (nifi->keycloak).
+#
+# The ingress-nginx namespace does NOT carry the cluster-authenticated
+# default-inbound-policy (the prepare hook only annotates platform namespaces),
+# so the meshed controller keeps an all-unauthenticated inbound policy and still
+# accepts external plaintext traffic from the metallb LoadBalancer on 80/443.
+# service-upstream is enabled so nginx dials APISIX via its ClusterIP, letting
+# Linkerd attach the destination's mesh identity for mTLS.
+mesh_ingress_controller() {
+  local ns="ingress-nginx"
+  if ! kubectl get ns "$ns" >/dev/null 2>&1; then
+    warn "namespace '$ns' not found — skipping ingress meshing"
+    return 0
+  fi
+  log "Meshing the nginx ingress controller (ingress->APISIX mTLS)"
+  kubectl annotate namespace "$ns" linkerd.io/inject=enabled --overwrite
+  # Route to the backend ClusterIP so Linkerd can resolve the upstream identity.
+  kubectl -n "$ns" patch configmap ingress-nginx-controller --type merge \
+    -p '{"data":{"service-upstream":"true"}}' >/dev/null 2>&1 || true
+  kubectl -n "$ns" rollout restart deploy
+  kubectl -n "$ns" rollout status deploy --timeout=300s
+  # Confirm the running controller pod actually came back meshed. The harness
+  # installs Linkerd with proxy.nativeSidecar=true, so the linkerd-proxy is
+  # injected as a native-sidecar *initContainer* (restartPolicy: Always), NOT a
+  # regular container — scan BOTH lists. Scope to Running pods and scan every
+  # listed pod so a lingering pre-restart pod can't mask the freshly injected one.
+  local containers
+  containers="$(kubectl -n "$ns" get pods \
+    -l app.kubernetes.io/component=controller \
+    --field-selector=status.phase=Running \
+    -o jsonpath='{range .items[*]}{.spec.initContainers[*].name} {.spec.containers[*].name}{"\n"}{end}' 2>/dev/null)"
+  if echo "$containers" | grep -q linkerd-proxy; then
+    ok "ingress controller is meshed (containers: $(echo "$containers" | tr '\n' '|'))"
+  else
+    err "ingress controller is NOT meshed (containers: $(echo "$containers" | tr '\n' '|'))"
+    return 1
+  fi
 }
 
 # Kyverno must be running before the platform deploys, because the
@@ -340,6 +385,31 @@ check_rollouts() { # remaining_seconds ns...
   ok "all rollouts complete"
 }
 
+# End-to-end HTTP check through the ingress edge. Pod-readiness + rollout alone
+# stay green even when the ingress->APISIX hop is broken (e.g. an unmeshed ingress
+# gets rejected by APISIX's all-authenticated Linkerd `Server` with a 502/403), so
+# assert one real request actually traverses ingress -> APISIX -> backend. Target
+# Keycloak's public OIDC discovery via the `idm.<domain>` route (uri '/*', no auth).
+# Only meaningful with our managed k3d cluster, whose loadbalancer maps host
+# 80/443 (k3d-civitas-local.yaml); skipped in --no-cluster mode.
+smoke_ingress_http() { # deadline
+  local deadline="$1" domain host url code
+  domain="$(yq -r '.global.domain // ""' "$ENV_FILE" 2>/dev/null || true)"
+  [[ -z "$domain" || "$domain" == "null" ]] && domain="civitas.test"
+  host="idm.${domain}"
+  url="https://${host}/realms/master/.well-known/openid-configuration"
+  log "Smoke-testing ingress HTTP: ${url}"
+  while :; do
+    code="$(curl -sk -o /dev/null -w '%{http_code}' --max-time 10 \
+      --resolve "${host}:443:${CLUSTER_IP:-127.0.0.1}" "$url" 2>/dev/null || echo 000)"
+    [[ "$code" == "200" ]] && { ok "ingress HTTP 200 (${host} -> APISIX -> keycloak)"; return 0; }
+    if (( SECONDS >= deadline )); then
+      err "ingress HTTP check failed: last status ${code} for ${url}"; return 1
+    fi
+    sleep 10
+  done
+}
+
 # Cluster-wide diagnostics — usable even when the deploy died before any
 # platform namespace was detected. Prints the not-ready pods, describes them
 # (events: ImagePullBackOff, scheduling, probes…) and tails their logs.
@@ -376,7 +446,7 @@ run_variant() { # MNS MI LNK
 
   write_env_overlay "$mns" "$lnk"
   [[ "$PROFILE" == "production" ]] && { install_monitoring_crds || return 1; }
-  [[ "$lnk" == "1" ]] && { install_linkerd || return 1; }
+  [[ "$lnk" == "1" ]] && { install_linkerd || return 1; mesh_ingress_controller || return 1; }
   install_kyverno || return 1
   create_smtp_secret "$mns" || return 1
 
@@ -418,6 +488,16 @@ run_variant() { # MNS MI LNK
   local remaining=$((deadline - SECONDS)); (( remaining < 30 )) && remaining=30
   if ! check_rollouts "$remaining" "${PLATFORM_NS[@]}"; then
     dump_diagnostics; return 1
+  fi
+
+  # Assert the ingress edge actually serves traffic (see smoke_ingress_http).
+  # Only with our managed k3d cluster, whose loadbalancer maps host 80/443.
+  if $MANAGE_CLUSTER; then
+    if ! smoke_ingress_http "$((SECONDS + 120))"; then
+      dump_diagnostics; return 1
+    fi
+  else
+    warn "--no-cluster: skipping ingress HTTP smoke (ingress endpoint unknown)"
   fi
 
   # In no-cluster mode clean up the platform namespaces for the next run.
