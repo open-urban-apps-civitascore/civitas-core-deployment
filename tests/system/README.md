@@ -10,9 +10,49 @@ The setup is intentionally split into two layers:
 
 ## Run locally
 
+Locally you need Java 21, Maven, Python 3 and the Robot
+Browser library:
+
+```bash
+python3 -m pip install robotframework -r tests/system/browser/requirements.txt
+rfbrowser init
+```
+
+Against a local dev stack (defaults target `localhost`):
+
 ```bash
 bash tests/system/run-system-tests.sh
 ```
+
+### Run against a cluster
+
+Point the endpoint env vars at the target cluster. Use public ingress URLs, or
+`kubectl port-forward` the services and target `localhost`.
+
+```bash
+# Example: public ingress of a smoke-test/nightly environment
+export API_BASE_URL=https://api.<slug>.<base-domain>/v1
+export KEYCLOAK_URL=https://idm.<slug>.<base-domain>
+export KEYCLOAK_REALM=civitas
+export PORTAL_FRONTEND_URL=https://portal.<slug>.<base-domain>
+export APISIX_GATEWAY_URL=https://api.<slug>.<base-domain>
+export SYSTEM_TEST_AUTH_USER=admin@civitas.test
+export SYSTEM_TEST_AUTH_PASSWORD=<password>
+
+bash tests/system/run-system-tests.sh
+```
+
+### Runner flags
+
+```bash
+bash tests/system/run-system-tests.sh --help
+```
+
+- `--suite <path>` run a specific suite/dir (repeatable)
+- `--include <tag>` / `--exclude <tag>` filter by tag (repeatable)
+- `--results-dir <dir>` output directory
+- `--remote-port <port>` Java remote-library port
+- `--skip-build` reuse an already-built Java jar
 
 ## Required environment variables
 

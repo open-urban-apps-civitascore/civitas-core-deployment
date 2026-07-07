@@ -255,9 +255,6 @@ deploy-mr:
     FROST_BASE_URL: http://frost-frost-frost-server-http.frost/FROST-Server/v1.1
   script:
     - bash tests/system/run-system-tests.sh
-  before_script:
-    - apk add --no-cache openjdk21-jdk maven
-    - python3 -m pip install --break-system-packages robotframework
 
 seed-branch:
   extends: .seed-base
