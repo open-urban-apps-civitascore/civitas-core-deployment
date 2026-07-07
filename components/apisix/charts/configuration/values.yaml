@@ -69,3 +69,21 @@ extraSecretEnvVars: []
 apisix:
   host: apisix
   port: 9180
+
+# Service mesh integration. When enabled, a Linkerd `Server` marks the APISIX
+# data plane as a public edge reachable by the unmeshed nginx ingress
+# controller, so a mandatory default-inbound-policy on the namespace does not
+# reject ingress traffic.
+serviceMesh:
+  enabled: false
+  # Selects the APISIX data-plane pods.
+  podSelector:
+    app.kubernetes.io/name: apisix
+  # Container port of the APISIX data plane (the public HTTP entry point).
+  dataPlanePort: 9080
+  # Whether the ingress edge may reach the data plane WITHOUT mTLS.
+  #   true  -> Server accessPolicy `all-unauthenticated`: plaintext from an
+  #            unmeshed nginx ingress controller is accepted.
+  #   false -> Server accessPolicy `all-authenticated`: only authenticated mesh
+  #            identities may connect, i.e. the ingress controller must be meshed.
+  allowUnauthenticatedIngress: false
