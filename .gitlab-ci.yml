@@ -45,7 +45,7 @@ setup-version:
 
 pre-commit:
   stage: lint
-  image: registry.gitlab.com/civitas-connect/civitas-core/docker-images/cicd:2.0.0-beta
+  image: *cicd_image
   script:
     - *helm-docker-hub-login
     - cp -r defaults/deployment deployment
@@ -80,7 +80,7 @@ validate-renovate-config:
 
 .deploy-base:
   stage: deploy
-  image: registry.gitlab.com/civitas-connect/civitas-core/docker-images/cicd:2.0.0-beta
+  image: *cicd_image
   before_script:
     # Setup kubeconfig
     - mkdir -p ~/.kube
@@ -244,7 +244,7 @@ deploy-mr:
 
 .system-tests-base:
   stage: system-tests
-  image: registry.gitlab.com/civitas-connect/civitas-core/civitas-core-v2/civitas-core-deployment/cicd:a1aebd6
+  image: *cicd_image
   variables:
     PIPELINE_SLUG: ''
     SMOKE_TEST_DOMAIN: ${PIPELINE_SLUG}.${SMOKE_TEST_BASE_DOMAIN}
@@ -536,7 +536,7 @@ destroy-nightly:
 # Regression tests for kyverno policies themselves (good/bad fixtures per policy).
 test-kyverno-policies:
   stage: lint
-  image: registry.gitlab.com/civitas-connect/civitas-core/docker-images/cicd:2.0.0-beta
+  image: *cicd_image
   needs: []
   rules:
     - when: always
@@ -545,7 +545,7 @@ test-kyverno-policies:
 
 scan-kyverno-policies:
   stage: lint
-  image: registry.gitlab.com/civitas-connect/civitas-core/docker-images/cicd:2.0.0-beta
+  image: *cicd_image
   needs: []
   # Transitional: the production rendering currently has ~49 known findings
   # (rolling-update, resources, ro-rootfs, capabilities, probes, and the
