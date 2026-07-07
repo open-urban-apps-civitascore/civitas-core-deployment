@@ -334,9 +334,15 @@ destroy-mr:
 #   2. verify-nightly-images   -> hard-fails fast if any image:tag is missing,
 #                                 BEFORE any vcluster is provisioned
 #   3. deploy-nightly          -> spins up an ephemeral vcluster + deploys platform
-#   4. system-tests-nightly    -> runs system tests against the vcluster (NO seed)
-#   5. collect-logs-nightly    -> dumps in-cluster pod logs/events as artifacts
-#   6. destroy-nightly         -> tears the vcluster down (runs even on failure)
+#   4. create-demo-db-nightly  -> creates the demo db + user (known password from
+#                                 DEMO_DB_PASSWORD) before tests run
+#   5. set-initial-user-password-nightly -> sets the initial user's password
+#                                 (reusing the seeding logic) and exports the
+#                                 credentials as a dotenv for the system tests
+#   6. system-tests-nightly    -> runs system tests against the vcluster (NO seed)
+#   7. collect-logs-nightly    -> dumps in-cluster pod logs/events as artifacts
+#   8. destroy-nightly         -> tears the vcluster down (runs even on failure)
+
 #
 # Domain schema: https://portal.nightly-20260629.<SMOKE_TEST_BASE_DOMAIN>
 #
@@ -398,14 +404,67 @@ deploy-nightly:
     - if: '$IS_NIGHTLY == "true"'
       when: always
 
-system-tests-nightly:
-  extends: .system-tests-base
-  # No seed step on purpose — run tests directly against the fresh deployment.
+# Create the demo database + user after deploy, before system tests run.
+create-demo-db-nightly:
+  extends: .deploy-base
+  stage: deploy
   needs:
     - job: nightly-slug
       artifacts: true
     - job: deploy-nightly
       artifacts: false
+  variables:
+    KUBECONFIG_CONTENT: $KUBECONFIG_CONTENT_VCLUSTER_HOST
+    SMOKE_TEST_DOMAIN: ${PIPELINE_SLUG}.${SMOKE_TEST_BASE_DOMAIN}
+    DEMO_DB_PASSWORD: $DEMO_DB_PASSWORD
+  rules:
+    - if: '$IS_NIGHTLY == "true"'
+      when: on_success
+  script:
+    # Point kubectl/helm at the vcluster the platform was deployed into.
+    - ./scripts/ci/fetch-vcluster-kubeconfig.sh
+    - just create-demo-db smoke-test
+
+# Set the initial user's password after a fresh deploy so the system tests can
+# log in.
+set-initial-user-password-nightly:
+  extends: .deploy-base
+  stage: deploy
+  needs:
+    - job: nightly-slug
+      artifacts: true
+    - job: deploy-nightly
+      artifacts: false
+  variables:
+    KUBECONFIG_CONTENT: $KUBECONFIG_CONTENT_VCLUSTER_HOST
+    SMOKE_TEST_DOMAIN: ${PIPELINE_SLUG}.${SMOKE_TEST_BASE_DOMAIN}
+    NAMESPACE: civitas
+    KEYCLOAK_REALM: civitas
+    KEYCLOAK_URL: https://idm.${PIPELINE_SLUG}.${SMOKE_TEST_BASE_DOMAIN}
+    AUTH_DOTENV_FILE: system-test-auth.env
+  rules:
+    - if: '$IS_NIGHTLY == "true"'
+      when: on_success
+  script:
+    - ./scripts/ci/fetch-vcluster-kubeconfig.sh
+    - export AUTH_USER="${GITLAB_USER_EMAIL:-admin@civitas.test}"
+    - ./scripts/ci/set-initial-user-password.sh
+  artifacts:
+    reports:
+      dotenv: system-test-auth.env
+
+system-tests-nightly:
+  extends: .system-tests-base
+  needs:
+    - job: nightly-slug
+      artifacts: true
+    - job: deploy-nightly
+      artifacts: false
+    - job: create-demo-db-nightly
+      artifacts: false
+    # Consumes SYSTEM_TEST_AUTH_USER / SYSTEM_TEST_AUTH_PASSWORD dotenv.
+    - job: set-initial-user-password-nightly
+      artifacts: true
   rules:
     - if: '$IS_NIGHTLY == "true"'
       when: on_success

@@ -555,8 +555,8 @@ create-demo-db profile='local':
 
     echo "Using primary Postgres pod: $POD"
 
-    # Fixed password for demo user
-    DB_PASSWORD="secret"
+    # Demo user password (override via DEMO_DB_PASSWORD, e.g. in CI)
+    DB_PASSWORD="${DEMO_DB_PASSWORD:-secret}"
 
     # Create user and database
     echo "Creating database user 'demo'..."
