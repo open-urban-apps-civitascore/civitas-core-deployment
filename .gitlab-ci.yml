@@ -352,7 +352,7 @@ nightly-slug:
   image: alpine:latest
   variables:
     # Branch whose nightly images we deploy. Override via CI/CD variable.
-    NIGHTLY_IMAGE_BRANCH: '1687-nightly-builds'
+    NIGHTLY_IMAGE_BRANCH: 'develop'
   rules:
     - if: '$IS_NIGHTLY == "true"'
   script:
