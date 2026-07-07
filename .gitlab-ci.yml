@@ -423,7 +423,7 @@ create-demo-db-nightly:
   script:
     # Point kubectl/helm at the vcluster the platform was deployed into.
     - ./scripts/ci/fetch-vcluster-kubeconfig.sh
-    - just create-demo-db smoke-test
+    - ./scripts/ci/create-demo-db.sh smoke-test
 
 # Set the initial user's password after a fresh deploy so the system tests can
 # log in.
