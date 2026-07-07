@@ -43,6 +43,13 @@ system-test environment='local' cicd-image='registry.gitlab.com/civitas-connect/
 		exit 1
 	fi
 
+	# portal-frontend is a confidential client; read its generated secret from the cluster.
+	CLIENT_SECRET=$(kubectl -n "${REALM}" get secret keycloak-client-portal-frontend -o jsonpath='{.data.client-secret}' | base64 -d)
+	if [ -z "${CLIENT_SECRET}" ]; then
+		echo "ERROR: could not read keycloak-client-portal-frontend secret from namespace ${REALM}." >&2
+		exit 1
+	fi
+
 	echo "Running system tests against environment '{{environment}}' (domain: ${DOMAIN})"
 
 	docker run --rm \
@@ -51,6 +58,7 @@ system-test environment='local' cicd-image='registry.gitlab.com/civitas-connect/
 		-e KEYCLOAK_URL="https://idm.${DOMAIN}" \
 		-e KEYCLOAK_REALM="${REALM}" \
 		-e KEYCLOAK_CLIENT_ID="portal-frontend" \
+		-e KEYCLOAK_CLIENT_SECRET="${CLIENT_SECRET}" \
 		-e APISIX_GATEWAY_URL="https://api.${DOMAIN}" \
 		-e PORTAL_FRONTEND_URL="https://portal.${DOMAIN}" \
 		-e FROST_BASE_URL="http://frost-frost-frost-server-http.frost/FROST-Server/v1.1" \
