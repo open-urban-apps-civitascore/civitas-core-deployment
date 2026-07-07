@@ -64,6 +64,9 @@ if [[ ${#ROBOT_SUITES[@]} -eq 0 ]]; then
 fi
 
 REMOTE_URL="${SYSTEM_TEST_REMOTE_URL:-http://127.0.0.1:${REMOTE_PORT}}"
+# The remote library is mounted at "/". Without a trailing slash Python's
+# xmlrpc.client defaults the path to /RPC2, which 404s (server + probe hang).
+REMOTE_URL="${REMOTE_URL%/}/"
 SERVER_LOG="${RESULT_DIR}/remote-server.log"
 
 mkdir -p "${RESULT_DIR}"
