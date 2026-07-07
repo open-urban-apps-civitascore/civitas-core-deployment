@@ -40,11 +40,9 @@ spec:
               value: {{ .Values.nifi.insecureSkipVerify | quote }}
             - name: OIDC_TOKEN_URL
               value: {{ required "oidc.tokenUrl is required" .Values.oidc.tokenUrl | quote }}
+            # NiFi's Initial Admin Identity — also this client's Keycloak client id.
             - name: OIDC_CLIENT_ID
               value: {{ .Values.oidc.clientId | quote }}
-            # NiFi's Initial Admin Identity.
-            - name: NIFI_ADMIN_USERNAME
-              value: {{ required "oidc.adminUsername is required" .Values.oidc.adminUsername | quote }}
             - name: HUMAN_ADMIN_IDENTITY
               value: {{ .Values.identities.humanAdmin | quote }}
             - name: CONFIG_ADAPTER_IDENTITY
@@ -66,12 +64,12 @@ spec:
           configMap:
             name: {{ include "nifi-bootstrap.fullname" . }}
             defaultMode: 0o555
-        # Mount the admin password as a file so it never appears in the pod's `env`.
+        # Mount the client secret as a file so it never appears in the pod's `env`.
         - name: oidc-secret
           secret:
-            secretName: {{ .Values.oidc.adminPasswordSecretRef.name }}
+            secretName: {{ .Values.oidc.clientSecretRef.name }}
             items:
-              - key: {{ .Values.oidc.adminPasswordSecretRef.key }}
-                path: admin-password
+              - key: {{ .Values.oidc.clientSecretRef.key }}
+                path: client-secret
         - name: tmp
           emptyDir: {}

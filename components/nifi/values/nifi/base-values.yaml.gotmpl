@@ -14,7 +14,10 @@ global:
       name: keycloak-client-nifi
       key: client-secret
     claim_identifying_user: preferred_username
-    # Realm user the `nifi-bootstrap` Job authenticates as via DAG/password grant.
+    # NiFi's bearer-token/REST path resolves identity from `sub`, not from
+    # `claim_identifying_user` above (that only governs the browser code-flow).
+    # The `nifi-bootstrap` client hardcodes its `sub` to this value via a protocol
+    # mapper — see components/nifi/keycloak-clients.yaml.
     initial_admin_identity: {{ $this.bootstrapAdminIdentity | quote }}
 
     {{- if eq $global.ingress.clusterIssuer "selfsigned-ca" }}

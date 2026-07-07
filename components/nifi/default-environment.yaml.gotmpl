@@ -5,7 +5,7 @@ nifi:
     namespace: {{ include "civitas.namespace" (dict "global" .Values.global "suffix" "nifi") }}
     nodeCount: 1
     initialAdminEmail: {{ .Values.global.initialUserEmail }}
-    bootstrapAdminIdentity: nifi-admin@internal.local
+    bootstrapAdminIdentity: nifi-bootstrap
     postgresqlJdbcVersion: "42.7.4"
 
   bootstrap:

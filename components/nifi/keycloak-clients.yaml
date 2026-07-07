@@ -23,69 +23,20 @@ nifi:
       - roles
     optionalClientScopes: []
 
-# DAG/password-grant client used by `nifi-admin@internal.local` and
-# `nifi-config-adapter@internal.local`. Public client (no secret — credential
-# is the user's password from a Kubernetes Secret).
+# Every in-cluster machine identity (bootstrap Job, config-adapter) authenticates
+# via the OAuth 2.0 client-credentials grant on its own dedicated confidential
+# client below — no Resource Owner Password Credentials / realm users involved.
 #
-# The `protocolMappers` below override the JWT `sub` claim with the user's
-# email because NiFi 2.x's bearer-token path keys off `sub` (its
-# `oidc.claim.identifying.user` setting only applies to the browser code-flow).
-# Without this, NiFi sees a Keycloak UUID principal and rejects every call
-# with 403 "No applicable policies could be found".
-nifi-direct:
-  name: NiFi Direct Access
-  description: >-
-    CIVITAS NiFi direct-access client used by in-cluster technical identities
-    (bootstrap Job) to obtain a Keycloak token via the Resource Owner Password
-    Credentials grant.
-  subdomain: nifi-direct
-  redirectPath: /
-  rawValues:
-    publicClient: true
-    bearerOnly: false
-    standardFlowEnabled: false
-    implicitFlowEnabled: false
-    directAccessGrantsEnabled: true
-    serviceAccountsEnabled: false
-    authorizationServicesEnabled: false
-    redirectUris: []
-    webOrigins: []
-    defaultClientScopes:
-      - basic
-      - email
-      - profile
-      - roles
-    optionalClientScopes: []
-    attributes:
-      use.refresh.tokens: 'false'
-    protocolMappers:
-      # Rewrite JWT `sub` = user's email (see header comment above).
-      - name: nifi-sub-override
-        protocol: openid-connect
-        protocolMapper: oidc-usermodel-property-mapper
-        consentRequired: false
-        config:
-          user.attribute: email
-          claim.name: sub
-          jsonType.label: String
-          access.token.claim: 'true'
-          id.token.claim: 'false'
-          userinfo.token.claim: 'false'
-          introspection.token.claim: 'true'
+# NiFi's bearer-token/REST path resolves identity from the JWT's `sub` claim
+# regardless of `claim_identifying_user` (that setting only governs the browser
+# code-flow session) — confirmed empirically: an unmapped client-credentials
+# token resolves to the service account's raw Keycloak UUID. Each client below
+# therefore carries an `oidc-hardcoded-claim-mapper` forcing `sub` to a stable,
+# human-chosen string, which `initial_admin_identity` /
+# `identities.configAdapter` are set to match. Safe here specifically because
+# each client has exactly one consumer and no interactive login path to spoof.
 
-# Confidential, machine-to-machine client for config-adapter's NiFi REST calls.
-# Dedicated to the client-credentials grant only (no ROPC/browser flows) so it
-# stays isolated from `nifi-direct`/the bootstrap Job's public-client password
-# grant — making `nifi-direct` confidential would break that Job's request,
-# which authenticates without a client secret.
-#
-# A client-credentials token's `sub` is otherwise the service account's
-# Keycloak UUID, which the nifi-bootstrap Job never grants NiFi policies to.
-# The hardcoded-claim mapper below forces `sub` to the same
-# `nifi-config-adapter@internal.local` identity the Job's IDENTITIES already
-# provisions RBAC policies for (see components/nifi/values/bootstrap), so
-# reusing that string is required, not incidental. Safe only because this
-# client has exactly one consumer and no interactive login path to spoof.
+# Machine-to-machine client for config-adapter's NiFi REST calls.
 nifi-config-adapter:
   name: NiFi Config Adapter
   description: >-
@@ -107,7 +58,6 @@ nifi-config-adapter:
     webOrigins: []
     defaultClientScopes:
       - basic
-      - email
       - profile
       - roles
     optionalClientScopes: []
@@ -118,7 +68,48 @@ nifi-config-adapter:
         consentRequired: false
         config:
           claim.name: sub
-          claim.value: nifi-config-adapter@internal.local
+          claim.value: nifi-config-adapter
+          jsonType.label: String
+          access.token.claim: 'true'
+          id.token.claim: 'false'
+          userinfo.token.claim: 'false'
+          introspection.token.claim: 'true'
+
+# Machine-to-machine client the `nifi-bootstrap` Job authenticates as to
+# provision NiFi's initial access policies. Its hardcoded `sub` is also NiFi's
+# `initial_admin_identity` (see `nifi.bootstrapAdminIdentity` /
+# `components/nifi/values/nifi/base-values.yaml.gotmpl`) — NiFi grants that
+# identity global admin policies on first boot.
+nifi-bootstrap:
+  name: NiFi Bootstrap
+  description: >-
+    CIVITAS NiFi client used by the nifi-bootstrap Job to obtain a Keycloak
+    token via the OAuth 2.0 client-credentials grant.
+  subdomain: nifi-bootstrap
+  redirectPath: /
+  rawValues:
+    publicClient: false
+    bearerOnly: false
+    standardFlowEnabled: false
+    implicitFlowEnabled: false
+    directAccessGrantsEnabled: false
+    serviceAccountsEnabled: true
+    authorizationServicesEnabled: false
+    redirectUris: []
+    webOrigins: []
+    defaultClientScopes:
+      - basic
+      - profile
+      - roles
+    optionalClientScopes: []
+    protocolMappers:
+      - name: nifi-sub-override
+        protocol: openid-connect
+        protocolMapper: oidc-hardcoded-claim-mapper
+        consentRequired: false
+        config:
+          claim.name: sub
+          claim.value: nifi-bootstrap
           jsonType.label: String
           access.token.claim: 'true'
           id.token.claim: 'false'

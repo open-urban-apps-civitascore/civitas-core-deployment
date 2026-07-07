@@ -133,9 +133,7 @@ env:
     value: "de.civitascore.data.thing.created,de.civitascore.data.thing.updated,de.civitascore.data.thing.deleted,de.civitascore.data.location.created,de.civitascore.data.location.updated,de.civitascore.data.location.deleted,de.civitascore.data.sensor.created,de.civitascore.data.sensor.updated,de.civitascore.data.sensor.deleted,de.civitascore.data.observedproperty.created,de.civitascore.data.observedproperty.updated,de.civitascore.data.observedproperty.deleted,de.civitascore.data.datastream.created,de.civitascore.data.datastream.updated,de.civitascore.data.datastream.deleted,de.civitascore.data.project.created,de.civitascore.data.project.updated,de.civitascore.data.project.deleted"
 
   # NiFi configuration — uses the dedicated `nifi-config-adapter` confidential
-  # client (OAuth 2.0 client-credentials grant), separate from `nifi-direct`
-  # (the bootstrap Job's public ROPC client) so neither consumer's auth model
-  # constrains the other.
+  # client (OAuth 2.0 client-credentials grant); see components/nifi/keycloak-clients.yaml.
   # $nifiUrl must be the same as `NIFI_WEB_HTTPS_HOST="${host_name}"` in apache-nifi-helm/templates/configmap.yaml
   {{- $nifiUrl := printf "https://nifi-nifi-0.nifi-nifi.%s:8443" .Values.nifi.nifi.namespace }}
   {{- $nifiTokenUrl := printf "%s/realms/%s/protocol/openid-connect/token" $keycloakUrl $realmName }}

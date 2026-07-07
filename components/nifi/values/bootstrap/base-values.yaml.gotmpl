@@ -29,22 +29,23 @@ nifi:
   insecureSkipVerify: true
 
 # Keycloak token endpoint (in-cluster, plain HTTP — TLS terminated by APISIX externally).
-# The Job uses DAG/password grant on the `nifi-direct` public client, authenticating
-# as `nifi-admin@internal.local` (NiFi's Initial Admin Identity).
+# The Job authenticates via the OAuth 2.0 client-credentials grant on the confidential
+# `nifi-bootstrap` client (see components/nifi/keycloak-clients.yaml), whose protocol
+# mapper hardcodes its `sub` to `nifi-bootstrap` — the value NiFi resolves as identity
+# and which must equal `nifi.bootstrapAdminIdentity` below.
 oidc:
   tokenUrl: 'http://keycloak-app-keycloakx-http.{{ .Values.keycloak.app.namespace }}.svc.cluster.local.:80{{ .Values.keycloak.app.pathPrefix | trimSuffix "/" }}/realms/{{ $global.instanceSlug }}/protocol/openid-connect/token'
-  clientId: nifi-direct
-  adminUsername: {{ $nifi.bootstrapAdminIdentity | quote }}
-  adminPasswordSecretRef:
-
-    name: nifi-admin-keycloak-user
-    key: password
+  clientId: nifi-bootstrap
+  clientSecretRef:
+    name: keycloak-client-nifi-bootstrap
+    key: client-secret
 
 identities:
   # Keycloak realm has registrationEmailAsUsername=true, so preferred_username == email.
   humanAdmin: {{ $nifi.initialAdminEmail | quote }}
-  # Realm user the config-adapter uses to talk to NiFi (DAG password grant).
-  configAdapter: nifi-config-adapter@internal.local
+  # `nifi-config-adapter`'s hardcoded `sub` (client-credentials grant) — see
+  # components/nifi/keycloak-clients.yaml.
+  configAdapter: nifi-config-adapter
 
 # Emit Linkerd `Server` CRDs marking NiFi's TLS ports opaque when the namespace
 # is meshed — see `charts/nifi-bootstrap/templates/linkerd-server.yaml`.
