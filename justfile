@@ -540,57 +540,11 @@ create-device-management-db:
     echo "  Password stored in secret: devicemanagement-db-credentials"
 
 # Create demo database and import demo data
+# Delegates to scripts/ci/create-demo-db.sh so the logic has a single source of
+# truth and the CI job can run it without needing `just` in the CICD image.
 [group('helpers')]
 create-demo-db profile='local':
-    #!/usr/bin/env bash
-    set -euo pipefail
-
-    # Read configuration from global.yaml
-    NS=$(helmfile template -f deployment/helmfile.yaml -e {{profile}} --selector component=postgres --skip-deps -q | yq 'select(.kind == "Deployment") | .metadata.namespace')
-
-    echo "Creating demo database in namespace: $NS"
-
-    # Get postgres superuser username
-    POSTGRES_USER=$(kubectl get secret -n "$NS" postgres-cluster-superuser -o jsonpath='{.data.username}' | base64 -d)
-
-    # Use the primary pod (writes are not allowed on read-only replicas)
-    POD=$(kubectl get pods -n "$NS" -l cnpg.io/cluster=postgres-cluster,cnpg.io/instanceRole=primary -o jsonpath='{.items[0].metadata.name}')
-
-    if [ -z "$POD" ]; then
-        echo "ERROR: Primary Postgres pod not found in namespace $NS"
-        exit 1
-    fi
-
-    echo "Using primary Postgres pod: $POD"
-
-    # Demo user password (override via DEMO_DB_PASSWORD, e.g. in CI)
-    DB_PASSWORD="${DEMO_DB_PASSWORD:-secret}"
-
-    # Create user and database
-    echo "Creating database user 'demo'..."
-    kubectl exec -n "$NS" "$POD" -c postgres -- psql -U "$POSTGRES_USER" -c "CREATE USER demo WITH PASSWORD '$DB_PASSWORD';" 2>/dev/null || echo "User 'demo' may already exist"
-
-    echo "Creating database 'demo' with owner 'demo'..."
-    kubectl exec -n "$NS" "$POD" -c postgres -- psql -U "$POSTGRES_USER" -c "CREATE DATABASE demo WITH OWNER demo;" 2>/dev/null || echo "Database 'demo' may already exist"
-
-    # Grant necessary permissions
-    echo "Granting permissions..."
-    kubectl exec -n "$NS" "$POD" -c postgres -- psql -U "$POSTGRES_USER" -d demo -c "GRANT ALL ON SCHEMA public TO demo;"
-
-    # Import SQL file
-    echo "Importing tests/03-demo.sql..."
-    cat tests/03-demo.sql | kubectl exec -i -n "$NS" "$POD" -c postgres -- psql -U "$POSTGRES_USER" -d demo
-
-    # Change ownership of the demo table to the demo user
-    echo "Updating ownership..."
-    kubectl exec -n "$NS" "$POD" -c postgres -- psql -U "$POSTGRES_USER" -d demo -c "ALTER TABLE public.demo_sensor_readings OWNER TO demo;"
-
-    echo "✓ Database 'demo' created and SQL imported successfully!"
-    echo "  Database: demo"
-    echo "  User: demo"
-    echo "  Password: $DB_PASSWORD"
-    # In-cluster connection URL (e.g. how the nifi pod reaches this db)
-    echo "  In-cluster URL: postgresql://demo:$DB_PASSWORD@postgres-cluster-rw.$NS.svc.cluster.local:5432/demo"
+    ./scripts/ci/create-demo-db.sh {{profile}}
 
 # Create test user in Keycloak
 
