@@ -1,16 +1,16 @@
 {{- /*
   Linkerd `Server` scoping the APISIX data-plane edge.
 
-  End-user traffic enters via the cluster's nginx ingress controller. With a
+  End-user traffic enters via the cluster's ingress controller. With a
   mandatory `config.linkerd.io/default-inbound-policy` on the application
   namespace, inbound traffic on the data-plane port would be rejected unless it
   carries a valid mesh identity. This `Server` scopes that public port; its
   `accessPolicy` is driven by `serviceMesh.allowUnauthenticatedIngress`:
 
-    true  -> `all-unauthenticated`: plaintext from an UNMESHED nginx ingress
+    true  -> `all-unauthenticated`: plaintext from an UNMESHED ingress
              controller is accepted (the ingress edge is authorized explicitly).
     false -> `all-authenticated`: only authenticated mesh identities may connect,
-             i.e. the nginx ingress controller must itself be meshed (mTLS).
+             i.e. the ingress controller must itself be meshed (mTLS).
 
   All other APISIX ports (admin 9180, control 9090, ...) remain governed by the
   namespace default policy, i.e. mandatory mTLS.
