@@ -30,7 +30,8 @@ system-test environment='local' cicd-image='registry.gitlab.com/civitas-connect/
 	GLOBAL="deployment/environments/{{environment}}/global.yaml.gotmpl"
 	DOMAIN=$(yq -r '.global.domain' "${GLOBAL}")
 	REALM=$(yq -r '.global.instanceSlug // "civitas"' "${GLOBAL}")
-	USER=$(yq -r '.global.initialUserEmail // "admin@civitas.test"' "${GLOBAL}")
+	# SYSTEM_TEST_AUTH_USER (from .env) takes precedence; fall back to initialUserEmail from global.yaml.
+	USER="${SYSTEM_TEST_AUTH_USER:-$(yq -r '.global.initialUserEmail // "admin@civitas.test"' "${GLOBAL}")}"
 
 	if [ -z "${DOMAIN}" ] || [ "${DOMAIN}" = "null" ]; then
 		echo "ERROR: could not read .global.domain from ${GLOBAL}" >&2
