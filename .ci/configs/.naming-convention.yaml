@@ -24,6 +24,8 @@ duplicate-files:
 exclude-patterns:
   - '__pycache__'
   - '\.venv'
+  # Maven build output (generated artifacts)
+  - 'tests/system/java/target/'
   - 'uv\.lock'
   - "\\.git/"
   - "\\.idea/"
