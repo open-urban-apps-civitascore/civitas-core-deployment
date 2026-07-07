@@ -89,16 +89,6 @@ extraEnv:
       secretKeyRef:
         name: config-adapter-keycloak-user
         key: password
-  - name: NIFI_ADMIN_PASSWORD
-    valueFrom:
-      secretKeyRef:
-        name: nifi-admin-keycloak-user
-        key: password
-  - name: NIFI_CONFIG_ADAPTER_PASSWORD
-    valueFrom:
-      secretKeyRef:
-        name: nifi-config-adapter-keycloak-user
-        key: password
 
 config:
   {{ $global.instanceSlug }}:
@@ -395,32 +385,9 @@ config:
           clientRoles:
             realm-management:
               - realm-admin
-        # nifi-admin — NiFi "Initial Admin Identity"; used by the nifi-bootstrap
-        # Job to provision NiFi access policies via the REST API.
-        - username: nifi-admin@internal.local
-          enabled: true
-          emailVerified: true
-          email: nifi-admin@internal.local
-          firstName: NiFi
-          lastName: Admin
-          requiredActions: []
-          credentials:
-            - type: password
-              value: "$(NIFI_ADMIN_PASSWORD)"
-              temporary: false
-        # nifi-config-adapter — identity used by the config-adapter when calling
-        # the NiFi REST API.
-        - username: nifi-config-adapter@internal.local
-          enabled: true
-          emailVerified: true
-          email: nifi-config-adapter@internal.local
-          firstName: NiFi
-          lastName: Config Adapter
-          requiredActions: []
-          credentials:
-            - type: password
-              value: "$(NIFI_CONFIG_ADAPTER_PASSWORD)"
-              temporary: false
+        # NiFi's machine identities (bootstrap Job, config-adapter) authenticate as
+        # Keycloak service accounts (client-credentials grant) instead of realm users
+        # — see components/nifi/keycloak-clients.yaml.
       clients:
         {{- range $clientId, $client := .Values.keycloakClients }}
         {{- $subdomain := $client.subdomain | default $clientId }}

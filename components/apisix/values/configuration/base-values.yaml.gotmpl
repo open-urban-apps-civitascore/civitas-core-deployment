@@ -33,6 +33,10 @@ extraSecretEnvVars:
   - name: APISIX_VALIDATOR_CLIENT_SECRET
     secretName: keycloak-client-apisix-validator
     secretKey: client-secret
+  - name: OIDC_SESSION_SECRET
+    secretName: apisix-oidc-session
+    secretKey: secret
+
 
 domain: {{ $global.domain }}
 realm: {{ $global.instanceSlug }}
