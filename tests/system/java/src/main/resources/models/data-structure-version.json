@@ -16,11 +16,7 @@
         "crs": "EPSG:4326"
       }
     },
-    "required": [
-      "id",
-      "name",
-      "geom"
-    ]
+    "required": ["id", "name", "geom"]
   },
   "styles": {
     "id": "f93a153b-dc3e-4e06-b1cc-d4e58fb01ce2",

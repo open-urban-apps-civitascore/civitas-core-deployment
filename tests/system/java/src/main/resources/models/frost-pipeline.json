@@ -15,14 +15,26 @@
         "id": "2f6b3fcd-8965-4264-b79b-76bd80bb92e6",
         "type": "start",
         "position": { "x": 100, "y": 140 },
-        "data": { "nodeType": "start", "label": "Start", "configured": true, "description": "Entry point of the pipeline. Execution begins here." },
+        "data": {
+          "nodeType": "start",
+          "label": "Start",
+          "configured": true,
+          "description": "Entry point of the pipeline. Execution begins here."
+        },
         "measured": { "width": 32, "height": 32 }
       },
       {
         "id": "1f18a7d8-3b98-48b1-868e-a42bf480b298",
         "type": "dataSource",
         "position": { "x": 140, "y": 220 },
-        "data": { "label": "DataSource", "configured": true, "entityType": "datasource", "entityId": "__DATA_SOURCE_ID__", "entityName": "__DATA_SOURCE_NAME__", "entityMetadata": { "connector": "MQTT" } },
+        "data": {
+          "label": "DataSource",
+          "configured": true,
+          "entityType": "datasource",
+          "entityId": "__DATA_SOURCE_ID__",
+          "entityName": "__DATA_SOURCE_NAME__",
+          "entityMetadata": { "connector": "MQTT" }
+        },
         "measured": { "width": 207, "height": 66 },
         "selected": false
       },
@@ -55,7 +67,15 @@
         "id": "2fe50b90-c0c2-4cdd-a56a-caf59dbdc2a6",
         "type": "frost",
         "position": { "x": 160, "y": 420 },
-        "data": { "label": "Frost Server", "configured": true, "entityType": "frost", "serverName": "Frost Server", "serverUrl": "", "version": "1.1", "entityId": "__FROST_SINK_ID__" },
+        "data": {
+          "label": "Frost Server",
+          "configured": true,
+          "entityType": "frost",
+          "serverName": "Frost Server",
+          "serverUrl": "",
+          "version": "1.1",
+          "entityId": "__FROST_SINK_ID__"
+        },
         "measured": { "width": 160, "height": 56 },
         "selected": true,
         "dragging": false
@@ -64,15 +84,44 @@
         "id": "3a31f6cc-d7eb-4df1-a86b-399de41e3c98",
         "type": "end",
         "position": { "x": 200, "y": 520 },
-        "data": { "nodeType": "end", "label": "End", "configured": true, "description": "Exit point of the pipeline. Execution completes here." },
+        "data": {
+          "nodeType": "end",
+          "label": "End",
+          "configured": true,
+          "description": "Exit point of the pipeline. Execution completes here."
+        },
         "measured": { "width": 32, "height": 32 }
       }
     ],
     "edges": [
-      { "id": "11c1b0bd-f800-4c7f-98e2-3617cb4aaa43", "source": "2f6b3fcd-8965-4264-b79b-76bd80bb92e6", "target": "1f18a7d8-3b98-48b1-868e-a42bf480b298", "type": "smoothstep", "data": { "label": "" } },
-      { "id": "967948d2-c2fb-47ec-a2c7-b0162e9e2801", "source": "1f18a7d8-3b98-48b1-868e-a42bf480b298", "target": "0bc9fd28-151c-41af-b813-3797909fe9f9", "type": "smoothstep", "data": { "label": "" } },
-      { "id": "af55c90c-71c9-40b6-9d3b-b5e85747b162", "source": "0bc9fd28-151c-41af-b813-3797909fe9f9", "target": "2fe50b90-c0c2-4cdd-a56a-caf59dbdc2a6", "type": "smoothstep", "data": { "label": "" } },
-      { "id": "817fedfe-686e-4f5c-b830-089dd9452c4a", "source": "2fe50b90-c0c2-4cdd-a56a-caf59dbdc2a6", "target": "3a31f6cc-d7eb-4df1-a86b-399de41e3c98", "type": "smoothstep", "data": { "label": "" } }
+      {
+        "id": "11c1b0bd-f800-4c7f-98e2-3617cb4aaa43",
+        "source": "2f6b3fcd-8965-4264-b79b-76bd80bb92e6",
+        "target": "1f18a7d8-3b98-48b1-868e-a42bf480b298",
+        "type": "smoothstep",
+        "data": { "label": "" }
+      },
+      {
+        "id": "967948d2-c2fb-47ec-a2c7-b0162e9e2801",
+        "source": "1f18a7d8-3b98-48b1-868e-a42bf480b298",
+        "target": "0bc9fd28-151c-41af-b813-3797909fe9f9",
+        "type": "smoothstep",
+        "data": { "label": "" }
+      },
+      {
+        "id": "af55c90c-71c9-40b6-9d3b-b5e85747b162",
+        "source": "0bc9fd28-151c-41af-b813-3797909fe9f9",
+        "target": "2fe50b90-c0c2-4cdd-a56a-caf59dbdc2a6",
+        "type": "smoothstep",
+        "data": { "label": "" }
+      },
+      {
+        "id": "817fedfe-686e-4f5c-b830-089dd9452c4a",
+        "source": "2fe50b90-c0c2-4cdd-a56a-caf59dbdc2a6",
+        "target": "3a31f6cc-d7eb-4df1-a86b-399de41e3c98",
+        "type": "smoothstep",
+        "data": { "label": "" }
+      }
     ]
   },
   "model": {
@@ -89,14 +138,26 @@
         "id": "2f6b3fcd-8965-4264-b79b-76bd80bb92e6",
         "type": "start",
         "position": { "x": 100, "y": 140 },
-        "data": { "nodeType": "start", "label": "Start", "configured": true, "description": "Entry point of the pipeline. Execution begins here." },
+        "data": {
+          "nodeType": "start",
+          "label": "Start",
+          "configured": true,
+          "description": "Entry point of the pipeline. Execution begins here."
+        },
         "measured": { "width": 32, "height": 32 }
       },
       {
         "id": "1f18a7d8-3b98-48b1-868e-a42bf480b298",
         "type": "dataSource",
         "position": { "x": 140, "y": 220 },
-        "data": { "label": "DataSource", "configured": true, "entityType": "datasource", "entityId": "__DATA_SOURCE_ID__", "entityName": "__DATA_SOURCE_NAME__", "entityMetadata": { "connector": "MQTT" } },
+        "data": {
+          "label": "DataSource",
+          "configured": true,
+          "entityType": "datasource",
+          "entityId": "__DATA_SOURCE_ID__",
+          "entityName": "__DATA_SOURCE_NAME__",
+          "entityMetadata": { "connector": "MQTT" }
+        },
         "measured": { "width": 207, "height": 66 },
         "selected": false
       },
@@ -129,7 +190,15 @@
         "id": "2fe50b90-c0c2-4cdd-a56a-caf59dbdc2a6",
         "type": "frost",
         "position": { "x": 160, "y": 420 },
-        "data": { "label": "Frost Server", "configured": true, "entityType": "frost", "serverName": "Frost Server", "serverUrl": "", "version": "1.1", "entityId": "__FROST_SINK_ID__" },
+        "data": {
+          "label": "Frost Server",
+          "configured": true,
+          "entityType": "frost",
+          "serverName": "Frost Server",
+          "serverUrl": "",
+          "version": "1.1",
+          "entityId": "__FROST_SINK_ID__"
+        },
         "measured": { "width": 160, "height": 56 },
         "selected": true,
         "dragging": false
@@ -138,15 +207,44 @@
         "id": "3a31f6cc-d7eb-4df1-a86b-399de41e3c98",
         "type": "end",
         "position": { "x": 200, "y": 520 },
-        "data": { "nodeType": "end", "label": "End", "configured": true, "description": "Exit point of the pipeline. Execution completes here." },
+        "data": {
+          "nodeType": "end",
+          "label": "End",
+          "configured": true,
+          "description": "Exit point of the pipeline. Execution completes here."
+        },
         "measured": { "width": 32, "height": 32 }
       }
     ],
     "edges": [
-      { "id": "11c1b0bd-f800-4c7f-98e2-3617cb4aaa43", "source": "2f6b3fcd-8965-4264-b79b-76bd80bb92e6", "target": "1f18a7d8-3b98-48b1-868e-a42bf480b298", "type": "smoothstep", "data": { "label": "" } },
-      { "id": "967948d2-c2fb-47ec-a2c7-b0162e9e2801", "source": "1f18a7d8-3b98-48b1-868e-a42bf480b298", "target": "0bc9fd28-151c-41af-b813-3797909fe9f9", "type": "smoothstep", "data": { "label": "" } },
-      { "id": "af55c90c-71c9-40b6-9d3b-b5e85747b162", "source": "0bc9fd28-151c-41af-b813-3797909fe9f9", "target": "2fe50b90-c0c2-4cdd-a56a-caf59dbdc2a6", "type": "smoothstep", "data": { "label": "" } },
-      { "id": "817fedfe-686e-4f5c-b830-089dd9452c4a", "source": "2fe50b90-c0c2-4cdd-a56a-caf59dbdc2a6", "target": "3a31f6cc-d7eb-4df1-a86b-399de41e3c98", "type": "smoothstep", "data": { "label": "" } }
+      {
+        "id": "11c1b0bd-f800-4c7f-98e2-3617cb4aaa43",
+        "source": "2f6b3fcd-8965-4264-b79b-76bd80bb92e6",
+        "target": "1f18a7d8-3b98-48b1-868e-a42bf480b298",
+        "type": "smoothstep",
+        "data": { "label": "" }
+      },
+      {
+        "id": "967948d2-c2fb-47ec-a2c7-b0162e9e2801",
+        "source": "1f18a7d8-3b98-48b1-868e-a42bf480b298",
+        "target": "0bc9fd28-151c-41af-b813-3797909fe9f9",
+        "type": "smoothstep",
+        "data": { "label": "" }
+      },
+      {
+        "id": "af55c90c-71c9-40b6-9d3b-b5e85747b162",
+        "source": "0bc9fd28-151c-41af-b813-3797909fe9f9",
+        "target": "2fe50b90-c0c2-4cdd-a56a-caf59dbdc2a6",
+        "type": "smoothstep",
+        "data": { "label": "" }
+      },
+      {
+        "id": "817fedfe-686e-4f5c-b830-089dd9452c4a",
+        "source": "2fe50b90-c0c2-4cdd-a56a-caf59dbdc2a6",
+        "target": "3a31f6cc-d7eb-4df1-a86b-399de41e3c98",
+        "type": "smoothstep",
+        "data": { "label": "" }
+      }
     ]
   },
   "dataSourceIds": ["__DATA_SOURCE_ID__"],
