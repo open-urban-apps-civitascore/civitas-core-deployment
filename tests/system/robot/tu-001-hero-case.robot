@@ -52,12 +52,12 @@ Hero Case - Open and Protected Data
     TC-023 Release Data Set
     TC-024 Wait For Available Data Set
     TC-025 Verify Available Data Set Snapshot
+    TC-031 Change Data Set Access To Protected
 
     TC-026 Verify Anonymous Gateway Access    200
     TC-027 Verify Anonymous Gateway Response Content
     TC-028 Verify Authenticated Gateway Access    200
     TC-029 Verify Authenticated Gateway Response Content
-    TC-031 Change Data Set Access To Protected
     TC-030 Verify Anonymous Gateway Rejection
 
     Cleanup Frontend Test Run

@@ -83,8 +83,6 @@ public class DataStructureKeywords {
     ObjectNode properties = model.putObject("properties");
     properties.putObject("id").put("type", "string");
     properties.putObject("name").put("type", "string");
-    // The geometry property must carry the GeoJSON $ref and a crs annotation: the frontend reads the
-    // layer's native CRS from the model schema (findNativeCRS scans for a geojson-$ref property + crs).
     ObjectNode geometry = properties.putObject(state.geoLayerGeometryColumnRef);
     geometry.put("$ref", "https://geojson.org/schema/Point.json");
     geometry.put("crs", state.geoLayerCrs);
@@ -95,8 +93,6 @@ public class DataStructureKeywords {
     ObjectNode styles = mapper.createObjectNode();
     ArrayNode nodes = styles.putArray("nodes");
     ObjectNode element = nodes.addObject().putObject("data").putObject("element");
-    // The geometry-column and attribute selects list these UML attribute names as options, so the
-    // geometry column must appear here for the layer's geometryColumnRef to render as a selection.
     ArrayNode attributes = element.putArray("attributes");
     attributes.addObject().put("name", "id");
     attributes.addObject().put("name", "name");
