@@ -3,10 +3,10 @@ apiVersion: v2
 name: nifi-bootstrap
 description: |
   Post-install / post-upgrade Job that provisions NiFi access policies via the REST API.
-  Authenticates to NiFi as `nifi-admin@internal.local`
+  Authenticates to NiFi as the `nifi-bootstrap` Keycloak service account (client-credentials grant)
 icon: https://gitlab.com/uploads/-/system/group/avatar/78954426/CIVITASCORE_Icon.png?width=128
 type: application
 
-version: 0.4.0
+version: 0.5.0
 
 appVersion: 'latest'
