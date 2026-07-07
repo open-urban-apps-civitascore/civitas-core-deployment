@@ -11,6 +11,7 @@ data:
     {
       "config": {
         "authz_repository_url": "http://{{ include "authz.fullname" . }}-authz:{{ .Values.authz.service.port }}/api/v1/user-context",
+        "dataset_pool_membership_url": "http://{{ include "authz.fullname" . }}-authz:{{ .Values.authz.service.port }}/api/v1/dataset-pool",
         "authz_cache_duration_seconds": 0
       }
     }

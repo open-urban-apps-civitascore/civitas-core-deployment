@@ -142,6 +142,21 @@ kyverno:
 	just _check-dependencies helmfile
 	./scripts/ci/install-kyverno-if-missing.sh
 
+# Mesh the local nginx ingress controller so it can reach APISIX under mandatory mTLS
+[group('deployment')]
+mesh-ingress-nginx:
+	#!/usr/bin/env bash
+	set -euo pipefail
+	if ! kubectl get deployment ingress-nginx-controller -n ingress-nginx >/dev/null 2>&1; then
+		echo "ingress-nginx not found; skipping mesh step."
+		exit 0
+	fi
+	kubectl annotate namespace ingress-nginx \
+		linkerd.io/inject=enabled \
+		config.linkerd.io/skip-inbound-ports=80,443,8443 --overwrite
+	kubectl rollout restart deployment ingress-nginx-controller -n ingress-nginx
+	kubectl rollout status deployment ingress-nginx-controller -n ingress-nginx --timeout=300s
+
 # Add host entries to /etc/hosts for Linux systems
 [group('helpers')]
 [linux]
@@ -282,6 +297,7 @@ deploy cri='k3d' namespace='dev' profile='local':
 	fi; fi
 	@just linkerd
 	@just kyverno
+	@just mesh-ingress-nginx
 	@if [ ! -d "./deployment" ]; then \
 		cp -r defaults/deployment deployment; \
 	fi

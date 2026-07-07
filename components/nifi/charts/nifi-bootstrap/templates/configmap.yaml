@@ -10,8 +10,8 @@ metadata:
     "helm.sh/hook-delete-policy": {{ join "," .Values.hook.deletePolicies | quote }}
 data:
   # NiFi access-policy provisioning script.
-  # Authenticates as `nifi-admin@internal.local` (NiFi's Initial Admin Identity)
-  # via Keycloak DAG/password grant on the `nifi-direct` client, then idempotently
+  # Authenticates via the OAuth 2.0 client-credentials grant on the `nifi-bootstrap`
+  # client — whose client id is NiFi's Initial Admin Identity — then idempotently
   # creates the human admin and `CONFIG_ADAPTER_IDENTITY` users + their policies.
   # See the "Initial admin and bootstrap" section in `components/nifi/README.md`
   # for the design rationale.
@@ -41,24 +41,22 @@ data:
     }
 
     log "starting; NIFI_URL=${NIFI_URL} OIDC_TOKEN_URL=${OIDC_TOKEN_URL} OIDC_CLIENT_ID=${OIDC_CLIENT_ID}"
-    log "auth user: '${NIFI_ADMIN_USERNAME}'"
     log "identities to provision: humanAdmin='${HUMAN_ADMIN_IDENTITY:-}' configAdapter='${CONFIG_ADAPTER_IDENTITY:-}'"
 
-    # 1) Fetch a `password`-grant token for `NIFI_ADMIN_USERNAME` via the
-    #    `nifi-direct` public client. Logs status + body on every attempt so a
-    #    misconfigured client / realm / password surfaces immediately.
-    log "Fetching password-grant token from ${OIDC_TOKEN_URL} (client_id=${OIDC_CLIENT_ID}, user=${NIFI_ADMIN_USERNAME})"
-    NIFI_ADMIN_PASSWORD=$(cat /var/run/secrets/oidc/admin-password)
+    # 1) Fetch a `client_credentials`-grant token for the `nifi-bootstrap` confidential
+    #    client. Logs status + body on every attempt so a misconfigured client / realm /
+    #    secret surfaces immediately.
+    log "Fetching client-credentials token from ${OIDC_TOKEN_URL} (client_id=${OIDC_CLIENT_ID})"
+    OIDC_CLIENT_SECRET=$(cat /var/run/secrets/oidc/client-secret)
     ACCESS_TOKEN=""
     # 15 × 5s = 75s budget — Keycloak is normally ready within seconds.
     for i in $(seq 1 15); do
       HTTP_CODE=$(curl_status -o /tmp/token.json \
             -X POST "${OIDC_TOKEN_URL}" \
             -H 'Content-Type: application/x-www-form-urlencoded' \
-            --data-urlencode "grant_type=password" \
+            --data-urlencode "grant_type=client_credentials" \
             --data-urlencode "client_id=${OIDC_CLIENT_ID}" \
-            --data-urlencode "username=${NIFI_ADMIN_USERNAME}" \
-            --data-urlencode "password=${NIFI_ADMIN_PASSWORD}")
+            --data-urlencode "client_secret=${OIDC_CLIENT_SECRET}")
       if [ "${HTTP_CODE}" = "200" ]; then
         ACCESS_TOKEN=$(jq -r '.access_token // empty' </tmp/token.json)
         if [ -n "${ACCESS_TOKEN}" ]; then
@@ -71,11 +69,12 @@ data:
       fi
       sleep 5
     done
-    [ -n "${ACCESS_TOKEN}" ] || die "Could not obtain password-grant access token from Keycloak after 15 attempts"
+    [ -n "${ACCESS_TOKEN}" ] || die "Could not obtain client-credentials access token from Keycloak after 15 attempts"
 
-    # NiFi verifies the JWT against the realm JWKS and resolves identity from
-    # the `sub` claim, which the `nifi-direct` client overrides to the user's
-    # email via a protocol mapper (see components/nifi/keycloak-clients.yaml).
+    # NiFi verifies the JWT against the realm JWKS and resolves identity from the `sub`
+    # claim, which the `nifi-bootstrap` client overrides to `nifi-bootstrap` via a
+    # protocol mapper (see components/nifi/keycloak-clients.yaml) — NiFi's bearer-token
+    # path uses `sub` regardless of `claim_identifying_user`.
     AUTH_HEADER="Authorization: Bearer ${ACCESS_TOKEN}"
 
     # 2) Wait until NiFi REST API is reachable & accepts the token.

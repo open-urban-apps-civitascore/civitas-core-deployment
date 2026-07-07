@@ -87,12 +87,10 @@ env:
     value: "de.civitascore.idm.user.created,de.civitascore.idm.user.updated,de.civitascore.idm.user.deleted,de.civitascore.idm.user.locked,de.civitascore.idm.user.unlocked,de.civitascore.idm.user.password.changed,de.civitascore.idm.user.password.reset,de.civitascore.idm.realm.created,de.civitascore.idm.realm.updated,de.civitascore.idm.realm.deleted,de.civitascore.idm.client.created,de.civitascore.idm.client.updated,de.civitascore.idm.client.deleted,de.civitascore.idm.role.created,de.civitascore.idm.role.updated,de.civitascore.idm.role.deleted,de.civitascore.idm.group.created,de.civitascore.idm.group.updated,de.civitascore.idm.group.deleted"
 
   # APISIX configuration
-  {{- $apisixHost := printf "%s.%s" (default "" .Values.apisix.apisix.subdomain) $global.domain | trimPrefix "." }}
   {{- $apisixPath := .Values.apisix.apisix.pathPrefix }}
-  {{- $apisixDataHost := printf "apisix-gateway.%s.svc.cluster.local:9080" .Values.apisix.apisix.namespace }}
-  {{- $apisixDataPublicUrl := printf "https://api.%s" $global.domain }}
   {{- $apisixNamespace := .Values.apisix.apisix.namespace }}
   {{- $apisixUrl := printf "http://%s.%s.svc.cluster.local:9180%s" "apisix-admin" $apisixNamespace $apisixPath }}
+  {{- $apisixApiHost := printf "api.%s" $global.domain }}
   - name: APISIX_ADMIN_URL
     value: {{ $apisixUrl | quote }}
   - name: APISIX_ADMIN_KEY
@@ -101,19 +99,24 @@ env:
         name: "apisix-admin-credentials"
         key: "admin"
   - name: APISIX_API_HOST
-    value: {{ $apisixDataHost | quote }}
+    value: {{ $apisixApiHost | quote }}
   - name: APISIX_API_PUBLIC_URL
-    value: {{ $apisixDataPublicUrl | quote }}
+    value: {{ printf "https://%s" $apisixApiHost | quote }}
   - name: APISIX_TOPICS
     value: "de.civitascore.api.backend.created,de.civitascore.api.backend.updated,de.civitascore.api.backend.deleted,de.civitascore.api.route.created,de.civitascore.api.route.updated,de.civitascore.api.route.deleted"
   - name: APISIX_PLUGIN_CONFIG_ID
-    value: "portal-backend"
+    value: "api-template"
+    # TODO: `"frost-server"` currently OPA still uses the name frost, although by now this is the genric service name for the payload_api.
+    #   Once this is refactored, we need to change this here as well.
+    #   see: https://gitlab.com/civitas-connect/civitas-core/civitas-core-v2/civitas-core-platform/-/work_items/1853
   - name: APISIX_SERVICE_ID
-    value: "portal-backend"
+    value: "frost-server"
   - name: APISIX_FROST_BASIC_AUTH_USERNAME
     value: "admin"
   - name: APISIX_FROST_BASIC_AUTH_PASSWORD
     value: "admin"
+  - name: APISIX_GEOSERVER_URL
+    value: "http://geoserver-geoserver-gsc-gateway.{{ .Values.geoserver.geoserver.namespace }}.svc.cluster.local:8080/geoserver-cloud"
 
   # FROST configuration (accessed via linkerd service mesh, basic auth)
   {{- $frostUrl := printf "http://frost-frost-frost-server-http.%s.svc.cluster.local/FROST-Server/v1.1" .Values.frost.frost.namespace }}
@@ -129,22 +132,22 @@ env:
   - name: FROST_TOPICS
     value: "de.civitascore.data.thing.created,de.civitascore.data.thing.updated,de.civitascore.data.thing.deleted,de.civitascore.data.location.created,de.civitascore.data.location.updated,de.civitascore.data.location.deleted,de.civitascore.data.sensor.created,de.civitascore.data.sensor.updated,de.civitascore.data.sensor.deleted,de.civitascore.data.observedproperty.created,de.civitascore.data.observedproperty.updated,de.civitascore.data.observedproperty.deleted,de.civitascore.data.datastream.created,de.civitascore.data.datastream.updated,de.civitascore.data.datastream.deleted,de.civitascore.data.project.created,de.civitascore.data.project.updated,de.civitascore.data.project.deleted"
 
-  # NiFi configuration — uses `nifi-direct` client with DAG/password grant.
-  {{- $nifiUrl := printf "https://nifi-nifi.%s.svc.cluster.local:8443/nifi-api" .Values.nifi.nifi.namespace }}
+  # NiFi configuration — uses the dedicated `nifi-config-adapter` confidential
+  # client (OAuth 2.0 client-credentials grant); see components/nifi/keycloak-clients.yaml.
+  # $nifiUrl must be the same as `NIFI_WEB_HTTPS_HOST="${host_name}"` in apache-nifi-helm/templates/configmap.yaml
+  {{- $nifiUrl := printf "https://nifi-nifi-0.nifi-nifi.%s:8443" .Values.nifi.nifi.namespace }}
   {{- $nifiTokenUrl := printf "%s/realms/%s/protocol/openid-connect/token" $keycloakUrl $realmName }}
   - name: NIFI_URL
     value: {{ $nifiUrl | quote }}
-  - name: NIFI_OIDC_TOKEN_URL
+  - name: NIFI_OIDC_TOKEN_URI
     value: {{ $nifiTokenUrl | quote }}
   - name: NIFI_OIDC_CLIENT_ID
-    value: "nifi-direct"
-  - name: NIFI_USERNAME
-    value: "nifi-config-adapter@internal.local"
-  - name: NIFI_PASSWORD
+    value: "nifi-config-adapter"
+  - name: NIFI_OIDC_CLIENT_SECRET
     valueFrom:
       secretKeyRef:
-        name: "nifi-config-adapter-keycloak-user"
-        key: "password"
+        name: keycloak-client-nifi-config-adapter
+        key: client-secret
   # Skipping NiFi's self-signed cert verification is intentional: all traffic is
   # cluster-internal (nifi-nifi.<namespace>.svc.cluster.local:8443) and already
   # protected by the Linkerd service mesh (mTLS). Not a public-facing path.

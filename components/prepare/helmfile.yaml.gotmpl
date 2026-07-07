@@ -53,6 +53,7 @@ bases:
 {{- $linkerdEnabled := and ($root.global.serviceMesh.enable | default false) (eq ($root.global.serviceMesh.type | default "") "linkerd") }}
 {{- $createNamespaces := $root.global.createNamespaces | default false }}
 {{- $patchNamespaces := and ($root.global.serviceMesh.enable | default false) ($root.global.serviceMesh.patchNamespaces | default false) }}
+{{- $defaultInboundPolicy := $root.global.serviceMesh.defaultInboundPolicy | default "" }}
 {{/* Distribute the in-cluster self-signed CA as `custom-ca-cert` whenever the
      self-signed issuer is in use */}}
 {{- $isSelfSignedCa := eq ($root.global.ingress.clusterIssuer | default "") "selfsigned-ca" }}
@@ -80,6 +81,13 @@ hooks:
         {{- if $linkerdEnabled }}
         kubectl annotate namespace {{ $ns | quote }} linkerd.io/inject=enabled --overwrite
         echo "Patched namespace {{ $ns | quote }} for Linkerd injection."
+        {{- if $defaultInboundPolicy }}
+        kubectl annotate namespace {{ $ns | quote }} config.linkerd.io/default-inbound-policy={{ $defaultInboundPolicy | quote }} --overwrite
+        echo "Set Linkerd default-inbound-policy={{ $defaultInboundPolicy }} on namespace {{ $ns | quote }}."
+        {{- else }}
+        kubectl annotate namespace {{ $ns | quote }} config.linkerd.io/default-inbound-policy-
+        echo "Cleared Linkerd default-inbound-policy on namespace {{ $ns | quote }}."
+        {{- end }}
         {{- end }}
         {{- end }}
         {{- end }}

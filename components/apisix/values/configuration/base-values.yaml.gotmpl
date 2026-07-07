@@ -33,9 +33,25 @@ extraSecretEnvVars:
   - name: APISIX_VALIDATOR_CLIENT_SECRET
     secretName: keycloak-client-apisix-validator
     secretKey: client-secret
+  - name: OIDC_SESSION_SECRET
+    secretName: apisix-oidc-session
+    secretKey: secret
+
 
 domain: {{ $global.domain }}
 realm: {{ $global.instanceSlug }}
+
+# Authorize the nginx ingress edge to reach the APISIX data plane when the
+# namespace enforces mandatory mTLS via the Linkerd default-inbound-policy.
+# `allowUnauthenticatedIngress` mirrors the global setting: true accepts plaintext
+# from an unmeshed ingress, false requires the ingress controller to be meshed.
+{{- $allowUnauthIngress := false }}
+{{- if hasKey ($global.serviceMesh | default dict) "allowUnauthenticatedIngress" }}
+{{- $allowUnauthIngress = $global.serviceMesh.allowUnauthenticatedIngress }}
+{{- end }}
+serviceMesh:
+  enabled: {{ and ($global.serviceMesh.enable | default false) (eq ($global.serviceMesh.type | default "") "linkerd") }}
+  allowUnauthenticatedIngress: {{ $allowUnauthIngress }}
 
 securityContext:
   {{ .Values.securityDefaults.securityContext | toYaml | nindent 2 }}

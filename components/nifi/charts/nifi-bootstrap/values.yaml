@@ -11,18 +11,18 @@ nifi:
 oidc:
   # Full token URL (`<issuer>/protocol/openid-connect/token`).
   tokenUrl: ''
-  clientId: nifi-direct
-  # Realm user the Job authenticates as.
-  adminUsername: nifi-admin@internal.local
-  # Kubernetes Secret holding the admin user's password.
-  adminPasswordSecretRef:
-    name: nifi-admin-keycloak-user
-    key: password
+  # Confidential client id the Job authenticates as (client-credentials grant).
+  clientId: nifi-bootstrap
+  # Kubernetes Secret holding that client's secret.
+  clientSecretRef:
+    name: keycloak-client-nifi-bootstrap
+    key: client-secret
 
 # Identities the Job will provision policies for inside NiFi.
 identities:
   humanAdmin: ''
-  configAdapter: nifi-config-adapter@internal.local
+  # `nifi-config-adapter`'s hardcoded `sub` claim (client-credentials grant).
+  configAdapter: nifi-config-adapter
 
 image:
   # Lightweight, well-known image with curl + jq for the bootstrap script.
