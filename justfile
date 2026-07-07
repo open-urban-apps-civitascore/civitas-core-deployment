@@ -19,6 +19,48 @@ validate:
 system-tests:
 	bash tests/system/run-system-tests.sh
 
+# Run the system tests against an environment (endpoints derived from its global.yaml.gotmpl domain).
+# Auth password is read from SYSTEM_TEST_AUTH_PASSWORD in the top-level .env (loaded via set dotenv-load).
+# Executed inside the cicd image so no local Java/Robot/Browser toolchain is needed.
+[group('test & lint')]
+system-test environment='local' cicd-image='registry.gitlab.com/civitas-connect/civitas-core/docker-images/cicd:2.0.0-beta-hotfixes-cicd-image':
+	#!/usr/bin/env bash
+	set -eu
+
+	GLOBAL="deployment/environments/{{environment}}/global.yaml.gotmpl"
+	DOMAIN=$(yq -r '.global.domain' "${GLOBAL}")
+	REALM=$(yq -r '.global.instanceSlug // "civitas"' "${GLOBAL}")
+	USER=$(yq -r '.global.initialUserEmail // "admin@civitas.test"' "${GLOBAL}")
+
+	if [ -z "${DOMAIN}" ] || [ "${DOMAIN}" = "null" ]; then
+		echo "ERROR: could not read .global.domain from ${GLOBAL}" >&2
+		exit 1
+	fi
+
+
+	if [ -z "${SYSTEM_TEST_AUTH_PASSWORD:-}" ]; then
+		echo "ERROR: SYSTEM_TEST_AUTH_PASSWORD is not set. Add it to the top-level .env file." >&2
+		exit 1
+	fi
+
+	echo "Running system tests against environment '{{environment}}' (domain: ${DOMAIN})"
+
+	docker run --rm \
+		-v "$(pwd)":/workspace -w /workspace \
+		-e API_BASE_URL="https://api.${DOMAIN}/v1" \
+		-e KEYCLOAK_URL="https://idm.${DOMAIN}" \
+		-e KEYCLOAK_REALM="${REALM}" \
+		-e KEYCLOAK_CLIENT_ID="portal-frontend" \
+		-e APISIX_GATEWAY_URL="https://api.${DOMAIN}" \
+		-e PORTAL_FRONTEND_URL="https://portal.${DOMAIN}" \
+		-e FROST_BASE_URL="http://frost-frost-frost-server-http.frost/FROST-Server/v1.1" \
+		-e SYSTEM_TEST_AUTH_USER="${USER}" \
+		-e SYSTEM_TEST_AUTH_PASSWORD="${SYSTEM_TEST_AUTH_PASSWORD}" \
+		"{{cicd-image}}" \
+		bash tests/system/run-system-tests.sh
+
+
+
 # Sync a specific component in an environment
 [group('deployment')]
 sync-component environment='local' component='':

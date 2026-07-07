@@ -71,7 +71,8 @@ rm -f "${SERVER_LOG}"
 
 # Resolve the shaded jar path from the pom version so a version bump doesn't
 # silently break the runner.
-JAR_VERSION="$(sed -n 's:.*<version>\(.*\)</version>.*:\1:p' "${JAVA_PROJECT_DIR}/pom.xml" | head -n1)"
+JAR_VERSION="$(sed -n 's:.*<version>\(.*\)</version>.*:\1:p' "${JAVA_PROJECT_DIR}/pom.xml" | sed -n '1p')"
+
 JAR_PATH="${JAVA_PROJECT_DIR}/target/civitas-system-tests-${JAR_VERSION}.jar"
 
 if [[ "${SKIP_BUILD}" != "true" || ! -f "${JAR_PATH}" ]]; then
