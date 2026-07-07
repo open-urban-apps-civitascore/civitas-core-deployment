@@ -463,7 +463,7 @@ destroy-nightly:
     - job: nightly-slug
       artifacts: true
     # Cleanup must always run once a vcluster was provisioned
-   - job: deploy-nightly
+    - job: deploy-nightly
       artifacts: false
       optional: true
     - job: collect-logs-nightly
