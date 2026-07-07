@@ -31,13 +31,14 @@ Hero Case - Open and Protected Data
     TC-013 Verify Data Source References Data Structure Version
     TC-014 Release Data Source
     TC-015 Verify Released Data Source Snapshot
-    TC-018 Create Pipeline
 
     Initialize Frontend Test Run
     TC-016 Create Data Set
     TC-017 Verify Draft Data Set Snapshot
+    Adopt Frontend Data Set
     TC-042 Assign Data Set To Data Pool
     TC-043 Verify Data Set Data Pool Assignment
+    TC-018 Create Pipeline
     TC-032 Create Geo Pipeline
     TC-033 Verify Geo Pipeline Snapshot
     TC-034 Create OWS API
@@ -51,12 +52,12 @@ Hero Case - Open and Protected Data
     TC-023 Release Data Set
     TC-024 Wait For Available Data Set
     TC-025 Verify Available Data Set Snapshot
+    TC-031 Change Data Set Access To Protected
 
     TC-026 Verify Anonymous Gateway Access    200
     TC-027 Verify Anonymous Gateway Response Content
     TC-028 Verify Authenticated Gateway Access    200
     TC-029 Verify Authenticated Gateway Response Content
-    TC-031 Change Data Set Access To Protected
     TC-030 Verify Anonymous Gateway Rejection
 
     Cleanup Frontend Test Run

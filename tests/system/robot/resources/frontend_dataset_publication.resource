@@ -1,26 +1,45 @@
 *** Settings ***
 Documentation     Browser-based frontend execution library for the dataset API publication Hero Case.
 Library           Browser
+Resource          ../ui_common.resource
 
 *** Variables ***
-${PORTAL_FRONTEND_URL}           %{PORTAL_FRONTEND_URL=http://localhost:3000}
-${SYSTEM_TEST_AUTH_USER}         %{SYSTEM_TEST_AUTH_USER=dev@civitas.local}
-${SYSTEM_TEST_AUTH_PASSWORD}     %{SYSTEM_TEST_AUTH_PASSWORD=dev123}
-
-${DATASETS_LINK}                 role=link[name="Datasets"]
-${CREATE_DATASET_BUTTON}         role=button[name="Create dataset"]
-${DATASET_NAME_FIELD}            label=Name
-${DATASET_DESCRIPTION_FIELD}     label=Description
-${OPEN_DATA_ACCESS_TOGGLE}       label=Open data access
-${NAMED_API_NAME_FIELD}          label=API name
-${NAMED_API_SLUG_FIELD}          label=Slug
-${NAMED_API_STANDARD_FIELD}      label=Standard
-${NAMED_API_VERSION_FIELD}       label=Version
-${SAVE_BUTTON}                   role=button[name="Save"]
-${STAGE_BUTTON}                  role=button[name="Stage"]
-${RELEASE_BUTTON}                role=button[name="Release"]
+${OUR_DATA_SIDEBAR_ITEM}         role=button[name="Unsere Daten"]
+${DATASETS_LINK}                 css=[data-testid="sidebarMenuItem-datasets"]
+${CREATE_DATASET_BUTTON}         css=[data-testid="addDatasetButton"]
+${DATASET_CREATE_FORM}           css=[data-testid="datasetCreateForm"]
+${DATASET_NAME_FIELD}            css=[data-testid="datasetCreateForm"] input[name="name"]
+${DATASET_DESCRIPTION_FIELD}     css=[data-testid="datasetBaseInfoForm"] textarea[name="description"]
+${OPEN_DATA_ACCESS_CHECKBOX}       role=checkbox[name="Open Data"]
+${API_CREATE_BUTTON}             role=button[name="API hinzufügen"]
+${STA_API_CREATE_BUTTON}         css=a[href*="type=sensorthings"]
+${API_CONFIG_FORM}               css=[data-testid="apiConfigForm"]
+${NAMED_API_NAME_FIELD}          css=[data-testid="apiConfigForm"] input[name="baseInfo.name"]
+${NAMED_API_SLUG_FIELD}          css=[data-testid="apiConfigForm"] input[name="baseInfo.slug"]
+${LAYER_TAB}                     role=tab[name="Layer"]
+${LAYER_HEADING}                 role=heading[name="Layer"]
+${LAYER_CONFIG_TITLE_FIELD}      css=[data-testid="layers.0.titleTextField"]
+${LAYER_CONFIG_NAME_FIELD}       css=[data-testid="layers.0.layerNameTextField"]
+${LAYER_CONFIG_TABLE_FIELD}      css=[data-testid="layers.0.dataSinkIdSelectTrigger"]
+${LAYER_CONFIG_ATTRIBUTE_FIELD}  css=[data-slot="combobox-chips"]:has(#layerAttribute)
+${LAYER_CONFIG_GEOMETRY_COLUMN_FIELD}     css=[data-testid="layers.0.geometryColumnRefSelectTrigger"]
+${LAYER_CONFIG_CRS_FIELD}                 css=[data-testid="layers.0.crsSelectTrigger"]
+${SAVE_AND_CONTINUE_BUTTON}      role=button[name="Erstellen und weiter"]
+${BACK_BUTTON}                   role=button[name="Zurück"]
+${EDIT_BUTTON}                   css=[data-testid="editButton"]
+${SAVE_BUTTON}                   role=button[name="Speichern"]
+${STATUS_BUTTON}                 css=[data-testid="statusDropdown"]
+${READY_BUTTON}                  role=menuitem[name="Fertig"]
+${RELEASE_BUTTON}                role=menuitem[name="Verfügbar"]
 ${ACCESS_SETTINGS_TAB}           role=tab[name="Access"]
-${PIPELINE_TAB}                  role=tab[name="Pipeline"]
+${PIPELINE_LINK}                 role=link[name="Saga Pipeline open"]
+${PIPELINE_TAB}                  text="Saga Pipeline open"
+${GEO_PIPELINE_LINK}             role=link[name="Saga Geo Pipeline open"]
+${GEO_PIPELINE_TAB}              text="Saga Geo Pipeline open"
+${PIPELINE_CANVAS}               css=.react-flow__pane
+${PIPELINE_DATASOURCE_NODE}      css=.react-flow__node-dataSource
+${PIPELINE_MAPPING_NODE}         css=.react-flow__node-mapping
+${PIPELINE_FROST_NODE}           css=.react-flow__node-frost
 ${OWS_API_CARD}                  css=[data-testid="apiCard-ows"]
 ${FRONTEND_GEO_API_NAME}         %{FRONTEND_GEO_API_NAME=WFS/WMS API}
 ${FRONTEND_GEO_API_SLUG}         %{FRONTEND_GEO_API_SLUG=ows}
@@ -37,10 +56,11 @@ ${FRONTEND_GEO_LAYER_CRS}        %{FRONTEND_GEO_LAYER_CRS=EPSG:4326}
 Initialize Frontend Test Run
     New Browser    chromium    headless=True
     New Context    viewport={'width': 1600, 'height': 1200}
-    New Page    ${PORTAL_FRONTEND_URL}
+    New Page    ${PORTAL_URL}
     Wait For Load State    networkidle
     Prepare Frontend Test Data
-    Login To Portal
+    Resolve Auth Credentials
+    Login Via Keycloak    ${KEYCLOAK_USERNAME}    ${KEYCLOAK_PASSWORD}
 
 Cleanup Frontend Test Run
     Close Browser
@@ -81,54 +101,65 @@ Prepare Frontend Test Data
     Set Suite Variable    ${FRONTEND_GEO_LAYER_GEOMETRY_COLUMN_REF}    ${geo_layer_geometry_column_ref}
     Set Suite Variable    ${FRONTEND_GEO_LAYER_CRS}    ${geo_layer_crs}
 
-Login To Portal
-    Go To    ${PORTAL_FRONTEND_URL}/datasets
-    Wait For Load State    networkidle
-    Run Keyword And Ignore Error    Click    role=link[name="Login"]
-    Run Keyword And Ignore Error    Click    role=button[name="Login"]
-    ${login_visible}=    Run Keyword And Return Status    Wait For Elements State    css=input[name="username"]    visible    timeout=10s
-    IF    ${login_visible}
-        Fill Text    css=input[name="username"]    ${SYSTEM_TEST_AUTH_USER}
-        Fill Text    css=input[name="password"]    ${SYSTEM_TEST_AUTH_PASSWORD}
-        Click    css=button[type="submit"]
-        Wait For Load State    networkidle
-    END
-    Wait For Elements State    ${DATASETS_LINK}    visible    timeout=30s
-
 Open Data Sets Management
+    Click    ${OUR_DATA_SIDEBAR_ITEM}
+    Wait For Elements State    css=[data-testid="sidebarMenuItem-datasets"]    visible    timeout=10s
     Click    ${DATASETS_LINK}
     Wait For Load State    networkidle
 
 Open Create Data Set Form
     Open Data Sets Management
     Click    ${CREATE_DATASET_BUTTON}
-    Wait For Load State    networkidle
+    Wait For Elements State    ${DATASET_CREATE_FORM}    visible    timeout=15s
+
+Create Dataset
+    Fill Text    ${DATASET_NAME_FIELD}    ${FRONTEND_DATA_SET_NAME}
+    Click        ${SAVE_AND_CONTINUE_BUTTON}
+    Wait For Elements State    ${DATASET_DESCRIPTION_FIELD}   visible     timeout=15s
 
 Fill Data Set Form
-    Fill Text    ${DATASET_NAME_FIELD}    ${FRONTEND_DATA_SET_NAME}
     Fill Text    ${DATASET_DESCRIPTION_FIELD}    ${FRONTEND_DATA_SET_DESCRIPTION}
-    Check Checkbox    ${OPEN_DATA_ACCESS_TOGGLE}
+    Check Checkbox    ${OPEN_DATA_ACCESS_CHECKBOX}
+    Click    ${SAVE_BUTTON}
+    Verify Success toast
+
+Create STA API
+    Click    ${API_CREATE_BUTTON}
+    Click    ${STA_API_CREATE_BUTTON}
+    Wait For Elements State    ${API_CONFIG_FORM}   visible     timeout=15s
     Fill Text    ${NAMED_API_NAME_FIELD}    Things
     Fill Text    ${NAMED_API_SLUG_FIELD}    ${FRONTEND_NAMED_API_SLUG}
-    Fill Text    ${NAMED_API_STANDARD_FIELD}    STA
-    Fill Text    ${NAMED_API_VERSION_FIELD}    1.1
+    Click    ${SAVE_BUTTON}
+    Wait For Condition    Url    contains    mode=edit    timeout=15s
 
 Save Form
     Click    ${SAVE_BUTTON}
+    Verify Success toast
+
+Go Back
+    Click   ${BACK_BUTTON}
     Wait For Load State    networkidle
 
-Assert Data Set Draft Snapshot
+Assert Data Set information
     ${body}=    Get Text    css=body
     Should Contain    ${body}    ${FRONTEND_DATA_SET_NAME}
-    Should Contain    ${body}    ${FRONTEND_DATA_SET_DESCRIPTION}
+    Should Contain    ${body}    ${FRONTEND_PIPELINE_NAME}
+    Should Contain    ${body}    ${FRONTEND_GEO_PIPELINE_NAME}
     Should Contain    ${body}    Things
-    Should Contain    ${body}    ${FRONTEND_NAMED_API_SLUG}
-    Should Contain    ${body}    STA
-    Should Contain    ${body}    1.1
+    Should Contain    ${body}    WFS/WMS API
+    Get Attribute    ${OPEN_DATA_ACCESS_CHECKBOX}    aria-checked    ==    true
+
+
+Assert Data Set Draft Snapshot
+    Assert Data Set Status      Entwurf
+    ${body}=    Get Text    css=body
+    Should Contain    ${body}    ${FRONTEND_DATA_SET_NAME}
+    Should Contain    ${body}    Things
+    Get Attribute    ${OPEN_DATA_ACCESS_CHECKBOX}    aria-checked    ==    true
 
 Open Pipeline Management
-    Click    ${PIPELINE_TAB}
-    Wait For Load State    networkidle
+    Click    ${PIPELINE_LINK}
+    Wait For Elements State    ${PIPELINE_CANVAS}       visible     timeout=15s
 
 Fill Pipeline Form
     Fill Text    label=Name    ${FRONTEND_PIPELINE_NAME}
@@ -140,89 +171,86 @@ Fill Pipeline Form
     Fill Text    label=Thing description    ${FRONTEND_GATEWAY_THING_DESCRIPTION}
 
 Assert Pipeline Snapshot
-    ${body}=    Get Text    css=body
-    Should Contain    ${body}    ${FRONTEND_PIPELINE_NAME}
-    Should Contain    ${body}    ${FRONTEND_DATA_SOURCE_NAME}
-    Should Contain    ${body}    ${FRONTEND_GATEWAY_THING_NAME}
-    Should Contain    ${body}    ${FRONTEND_GATEWAY_THING_DESCRIPTION}
+    Get Text    css=body    contains    ${FRONTEND_PIPELINE_NAME}
+    Get Text    ${PIPELINE_DATASOURCE_NODE}    contains    ${FRONTEND_DATA_SOURCE_NAME}
+    Get Text    ${PIPELINE_MAPPING_NODE}    contains    Mapping
+    Get Text    ${PIPELINE_FROST_NODE}    contains    Frost Server
 
 Verify OWS API Snapshot
-    Reload Page
-    Wait For Load State    networkidle
-    Wait For Elements State    ${OWS_API_CARD}    visible    timeout=30s
-    Click    ${OWS_API_CARD}
-    Wait For Load State    networkidle
+    Reload
+    Wait For Elements State    ${OWS_API_CARD}    visible    timeout=15s
     ${body}=    Get Text    css=body
     Should Contain    ${body}    ${FRONTEND_GEO_API_NAME}
     Should Contain    ${body}    ${FRONTEND_GEO_API_SLUG}
-    Should Contain    ${body}    PostGIS Geo Persistence
-    Go Back
-    Wait For Load State    networkidle
+    Click    ${OWS_API_CARD}
+    Wait For Elements State     ${API_CONFIG_FORM}      visible     timeout=15s
+    ${body}=    Get Text    css=body
+    Should Contain    ${body}    ${FRONTEND_GEO_API_NAME}
+    Should Contain    ${body}    ${FRONTEND_GEO_API_SLUG}
 
 Verify Geo Layer Snapshot
-    Reload Page
-    Wait For Load State    networkidle
-    Wait For Elements State    ${OWS_API_CARD}    visible    timeout=30s
-    Click    ${OWS_API_CARD}
-    Wait For Load State    networkidle
-    Click    role=tab[name="Layer"]
-    Wait For Load State    networkidle
-    ${body}=    Get Text    css=body
-    Should Contain    ${body}    ${FRONTEND_GEO_LAYER_TITLE}
-    Should Contain    ${body}    ${FRONTEND_GEO_LAYER_NAME}
-    Should Contain    ${body}    ${FRONTEND_GEO_TABLE_NAME}
-    Should Contain    ${body}    ${FRONTEND_GEO_LAYER_ATTRIBUTE}
-    Should Contain    ${body}    ${FRONTEND_GEO_LAYER_GEOMETRY_COLUMN_REF}
-    Should Contain    ${body}    ${FRONTEND_GEO_LAYER_CRS}
+    Reload
+    Wait For Elements State    ${API_CONFIG_FORM}    visible    timeout=30s
+    Click    ${LAYER_TAB}
+    Wait For Elements State    ${LAYER_HEADING}    visible    timeout=30s
+    # Text inputs: read the field value. Selects/combobox: the selection is rendered as visible text.
+    Get Property    ${LAYER_CONFIG_TITLE_FIELD}              value       ==          ${FRONTEND_GEO_LAYER_TITLE}
+    Get Property    ${LAYER_CONFIG_NAME_FIELD}              value       ==          ${FRONTEND_GEO_LAYER_NAME}
+    Get Text        ${LAYER_CONFIG_TABLE_FIELD}                         contains    ${FRONTEND_GEO_TABLE_NAME}
+    Get Text        ${LAYER_CONFIG_ATTRIBUTE_FIELD}                     contains    ${FRONTEND_GEO_LAYER_ATTRIBUTE}
+    Get Text        ${LAYER_CONFIG_GEOMETRY_COLUMN_FIELD}               contains    ${FRONTEND_GEO_LAYER_GEOMETRY_COLUMN_REF}
+    Get Text        ${LAYER_CONFIG_CRS_FIELD}                           contains    ${FRONTEND_GEO_LAYER_CRS}
     Go Back
     Wait For Load State    networkidle
 
 Stage Data Set In UI
-    Click    ${STAGE_BUTTON}
-    Wait For Load State    networkidle
+    Navigate via Breadcrumbs       ${FRONTEND_DATA_SET_NAME}
+    Click    ${EDIT_BUTTON}
+    Click    ${STATUS_BUTTON}
+    Click    ${READY_BUTTON}
+    Click    ${SAVE_BUTTON}
+    Wait For Elements State    ${EDIT_BUTTON}       visible     timeout=15s
 
 Wait For Ready Data Set Status In UI
-    Wait Until Keyword Succeeds    2 min    5 sec    Assert Data Set Status    READY
+    Reload
+    Get Text        ${STATUS_BUTTON}      contains    Fertig
 
 Assert Ready Data Set Snapshot
-    Assert Data Set Status    READY
-    ${body}=    Get Text    css=body
-    Should Not Contain    ${body}    Public URL
-    Should Not Contain    ${body}    Named API route
+    Assert Data Set Status    Fertig
+    Assert Data Set information
 
 Release Data Set In UI
+    Click    ${EDIT_BUTTON}
+    Click    ${STATUS_BUTTON}
     Click    ${RELEASE_BUTTON}
-    Wait For Load State    networkidle
+    Click    ${SAVE_BUTTON}
+    Wait For Elements State    ${EDIT_BUTTON}       visible     timeout=15s
 
 Wait For Available Data Set Status In UI
-    Wait Until Keyword Succeeds    3 min    5 sec    Assert Data Set Status    AVAILABLE
+    Reload
+    Get Text        ${STATUS_BUTTON}      contains    Verfügbar
 
 Assert Available Data Set Snapshot
-    Assert Data Set Status    AVAILABLE
-    ${body}=    Get Text    css=body
-    Should Contain    ${body}    ${FRONTEND_DATA_SET_NAME}
-    Should Contain    ${body}    Things
-    Should Contain    ${body}    Public URL
+    Assert Data Set Status    Verfügbar
+    Assert Data Set information
 
 Change Data Set Access To Protected In UI
-    Click    ${ACCESS_SETTINGS_TAB}
-    Wait For Load State    networkidle
-    Uncheck Checkbox    ${OPEN_DATA_ACCESS_TOGGLE}
+    Click    ${EDIT_BUTTON}
+    Uncheck Checkbox    ${OPEN_DATA_ACCESS_CHECKBOX}
     Click    ${SAVE_BUTTON}
-    Wait For Load State    networkidle
-    ${body}=    Get Text    css=body
-    Should Contain    ${body}    Protected
+    Wait For Elements State     ${EDIT_BUTTON}      visible     timeout=15s
+    Get Attribute    ${OPEN_DATA_ACCESS_CHECKBOX}    aria-checked    ==    false
 
 Assert Data Set Status
     [Arguments]    ${expected_status}
-    ${body}=    Get Text    css=body
-    Should Contain    ${body}    ${expected_status}
+    Assert Status    ${expected_status}
 
 TC-016 Create Data Set
     Open Create Data Set Form
+    Create Dataset
     Fill Data Set Form
-    Save Form
-    Assert Data Set Draft Snapshot
+    Create STA API
+    Navigate via Breadcrumbs       ${FRONTEND_DATA_SET_NAME}
 
 TC-017 Verify Draft Data Set Snapshot
     Assert Data Set Draft Snapshot

@@ -30,7 +30,7 @@ TC-003 Create Data Structure Version
     Create Data Structure Version
 
 TC-004 Verify Data Structure Version Snapshot
-    Verify Data Structure Version Snapshot
+    Verify Data Structure Version Snapshot    DRAFT
 
 TC-005 Verify Data Structure References Created Version
     Verify Data Structure Snapshot    DRAFT    ${TRUE}
@@ -39,7 +39,7 @@ TC-006 Release Data Structure Version
     Release Data Structure Version
 
 TC-007 Verify Data Structure Version Snapshot After Release
-    Verify Data Structure Version Snapshot
+    Verify Data Structure Version Snapshot    AVAILABLE
 
 TC-008 Release Data Structure
     Release Data Structure
@@ -92,7 +92,7 @@ TC-028 Verify Authenticated Gateway Access
     Verify Gateway Access    ${expected_status}    ${TRUE}
 
 TC-029 Verify Authenticated Gateway Response Content
-    Verify Gateway Response Content    Test Sensor    test
+    Verify Gateway Response Content    Test Sensor    test    ${TRUE}
 
 TC-030 Verify Anonymous Gateway Rejection
     Verify Gateway Access    401    ${FALSE}

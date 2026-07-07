@@ -122,7 +122,7 @@ from xmlrpc.client import ServerProxy
 import os
 import sys
 
-url = os.environ["REMOTE_URL"]
+url = os.environ["REMOTE_URL"].rstrip("/") + "/"
 try:
     ServerProxy(url, allow_none=True).get_keyword_names()
 except Exception:
@@ -139,7 +139,7 @@ from xmlrpc.client import ServerProxy
 import os
 import sys
 
-url = os.environ["REMOTE_URL"]
+url = os.environ["REMOTE_URL"].rstrip("/") + "/"
 try:
     ServerProxy(url, allow_none=True).get_keyword_names()
 except Exception:

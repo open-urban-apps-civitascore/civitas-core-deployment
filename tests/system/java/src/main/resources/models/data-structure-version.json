@@ -1,0 +1,93 @@
+{
+  "model": {
+    "$id": "http://civitas.org/model/6b6ce2e0-672a-48cf-8490-6e4dc541e76d/1.0",
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "NeueKlasse",
+    "type": "object",
+    "properties": {
+      "id": {
+        "type": "string"
+      },
+      "name": {
+        "type": "string"
+      },
+      "geom": {
+        "$ref": "https://geojson.org/schema/Point.json",
+        "crs": "EPSG:4326"
+      }
+    },
+    "required": [
+      "id",
+      "name",
+      "geom"
+    ]
+  },
+  "styles": {
+    "id": "f93a153b-dc3e-4e06-b1cc-d4e58fb01ce2",
+    "name": "Untitled Diagram",
+    "nodes": [
+      {
+        "id": "7e92eb41-aa44-4b23-be90-ffaa81964f6c",
+        "type": "class",
+        "position": {
+          "x": 303,
+          "y": 179
+        },
+        "data": {
+          "element": {
+            "id": "7e92eb41-aa44-4b23-be90-ffaa81964f6c",
+            "name": "NeueKlasse",
+            "type": "class",
+            "attributes": [
+              {
+                "id": "9939b220-95d1-425b-9a8e-4d888327a918",
+                "name": "id",
+                "type": "String",
+                "visibility": "private"
+              },
+              {
+                "id": "415f28a7-ba6d-4e9e-8edd-cc3c2c36b4a6",
+                "name": "name",
+                "type": "String",
+                "visibility": "private",
+                "isId": false
+              },
+              {
+                "id": "3451facf-0a48-4b32-a65e-cf3ca63eb46a",
+                "name": "geom",
+                "type": "Point",
+                "visibility": "private",
+                "isId": false,
+                "meta": {
+                  "gisInfo": {
+                    "crs": "EPSG:4326"
+                  }
+                }
+              }
+            ],
+            "operations": []
+          },
+          "label": "NeueKlasse",
+          "isSelected": false,
+          "isDirty": true
+        },
+        "dragHandle": ".node-header",
+        "style": {
+          "border": "2px solid #333",
+          "borderRadius": "8px",
+          "background": "#fff",
+          "minWidth": 150,
+          "minHeight": 80
+        },
+        "measured": {
+          "width": 154,
+          "height": 121
+        },
+        "selected": true
+      }
+    ],
+    "edges": [],
+    "lastModified": "2026-07-01T12:19:10.876Z",
+    "isDirty": true
+  }
+}
