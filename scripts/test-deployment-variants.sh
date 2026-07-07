@@ -224,6 +224,17 @@ install_linkerd() {
   linkerd check
 }
 
+# Kyverno must be running before the platform deploys, because the
+# runtime-policies component (components/runtime-policies) applies cluster-scoped
+# ClusterPolicy objects that need Kyverno's CRDs + admission webhook to exist.
+# This is the same idempotent bootstrap the CI smoke test and `just kyverno` use.
+install_kyverno() {
+  log "Installing Kyverno (runtime ClusterPolicies prerequisite)"
+  ./scripts/ci/install-kyverno-if-missing.sh || return 1
+  # Wait for the webhook to be serving so the policy applies don't race it.
+  kubectl -n kyverno rollout status deploy --timeout=300s
+}
+
 # Keycloak needs its keycloak-smtp secret to exist before its pod starts,
 # otherwise the pod never becomes ready. Mirror `just deploy`.
 create_smtp_secret() { # MNS
@@ -366,6 +377,7 @@ run_variant() { # MNS MI LNK
   write_env_overlay "$mns" "$lnk"
   [[ "$PROFILE" == "production" ]] && { install_monitoring_crds || return 1; }
   [[ "$lnk" == "1" ]] && { install_linkerd || return 1; }
+  install_kyverno || return 1
   create_smtp_secret "$mns" || return 1
 
   local before after

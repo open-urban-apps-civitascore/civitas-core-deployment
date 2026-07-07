@@ -2,8 +2,7 @@
 # rest->DB (in postgres)
 # wcs->DB (in postgres)
 # wms->DB (in postgres)
-# webui->rabbitmq
-# others might be necessary in the future, but this seems to be the minimum for now.
+# all gsc services->rabbitmq (Spring Cloud Bus)
 
 # name must match lower case alphanumeric characters
 geoserver-rabbitmq:
@@ -16,6 +15,7 @@ geoserver-rabbitmq:
         - podSelector:
             matchLabels:
               app.kubernetes.io/instance: geoserver-geoserver
+              app.kubernetes.io/name: gsc
           componentNamespace: geoserver
 geoserver:
   podSelector:
