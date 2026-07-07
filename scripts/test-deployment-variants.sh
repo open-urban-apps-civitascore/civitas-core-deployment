@@ -385,26 +385,59 @@ check_rollouts() { # remaining_seconds ns...
   ok "all rollouts complete"
 }
 
-# End-to-end HTTP check through the ingress edge. Pod-readiness + rollout alone
+# HTTP status of one ingress request (prints "000" on connect/DNS/TLS failure).
+ingress_code() { # host url
+  local c
+  c="$(curl -sk -o /dev/null -w '%{http_code}' --max-time 10 \
+    --resolve "${1}:443:${CLUSTER_IP:-127.0.0.1}" "$2" 2>/dev/null)"
+  echo "${c:-000}"
+}
+
+# End-to-end HTTP checks through the ingress edge. Pod-readiness + rollout alone
 # stay green even when the ingress->APISIX hop is broken (e.g. an unmeshed ingress
-# gets rejected by APISIX's all-authenticated Linkerd `Server` with a 502/403), so
-# assert one real request actually traverses ingress -> APISIX -> backend. Target
-# Keycloak's public OIDC discovery via the `idm.<domain>` route (uri '/*', no auth).
+# rejected by APISIX's Linkerd `Server` with a 403, or an APISIX upstream that
+# can't resolve a service cross-namespace -> 502), so assert real requests
+# traverse ingress -> APISIX -> backend. Two routes are probed:
+#   * Keycloak OIDC discovery (idm) -> must be a clean 200 (public, no auth).
+#   * NiFi UI (nifi) -> must return ANY real HTTP status, not a gateway/upstream
+#     error; NiFi does its own OIDC, so 2xx/3xx/4xx all prove the ingress->APISIX
+#     ->nifi TLS path works, whereas 000/502/503/504 is exactly the DM1 broken-
+#     upstream / SNI-mismatch symptom.
 # Only meaningful with our managed k3d cluster, whose loadbalancer maps host
 # 80/443 (k3d-civitas-local.yaml); skipped in --no-cluster mode.
 smoke_ingress_http() { # deadline
-  local deadline="$1" domain host url code
+  local deadline="$1" domain code
   domain="$(yq -r '.global.domain // ""' "$ENV_FILE" 2>/dev/null || true)"
   [[ -z "$domain" || "$domain" == "null" ]] && domain="civitas.test"
-  host="idm.${domain}"
-  url="https://${host}/realms/master/.well-known/openid-configuration"
-  log "Smoke-testing ingress HTTP: ${url}"
+
+  # 1) Keycloak OIDC discovery must be a clean 200.
+  local kc_host="idm.${domain}" kc_url
+  kc_url="https://${kc_host}/realms/master/.well-known/openid-configuration"
+  log "Smoke-testing ingress HTTP: ${kc_url}"
   while :; do
-    code="$(curl -sk -o /dev/null -w '%{http_code}' --max-time 10 \
-      --resolve "${host}:443:${CLUSTER_IP:-127.0.0.1}" "$url" 2>/dev/null || echo 000)"
-    [[ "$code" == "200" ]] && { ok "ingress HTTP 200 (${host} -> APISIX -> keycloak)"; return 0; }
+    code="$(ingress_code "$kc_host" "$kc_url")"
+    [[ "$code" == "200" ]] && { ok "ingress HTTP 200 (${kc_host} -> APISIX -> keycloak)"; break; }
     if (( SECONDS >= deadline )); then
-      err "ingress HTTP check failed: last status ${code} for ${url}"; return 1
+      err "ingress HTTP check failed: last status ${code} for ${kc_url}"; return 1
+    fi
+    sleep 10
+  done
+
+  # 2) NiFi route must return a real HTTP response (not a gateway/upstream error).
+  local nifi_host="nifi.${domain}" nifi_url
+  nifi_url="https://${nifi_host}/nifi/"
+  log "Smoke-testing ingress HTTP: ${nifi_url}"
+  # Require a positive response from NiFi itself. A 000 (unreachable), 404
+  # (APISIX matched no route) or 5xx (502/503/504 = the DM1 broken-upstream /
+  # SNI-mismatch symptom) is retried and, at the deadline, fails.
+  while :; do
+    code="$(ingress_code "$nifi_host" "$nifi_url")"
+    case "$code" in
+      2[0-9][0-9]|3[0-9][0-9]|401|403)
+        ok "ingress HTTP ${code} (${nifi_host} -> APISIX -> nifi)"; return 0 ;;
+    esac
+    if (( SECONDS >= deadline )); then
+      err "ingress HTTP check failed: last status ${code} for ${nifi_url} (no healthy response from nifi upstream)"; return 1
     fi
     sleep 10
   done
@@ -493,7 +526,7 @@ run_variant() { # MNS MI LNK
   # Assert the ingress edge actually serves traffic (see smoke_ingress_http).
   # Only with our managed k3d cluster, whose loadbalancer maps host 80/443.
   if $MANAGE_CLUSTER; then
-    if ! smoke_ingress_http "$((SECONDS + 120))"; then
+    if ! smoke_ingress_http "$((SECONDS + 180))"; then
       dump_diagnostics; return 1
     fi
   else
