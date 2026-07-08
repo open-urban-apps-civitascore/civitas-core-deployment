@@ -34,6 +34,7 @@ helmfiles:
           - postgres
           - kafka
           - runtime-policies
+          - networkpolicies
         global:
           operators:
             # Watch all namespaces so the operators reconcile every instance.
