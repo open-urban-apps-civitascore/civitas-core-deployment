@@ -1,0 +1,4 @@
+Kyverno runtime policies deployed.
+
+  Operator policies (CNPG/Strimzi label protection): {{ .Values.operators.enabled }}
+  Linkerd mesh policies:                             {{ .Values.linkerd.enabled }}

@@ -1,0 +1,15 @@
+---
+operators:
+  enabled: true
+
+# Namespaces the operators run in — used to build the full service-account
+# username (system:serviceaccount:<ns>:<name>) the reverse label-protection
+# rules pin to. Supplied by the helmfile; empty falls back to .Release.Namespace.
+strimziOperatorNamespace: ''
+cnpgOperatorNamespace: ''
+
+linkerd:
+  enabled: true
+
+# Kyverno failureAction for all policies: Audit (log only) or Enforce (block)
+failureAction: Audit

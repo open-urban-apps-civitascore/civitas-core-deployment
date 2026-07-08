@@ -31,6 +31,19 @@ releases:
     {{- if ne $policyComponentName "networkpolicies" }}
       {{- $sourceComponent := index $policyConfig "_component" | default $policyComponentName }}
       {{- $targetComponentData := index $root $sourceComponent | default dict }}
+      {{- /* Values keys are camelCase, but component names are dash-cased (e.g.
+             "config-adapters" -> "configAdapters"); fall back to the camelCase key
+             so dash-named components still resolve a namespace and get their policies. */}}
+      {{- if not $targetComponentData }}
+        {{- $parts := splitList "-" $sourceComponent }}
+        {{- $camelCase := index $parts 0 }}
+        {{- range $i, $part := $parts }}
+          {{- if gt $i 0 }}
+            {{- $camelCase = printf "%s%s" $camelCase ($part | title) }}
+          {{- end }}
+        {{- end }}
+        {{- $targetComponentData = index $root $camelCase | default dict }}
+      {{- end }}
       {{- $targetNamespace := "" }}
       {{- range $partKey, $partData := $targetComponentData }}
         {{- if and (kindIs "map" $partData) (hasKey $partData "namespace") }}

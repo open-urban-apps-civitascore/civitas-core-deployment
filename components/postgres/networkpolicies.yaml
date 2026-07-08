@@ -31,12 +31,14 @@ postgres:
         - podSelector:
             matchLabels:
               app.kubernetes.io/component: backend
+              app.kubernetes.io/name: portal
           componentNamespace: portal
     # Keycloak - auto-inject instanceSlug namespace
     - from:
         - podSelector:
             matchLabels:
               app.kubernetes.io/instance: keycloak-app
+              app.kubernetes.io/name: keycloakx
           componentNamespace: keycloak
     # Authz - auto-inject instanceSlug namespace
     - from:
@@ -53,12 +55,14 @@ postgres:
         - podSelector:
             matchLabels:
               app.kubernetes.io/instance: frost-frost
+              app: frost-server
           componentNamespace: frost
     # Database role setup jobs - auto-inject instanceSlug namespace
     - from:
         - podSelector:
             matchLabels:
               app.kubernetes.io/component: database-role-setup
+              app.kubernetes.io/name: databases
           componentNamespace: postgres
     # Config adapter
     - from:
@@ -78,41 +82,48 @@ postgres:
             matchLabels:
               app.kubernetes.io/component: rest
               app.kubernetes.io/instance: geoserver-geoserver
+              app.kubernetes.io/name: gsc
           componentNamespace: geoserver
     - from:
         - podSelector:
             matchLabels:
               app.kubernetes.io/component: wcs
               app.kubernetes.io/instance: geoserver-geoserver
+              app.kubernetes.io/name: gsc
           componentNamespace: geoserver
     - from:
         - podSelector:
             matchLabels:
               app.kubernetes.io/component: wms
               app.kubernetes.io/instance: geoserver-geoserver
+              app.kubernetes.io/name: gsc
           componentNamespace: geoserver
     - from:
         - podSelector:
             matchLabels:
               app.kubernetes.io/component: wfs
               app.kubernetes.io/instance: geoserver-geoserver
+              app.kubernetes.io/name: gsc
           componentNamespace: geoserver
     - from:
         - podSelector:
             matchLabels:
               app.kubernetes.io/component: webui
               app.kubernetes.io/instance: geoserver-geoserver
+              app.kubernetes.io/name: gsc
           componentNamespace: geoserver
     # Superset
     - from:
         - podSelector:
             matchLabels:
               app: superset
+              release: superset-superset
           componentNamespace: superset
     - from:
         - podSelector:
             matchLabels:
               app: superset-worker
+              release: superset-superset
           componentNamespace: superset
     - from:
         - podSelector:
@@ -125,3 +136,24 @@ postgres:
               app.kubernetes.io/instance: nifi-nifi
               app.kubernetes.io/name: nifi
           componentNamespace: nifi
+
+# Admission webhook: the kube-apiserver calls the CloudNativePG operator's
+# mutating/validating webhook (mcluster/mdatabase) on :9443. The apiserver is not
+# selectable as a NetworkPolicy peer (it connects from the control-plane/host
+# network with a cluster-dependent source IP), so allow the webhook port from any
+# source; the podSelector + port keep this scoped to the operator's webhook
+# endpoint only. Without this, the namespace default-deny blocks the webhook and
+# Cluster/Database CR applies intermittently fail with a 502 from
+# cnpg-webhook-service.
+postgres-operator-webhook:
+  podSelector:
+    app.kubernetes.io/name: cloudnative-pg
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+      ports:
+        - protocol: TCP
+          port: 9443

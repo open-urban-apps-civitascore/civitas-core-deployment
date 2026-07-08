@@ -89,6 +89,9 @@ spec:
               {{- if hasKey $config "scheme" }}
               "scheme": "{{ $config.scheme }}",
               "pass_host": "{{ $config.passHost | default "pass" }}",
+              {{- if hasKey $config "upstreamHost" }}
+              "upstream_host": "{{ $config.upstreamHost }}",
+              {{- end }}
               {{- end }}
               "nodes": {
                 "{{ $config.upstream }}": 1
@@ -115,6 +118,9 @@ spec:
               {{- if hasKey $config "scheme" }}
               "scheme": "{{ $config.scheme }}",
               "pass_host": "{{ $config.passHost | default "pass" }}",
+              {{- if hasKey $config "upstreamHost" }}
+              "upstream_host": "{{ $config.upstreamHost }}",
+              {{- end }}
               {{- end }}
               "nodes": {
                 "{{ $config.upstream }}": 1

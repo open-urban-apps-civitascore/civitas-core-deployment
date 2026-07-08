@@ -176,15 +176,42 @@ sync environment='local' component='all':
 		helmfile -f ./deployment/helmfile.yaml sync -e {{environment}} --selector component={{component}}; \
 	fi
 
-# Deploy linkerd
+# Deploy linkerd (idempotent — skips if the control plane is already installed)
 [group('deployment')]
 linkerd:
+	#!/usr/bin/env bash
+	set -euo pipefail
 	just _check-dependencies linkerd
+	if kubectl get deploy linkerd-destination -n linkerd >/dev/null 2>&1; then
+		echo "Linkerd control plane already installed — skipping."
+		exit 0
+	fi
 	linkerd check --pre
 	kubectl apply --server-side -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.4.0/standard-install.yaml
 	linkerd install --crds | kubectl apply -f -
 	linkerd install --set proxy.nativeSidecar=true | kubectl apply -f -
 	linkerd check
+
+# Deploy Kyverno (idempotent, required by runtime-policies; same script as CI)
+[group('deployment')]
+kyverno:
+	just _check-dependencies helmfile
+	./scripts/ci/install-kyverno-if-missing.sh
+
+# Mesh the local nginx ingress controller so it can reach APISIX under mandatory mTLS
+[group('deployment')]
+mesh-ingress-nginx:
+	#!/usr/bin/env bash
+	set -euo pipefail
+	if ! kubectl get deployment ingress-nginx-controller -n ingress-nginx >/dev/null 2>&1; then
+		echo "ingress-nginx not found; skipping mesh step."
+		exit 0
+	fi
+	kubectl annotate namespace ingress-nginx \
+		linkerd.io/inject=enabled \
+		config.linkerd.io/skip-inbound-ports=80,443,8443 --overwrite
+	kubectl rollout restart deployment ingress-nginx-controller -n ingress-nginx
+	kubectl rollout status deployment ingress-nginx-controller -n ingress-nginx --timeout=300s
 
 # Add host entries to /etc/hosts for Linux systems
 [group('helpers')]
@@ -325,6 +352,8 @@ deploy cri='k3d' namespace='dev' profile='local':
 		exit 1; \
 	fi; fi
 	@just linkerd
+	@just kyverno
+	@just mesh-ingress-nginx
 	@if [ ! -d "./deployment" ]; then \
 		cp -r defaults/deployment deployment; \
 	fi

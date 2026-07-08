@@ -1,0 +1,28 @@
+# Helmfile for Kyverno installation inside vcluster
+# Usage: helmfile -f .ci/kyverno/helmfile.yaml.gotmpl sync
+#
+# Installs Kyverno admission controller for policy enforcement in ephemeral
+# vcluster smoke-test environments. No external certificates required —
+# Kyverno manages its own webhook TLS.
+
+repositories:
+  - name: kyverno
+    url: https://kyverno.github.io/kyverno/
+
+releases:
+  - name: kyverno
+    namespace: kyverno
+    createNamespace: true
+    chart: kyverno/kyverno
+    version: 3.8.1
+    wait: true
+    waitForJobs: true
+    values:
+      - admissionController:
+          replicas: 1
+        backgroundController:
+          replicas: 1
+        cleanupController:
+          replicas: 1
+        reportsController:
+          replicas: 1

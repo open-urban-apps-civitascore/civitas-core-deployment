@@ -6,6 +6,11 @@ networkpolicies:
     {{- if isDir $addonPath }}
       {{- $componentPath = $addonPath }}  
     {{- end }}
+  default-deny-{{ $component }}:
+    podSelector: {}
+    policyTypes:
+      - Ingress
+    _component: {{ $component }}
     {{- $networkpoliciesFile := printf "%s/networkpolicies.yaml" $componentPath }}
     {{- if isFile $networkpoliciesFile }}
       {{- $content := readFile $networkpoliciesFile | fromYaml }}

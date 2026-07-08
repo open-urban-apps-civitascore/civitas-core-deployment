@@ -21,6 +21,14 @@ version:
 
 cluster:
   imageName: "{{ .Values.images.postgres.cluster.repository }}:{{ .Values.images.postgres.cluster.tag }}"
+  # Skip the Linkerd proxy for inbound on the instance-manager status/probe port
+  # (:8000, served over the instance's own TLS). The kubelet probe is unmeshed
+  # (tls=None), so mandatory mTLS (cluster-authenticated) would deny it and the
+  # instances would CrashLoop. This annotation is propagated onto the instance pods
+  # via the operator's INHERITED_ANNOTATIONS (see operator base-values). Inert
+  # without Linkerd.
+  annotations:
+    config.linkerd.io/skip-inbound-ports: "8000"
   storage:
     size: "8Gi"
     storageClass: "{{ $global.storage.storageClass.rwo | default "" }}"
@@ -44,16 +52,5 @@ cluster:
   postgresql:
     parameters: {}
     synchronous: {}
-    # TODO: Fix pg_hba according to real needs
     pg_hba:
-      - local     all           all                     trust
-      - hostnossl quantumleap   all       all           md5
-      - hostssl   all           +zalandos 127.0.0.1/32  pam
-      - host      all           all       127.0.0.1/32  md5
-      - hostssl   all           +zalandos ::1/128       pam
-      - host      all           all       ::1/128       md5
-      - hostssl   replication   standby   all           md5
-      - hostnossl all           all       10.0.0.0/8    md5
-      - hostnossl all           all       10.0.0.0/8    pam
-      - hostssl   all           +zalandos all           pam
-      - hostssl   all           all       all           md5
+      - host all all all scram-sha-256
