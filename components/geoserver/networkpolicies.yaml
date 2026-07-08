@@ -17,9 +17,9 @@ geoserver-rabbitmq:
               app.kubernetes.io/instance: geoserver-geoserver
               app.kubernetes.io/name: gsc
           componentNamespace: geoserver
+
 geoserver:
   podSelector:
-    app.kubernetes.io/component: rest
     app.kubernetes.io/instance: geoserver-geoserver
     app.kubernetes.io/name: gsc
   policyTypes:
@@ -28,10 +28,14 @@ geoserver:
     - from:
         - podSelector:
             matchLabels:
-              app.kubernetes.io/name: apisix
-          componentNamespace: apisix
-    - from:
-        - podSelector:
-            matchLabels:
               app.kubernetes.io/name: config-adapter
           componentNamespace: config-adapters
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: apisix
+          componentNamespace: apisix
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/instance: geoserver-geoserver
+              app.kubernetes.io/name: gsc
+          componentNamespace: geoserver
