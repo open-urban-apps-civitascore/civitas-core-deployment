@@ -12,18 +12,22 @@
 #
 # Usage:
 #   ./scripts/ci/create-demo-db.sh [profile]
-#     profile   helmfile environment used to resolve the postgres namespace
-#               (default: local)
+#     profile   the postgres namespace is now resolved from the running 
+#               cluster (default: local)
 #
-# Required tools (all present in the CICD image): helmfile, yq, kubectl.
+# Required tools (all present in the CICD image): kubectl.
 # Optional env: DEMO_DB_PASSWORD (demo user password, defaults to `secret`).
 # =============================================================================
 set -euo pipefail
 
 PROFILE="${1:-local}"
 
-# Read configuration from global.yaml
-NS=$(helmfile template -f deployment/helmfile.yaml -e "$PROFILE" --selector component=postgres --skip-deps -q | yq 'select(.kind == "Deployment") | .metadata.namespace')
+NS=$(kubectl get pods --all-namespaces -l cnpg.io/cluster=postgres-cluster,cnpg.io/instanceRole=primary -o jsonpath='{.items[0].metadata.namespace}')
+
+if [ -z "$NS" ]; then
+    echo "ERROR: Primary Postgres pod not found in any namespace"
+    exit 1
+fi
 
 echo "Creating demo database in namespace: $NS"
 
@@ -32,11 +36,6 @@ POSTGRES_USER=$(kubectl get secret -n "$NS" postgres-cluster-superuser -o jsonpa
 
 # Use the primary pod (writes are not allowed on read-only replicas)
 POD=$(kubectl get pods -n "$NS" -l cnpg.io/cluster=postgres-cluster,cnpg.io/instanceRole=primary -o jsonpath='{.items[0].metadata.name}')
-
-if [ -z "$POD" ]; then
-    echo "ERROR: Primary Postgres pod not found in namespace $NS"
-    exit 1
-fi
 
 echo "Using primary Postgres pod: $POD"
 
