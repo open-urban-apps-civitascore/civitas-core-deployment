@@ -435,7 +435,6 @@ create-demo-db-nightly:
     reports:
       dotenv: demo-db.env
 
-
 # Set the initial user's password after a fresh deploy so the system tests can
 # log in.
 set-initial-user-password-nightly:
