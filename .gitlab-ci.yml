@@ -400,9 +400,9 @@ deploy-nightly:
   environment:
     name: nightly/$CI_COMMIT_REF_SLUG
   rules:
-    # Deploy always on the nightly schedule (no manual trigger).
+    # Deploy on the nightly schedule (no manual trigger)
     - if: '$IS_NIGHTLY == "true"'
-      when: always
+      when: on_success
 
 # Create the demo database + user after deploy, before system tests run.
 create-demo-db-nightly:
