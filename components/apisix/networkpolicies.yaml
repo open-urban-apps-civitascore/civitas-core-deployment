@@ -21,7 +21,7 @@ apisix:
           port: 9180
 
     # Data plane (9080): the gateway's public HTTP entry point. End-user
-    # traffic enters via the cluster's ingress controller (nginx), which
+    # traffic enters via the cluster's ingress controller, which
     # terminates TLS and forwards the request to this port.
     - from:
         - ipBlock:

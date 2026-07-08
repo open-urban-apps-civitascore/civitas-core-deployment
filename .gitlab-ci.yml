@@ -121,6 +121,7 @@ deploy-staging:
     KEYCLOAK_SMTP_NAMESPACE: staging
   script:
     - *create-keycloak-smtp-secret
+    - ./scripts/ci/install-kyverno-if-missing.sh
     - helmfile -f ./deployment/ sync -e staging
   only:
     - staging
@@ -135,6 +136,7 @@ deploy-production:
     KEYCLOAK_SMTP_NAMESPACE: civitas
   script:
     - *create-keycloak-smtp-secret
+    - ./scripts/ci/install-kyverno-if-missing.sh
     - helmfile -f ./deployment/ sync -e production
   rules:
     - if: '$CI_COMMIT_BRANCH == "main" || $CI_COMMIT_TAG'

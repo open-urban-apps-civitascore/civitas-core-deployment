@@ -1,11 +1,14 @@
 ---
-# NiFi terminates TLS on 8443 with a self-signed cert; passHost=node sends the upstream
-# hostname (nifi-nifi-http) as SNI so it matches the cert SAN.
+# NiFi terminates TLS on 8443 with a self-signed cert. Dial the pod's namespace-
+# qualified FQDN so the upstream resolves cross-namespace in multi-NS, but keep
+# the TLS SNI (and Host) pinned to `nifi-nifi-http` via pass_host=rewrite so it
+# still matches the cert SAN — NiFi/Jetty enforces an SNI host check.
 nifi:
   name: nifi
   description: Apache NiFi web UI and REST API
-  upstream: nifi-nifi-http:8443
+  upstream: nifi-nifi-http.{{ include "civitas.namespace" (dict "global" .Values.global "suffix" "nifi") }}.svc.cluster.local:8443 # yamllint disable-line rule:line-length
   scheme: https
-  passHost: node
+  passHost: rewrite
+  upstreamHost: nifi-nifi-http
   subDomain: nifi
   uri: '/*'

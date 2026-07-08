@@ -20,7 +20,7 @@ global:
 
   serviceMesh:
     # The smoke-test vcluster's Ingress objects are synced to the HOST cluster
-    # (sync.toHost.ingresses), so the nginx ingress controller fronting APISIX
+    # (sync.toHost.ingresses), so the ingress controller fronting APISIX
     # runs outside this vcluster's Linkerd mesh and has no mesh identity. Keep
     # the APISIX data-plane edge `all-unauthenticated` so that unmeshed,
     # plaintext ingress traffic is accepted. (The global default is false.)

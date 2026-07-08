@@ -41,7 +41,7 @@ extraSecretEnvVars:
 domain: {{ $global.domain }}
 realm: {{ $global.instanceSlug }}
 
-# Authorize the nginx ingress edge to reach the APISIX data plane when the
+# Authorize the ingress edge to reach the APISIX data plane when the
 # namespace enforces mandatory mTLS via the Linkerd default-inbound-policy.
 # `allowUnauthenticatedIngress` mirrors the global setting: true accepts plaintext
 # from an unmeshed ingress, false requires the ingress controller to be meshed.

@@ -317,6 +317,8 @@ configOverrides:
       imports = ('superset.sql_lab',)
       broker_url = CELERY_REDIS_URL
       result_backend = CELERY_REDIS_URL
+      # Pin pool size; else celery defaults to host core count and OOMKills the worker.
+      worker_concurrency = 4
 
     CELERY_CONFIG = CeleryConfig
     RESULTS_BACKEND = RedisCache(
