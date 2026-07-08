@@ -136,3 +136,24 @@ postgres:
               app.kubernetes.io/instance: nifi-nifi
               app.kubernetes.io/name: nifi
           componentNamespace: nifi
+
+# Admission webhook: the kube-apiserver calls the CloudNativePG operator's
+# mutating/validating webhook (mcluster/mdatabase) on :9443. The apiserver is not
+# selectable as a NetworkPolicy peer (it connects from the control-plane/host
+# network with a cluster-dependent source IP), so allow the webhook port from any
+# source; the podSelector + port keep this scoped to the operator's webhook
+# endpoint only. Without this, the namespace default-deny blocks the webhook and
+# Cluster/Database CR applies intermittently fail with a 502 from
+# cnpg-webhook-service.
+postgres-operator-webhook:
+  podSelector:
+    app.kubernetes.io/name: cloudnative-pg
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+      ports:
+        - protocol: TCP
+          port: 9443
