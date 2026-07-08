@@ -12,7 +12,7 @@
 #
 # Usage:
 #   ./scripts/ci/create-demo-db.sh [profile]
-#     profile   the postgres namespace is now resolved from the running 
+#     profile   the postgres namespace is now resolved from the running
 #               cluster (default: local)
 #
 # Required tools (all present in the CICD image): kubectl.
