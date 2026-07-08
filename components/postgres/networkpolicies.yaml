@@ -142,10 +142,13 @@ postgres:
 # selectable as a NetworkPolicy peer (it connects from the control-plane/host
 # network with a cluster-dependent source IP), so allow the webhook port from any
 # source; the podSelector + port keep this scoped to the operator's webhook
-# endpoint only. Without this, the namespace default-deny blocks the webhook and
-# Cluster/Database CR applies intermittently fail with a 502 from
+# endpoint only. Without this, the operator namespace's default-deny (default-deny
+# for the runtime-policies component, which shares the operator namespace) blocks
+# the webhook and Cluster/Database CR applies intermittently fail with a 502 from
 # cnpg-webhook-service.
 postgres-operator-webhook:
+  deployLayer: operators
+  componentNamespace: postgres.operator
   podSelector:
     app.kubernetes.io/name: cloudnative-pg
   policyTypes:
