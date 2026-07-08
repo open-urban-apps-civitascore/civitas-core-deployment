@@ -19,6 +19,11 @@
             "type": "string",
             "minLength": 1
           },
+          "timeout": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Per-release helm wait timeout in seconds; overrides helmDefaults.timeout"
+          },
           "extraLabels": {
             "type": "object",
             "patternProperties": {

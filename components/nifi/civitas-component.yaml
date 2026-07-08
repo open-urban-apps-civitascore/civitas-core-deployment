@@ -2,6 +2,7 @@
 component: nifi
 parts:
   - name: nifi
+    timeout: 600
   - name: bootstrap
     needs:
       - nifi.nifi
