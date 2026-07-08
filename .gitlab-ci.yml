@@ -417,6 +417,7 @@ create-demo-db-nightly:
     KUBECONFIG_CONTENT: $KUBECONFIG_CONTENT_VCLUSTER_HOST
     SMOKE_TEST_DOMAIN: ${PIPELINE_SLUG}.${SMOKE_TEST_BASE_DOMAIN}
     DEMO_DB_PASSWORD: $DEMO_DB_PASSWORD
+    DEMO_DB_DOTENV: demo-db.env
   rules:
     - if: '$IS_NIGHTLY == "true"'
       when: on_success
@@ -424,6 +425,11 @@ create-demo-db-nightly:
     # Point kubectl/helm at the vcluster the platform was deployed into.
     - ./scripts/ci/fetch-vcluster-kubeconfig.sh
     - ./scripts/ci/create-demo-db.sh smoke-test
+  # Expose the demo db connection details (DEMO_DB_*) to the system tests.
+  artifacts:
+    reports:
+      dotenv: demo-db.env
+
 
 # Set the initial user's password after a fresh deploy so the system tests can
 # log in.
@@ -464,8 +470,9 @@ system-tests-nightly:
       artifacts: true
     - job: deploy-nightly
       artifacts: false
+    # Consumes the DEMO_DB_* dotenv (demo db connection details).
     - job: create-demo-db-nightly
-      artifacts: false
+      artifacts: true
     # Consumes SYSTEM_TEST_AUTH_USER / SYSTEM_TEST_AUTH_PASSWORD dotenv.
     - job: set-initial-user-password-nightly
       artifacts: true

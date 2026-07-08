@@ -16,7 +16,10 @@
 #               cluster (default: local)
 #
 # Required tools (all present in the CICD image): kubectl.
-# Optional env: DEMO_DB_PASSWORD (demo user password, defaults to `secret`).
+# Optional env:
+#   DEMO_DB_PASSWORD  demo user password (defaults to `secret`).
+#   DEMO_DB_DOTENV    if set, the demo db connection details are written to this
+#                     file as DEMO_DB_* variables (consumed by the system tests).
 # =============================================================================
 set -euo pipefail
 
@@ -65,5 +68,24 @@ echo "✓ Database 'demo' created and SQL imported successfully!"
 echo "  Database: demo"
 echo "  User: demo"
 echo "  Password: $DB_PASSWORD"
-# In-cluster connection URL (e.g. how the nifi pod reaches this db)
-echo "  In-cluster URL: postgresql://demo:$DB_PASSWORD@postgres-cluster-rw.$NS.svc.cluster.local:5432/demo"
+# In-cluster connection details (e.g. how the nifi pod reaches this db)
+DEMO_DB_HOST="postgres-cluster-rw.$NS.svc.cluster.local"
+DEMO_DB_PORT="5432"
+DEMO_DB_USER="demo"
+DEMO_DB_NAME="demo"
+DEMO_DB_URL="postgresql://$DEMO_DB_USER:$DB_PASSWORD@$DEMO_DB_HOST:$DEMO_DB_PORT/$DEMO_DB_NAME"
+echo "  In-cluster URL: $DEMO_DB_URL"
+
+# Write connection details for downstream jobs (e.g. system tests)
+if [ -n "${DEMO_DB_DOTENV:-}" ]; then
+    echo "Writing demo db connection details to $DEMO_DB_DOTENV"
+    cat > "$DEMO_DB_DOTENV" <<EOF
+DEMO_DB_URL=$DEMO_DB_URL
+DEMO_DB_HOST=$DEMO_DB_HOST
+DEMO_DB_PORT=$DEMO_DB_PORT
+DEMO_DB_USER=$DEMO_DB_USER
+DEMO_DB_PASSWORD=$DB_PASSWORD
+DEMO_DB_NAME=$DEMO_DB_NAME
+EOF
+fi
+
