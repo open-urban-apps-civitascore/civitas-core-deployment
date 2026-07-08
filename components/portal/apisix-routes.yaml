@@ -3,6 +3,7 @@ portal-backend:
   name: portal-backend
   description: Portal Backend API Service
   upstream: portal-portal-backend.{{ include "civitas.namespace" (dict "global" .Values.global "suffix" "portal") }}.svc.cluster.local:8080 # yamllint disable-line rule:line-length
+  subDomain: portal
   uri: /v1/*
   priority: 10
 portal-bff:
