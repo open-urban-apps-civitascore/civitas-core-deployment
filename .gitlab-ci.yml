@@ -449,6 +449,7 @@ set-initial-user-password-nightly:
     - ./scripts/ci/fetch-vcluster-kubeconfig.sh
     - export AUTH_USER="${GITLAB_USER_EMAIL:-admin@civitas.test}"
     - ./scripts/ci/set-initial-user-password.sh
+    - echo "KEYCLOAK_CLIENT_SECRET=$(kubectl -n "${NAMESPACE}" get secret keycloak-client-portal-frontend -o jsonpath='{.data.client-secret}' | base64 -d)" >> system-test-auth.env
   artifacts:
     reports:
       dotenv: system-test-auth.env
