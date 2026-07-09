@@ -21,3 +21,15 @@ api-access:
     optionalClientScopes: []
     attributes:
       use.refresh.tokens: 'false'
+    protocolMappers:
+      # Without this, APISIX's openid-connect introspection (client
+      # apisix-validator) rejects api-access tokens with
+      # "Client 'apisix-validator' is not in the token audience".
+      - name: apisix-audience
+        protocol: openid-connect
+        protocolMapper: oidc-audience-mapper
+        consentRequired: false
+        config:
+          included.client.audience: apisix-validator
+          access.token.claim: 'true'
+          id.token.claim: 'false'
