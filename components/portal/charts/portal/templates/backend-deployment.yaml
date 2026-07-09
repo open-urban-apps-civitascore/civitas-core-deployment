@@ -76,6 +76,8 @@ spec:
               value: {{ .Values.keycloak.authServerUrl }}
             - name: KEYCLOAK_TARGET_REALM
               value: {{ .Values.keycloak.realm }}
+            - name: KEYCLOAK_ENFORCE_OTP
+              value: {{ .Values.backend.env.keycloakEnforceOtp | quote }}
             # JWT configuration
             - name: SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWS_ALGORITHMS
               value: ES256

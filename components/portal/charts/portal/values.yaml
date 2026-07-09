@@ -23,6 +23,7 @@ backend:
       memory: 1Gi
   env:
     loggingLevelRoot: INFO
+    keycloakEnforceOtp: true
 
 # Frontend configuration
 frontend:
