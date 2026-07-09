@@ -32,6 +32,7 @@ Point the endpoint env vars at the target cluster. Use public ingress URLs, or
 ```bash
 # Example: public ingress of a smoke-test/nightly environment
 export API_BASE_URL=https://api.<slug>.<base-domain>/v1
+export PORTAL_BACKEND_URL=https://portal.<slug>.<base-domain>/v1
 export KEYCLOAK_URL=https://idm.<slug>.<base-domain>
 export KEYCLOAK_REALM=civitas
 export PORTAL_FRONTEND_URL=https://portal.<slug>.<base-domain>
@@ -58,7 +59,7 @@ bash tests/system/run-system-tests.sh --help
 
 The defaults are tuned for the local development setup, but they can be overridden:
 
-- `PORTAL_BACKEND_URL` or `API_BASE_URL`
+- `PORTAL_BACKEND_URL`
 - `KEYCLOAK_URL`
 - `KEYCLOAK_REALM`
 - `KEYCLOAK_CLIENT_ID`

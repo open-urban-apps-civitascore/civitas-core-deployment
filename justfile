@@ -61,6 +61,7 @@ system-test environment='local' cicd-image='registry.gitlab.com/civitas-connect/
 		-e KEYCLOAK_CLIENT_ID="portal-frontend" \
 		-e KEYCLOAK_CLIENT_SECRET="${CLIENT_SECRET}" \
 		-e APISIX_GATEWAY_URL="https://api.${DOMAIN}" \
+		-e PORTAL_BACKEND_URL="https://portal.${DOMAIN}/v1" \
 		-e PORTAL_FRONTEND_URL="https://portal.${DOMAIN}" \
 		-e FROST_BASE_URL="http://frost-frost-frost-server-http.frost/FROST-Server/v1.1" \
 		-e SYSTEM_TEST_AUTH_USER="${USER}" \

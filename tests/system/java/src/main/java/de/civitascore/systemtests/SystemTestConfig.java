@@ -41,8 +41,7 @@ public class SystemTestConfig {
   public static SystemTestConfig fromEnvironment() {
     Map<String, String> env = System.getenv();
     String backendBaseUrl = nonBlank(
-        env.get("PORTAL_BACKEND_URL"),
-        nonBlank(env.get("API_BASE_URL"), "http://localhost:8089/v1"));
+        env.get("PORTAL_BACKEND_URL"), "http://localhost:8089/v1");
     String keycloakBaseUrl = nonBlank(env.get("KEYCLOAK_URL"), "http://localhost:8080");
     String keycloakRealm = nonBlank(env.get("KEYCLOAK_REALM"), "civitas-core");
     String keycloakClientId = nonBlank(env.get("KEYCLOAK_CLIENT_ID"), "portal-frontend");
