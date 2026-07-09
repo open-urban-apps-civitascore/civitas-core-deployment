@@ -79,15 +79,5 @@ api-template:
       with_consumer: false
       send_headers_upstream:
         - X-Allowed-Scope-Ids
-    serverless-pre-function:
-      phase: rewrite
-      functions:
-        - >-
-          return function()
-            ngx.req.clear_header("X-Userinfo")
-            ngx.req.clear_header("X-Access-Token")
-            ngx.req.clear_header("X-Id-Token")
-            ngx.req.clear_header("X-Allowed-Scope-Ids")
-          end
     request-id:
       include_in_response: true
