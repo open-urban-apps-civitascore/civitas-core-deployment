@@ -136,7 +136,7 @@ spec:
             - name: INIT_USERS_0_GROUPS_1
               value: Data Owner
             - name: INIT_USERS_0_GROUPS_2
-              value: Data Owner
+              value: Data Architect
             {{- end }}
             {{- if and ($trustStoreConfig.enabled | default false) $trustStoreSecret }}
             - name: JAVA_TOOL_OPTIONS
