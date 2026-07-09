@@ -36,24 +36,23 @@ keycloak:
   realm: {{ $realmName }}
 
 kafka:
-  bootstrapServers: "{{ .Values.kafka.cluster.bootstrapService }}:{{ .Values.kafka.cluster.bootstrapPort }}"
+  bootstrapServers: "{{ .Values.kafka.cluster.bootstrapService }}.{{ .Values.kafka.cluster.namespace }}.svc.cluster.local:{{ .Values.kafka.cluster.bootstrapPort }}"
 
 {{- $host := printf "%s.%s" (default "" $this.subdomain) $global.domain | trimPrefix "." }}
 
 server:
   url: https://{{ $host }}
 
+{{- $publicApiUrl := printf "https://api.%s" $global.domain }}
 apisix:
   serviceUrl: "http://apisix-gateway.{{ .Values.apisix.apisix.namespace }}.svc.cluster.local"
-
-modelAtlas:
-  url: "http://model-atlas-model-atlas.{{ .Values.modelAtlas.modelAtlas.namespace }}.svc.cluster.local:8080"
+  apiUrl: {{ $publicApiUrl | quote }}
 
 ingress:
   enabled: false
 
 database:
-  host: {{ .Values.databases.portal.host }}
+  host: {{ .Values.databases.portal.hostServiceName }}.{{ .Values.postgres.cluster.namespace }}.svc.cluster.local
   port: {{ .Values.databases.portal.port }}
   name: {{ .Values.databases.portal.name }}
   owner: {{ .Values.databases.portal.user }}

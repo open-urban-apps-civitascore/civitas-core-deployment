@@ -17,7 +17,9 @@ podSecurityContext:
   {{ .Values.securityDefaults.podSecurityContext | toYaml | nindent 2 }}
 
 podAnnotations:
-  config.linkerd.io/skip-outbound-ports: "25,465,587" # ignore smtp ports
+  config.linkerd.io/skip-outbound-ports: "25,465,587,7800,57800"
+  config.linkerd.io/skip-inbound-ports: "7800,57800"
+
 
 image:
 {{- with .Values.images.keycloak.app }}
@@ -69,12 +71,17 @@ dbchecker:
 
 database:
   vendor: postgres
-  hostname: {{ .Values.databases.keycloak.host }}
+  hostname: {{ .Values.databases.keycloak.hostServiceName }}.{{ .Values.postgres.cluster.namespace }}.svc.cluster.local
   port: {{ .Values.databases.keycloak.port }}
   database: {{ .Values.databases.keycloak.name }}
   username: {{ .Values.databases.keycloak.user }}
   existingSecret: {{ .Values.databases.keycloak.secret.name }}
   existingSecretKey: "password"
+service:
+  sessionAffinity: "ClientIP"
+  sessionAffinityConfig:
+    clientIP:
+      timeoutSeconds: 3600
 proxy:
   enabled: true
   mode: xforwarded
@@ -137,6 +144,8 @@ extraInitContainers: |
     volumeMounts:
       - name: workspace
         mountPath: /app
+      - name: tmp
+        mountPath: /tmp
 
 extraVolumeMounts: |
   - name: workspace

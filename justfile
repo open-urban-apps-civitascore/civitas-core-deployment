@@ -1,8 +1,10 @@
 # .DEFAULT_GOAL := help
 
+set dotenv-load
+
 # MINIKUBE_IP := $(shell minikube ip)
 marker := 'LOCAL_CIVITAS_HOSTS'
-hosts := 'idm.civitas.test portal.civitas.test'
+hosts := 'idm.civitas.test portal.civitas.test api.civitas.test dashboard.civitas.test'
 
 default:
 	@just --list
@@ -23,6 +25,60 @@ sync-component environment='local' component='':
 destroy-component environment='local' component='':
 	echo "Destroying component: {{component}} in environment: {{environment}}"
 	helmfile -f ./deployment/helmfile.yaml destroy -e {{environment}} --selector component={{component}}
+
+# Get Keycloak Realm
+[group('helpers')]
+_get-keycloak-realm profile='local':
+	@yq '(.global.instanceSlug // error("missing"))' deployment/environments/{{ profile }}/global.yaml.gotmpl 2>/dev/null || yq '.global.instanceSlug' defaults/environment/global.yaml
+
+# Get domain
+[group('helpers')]
+_get-domain profile='local':
+	@yq '(.global.domain // error("missing"))' deployment/environments/local/global.yaml.gotmpl 2>/dev/null || yq '.global.domain' defaults/environment/global.yaml
+
+# Get Keycloak namespace
+[group('helpers')]
+_get-keycloak-namespace:
+	@helmfile template -f deployment/helmfile.yaml -e local --selector component=keycloak --skip-deps -q | yq 'select(.kind == "StatefulSet") | .metadata.namespace'
+
+# Get APISix namespace
+[group('helpers')]
+_get-apisix-namespace:
+	@helmfile template -f deployment/helmfile.yaml -e local --selector component=apisix --skip-deps -q | yq 'select(.kind == "Deployment" ) | .metadata.namespace'
+
+# Get Postgres namespace
+[group('helpers')]
+_get-postgres-namespace:
+	@helmfile template -f deployment/helmfile.yaml -e local --selector component=postgres --skip-deps -q | yq 'select(.kind == "Deployment") | .metadata.namespace'
+
+# Deploy the shared cluster operators (CloudNativePG, Strimzi) ONCE per cluster.
+# Run this before deploying any instances; re-running is idempotent.
+[group('deployment')]
+deploy-operators environment='local':
+	echo "Deploying shared cluster operators in environment: {{environment}}"
+	helmfile -f ./deployment/helmfile-operators.yaml sync -e {{environment}}
+
+# Deploy a single instance (everything except the shared operators). The shared operators
+# must already be running (see deploy-operators). Optionally override the instance slug
+# (namespace + Keycloak realm) ad-hoc; otherwise the environment's instanceSlug is used.
+[group('deployment')]
+deploy-instance environment='local' slug='':
+	if [ -n "{{slug}}" ]; then \
+		echo "Deploying instance '{{slug}}' in environment: {{environment}}"; \
+		helmfile -f ./deployment/helmfile-instance.yaml.gotmpl sync -e {{environment}} --state-values-set-string instanceSlug={{slug}}; \
+	else \
+		echo "Deploying instance in environment: {{environment}}"; \
+		helmfile -f ./deployment/helmfile-instance.yaml.gotmpl sync -e {{environment}}; \
+	fi
+
+# Destroy a single instance (everything except the shared operators)
+[group('deployment')]
+destroy-instance environment='local' slug='':
+	if [ -n "{{slug}}" ]; then \
+		helmfile -f ./deployment/helmfile-instance.yaml.gotmpl destroy -e {{environment}} --state-values-set-string instanceSlug={{slug}}; \
+	else \
+		helmfile -f ./deployment/helmfile-instance.yaml.gotmpl destroy -e {{environment}}; \
+	fi
 
 # Deploy minikube
 [group('deployment')]
@@ -64,15 +120,42 @@ sync environment='local' component='all':
 		helmfile -f ./deployment/helmfile.yaml sync -e {{environment}} --selector component={{component}}; \
 	fi
 
-# Deploy linkerd
+# Deploy linkerd (idempotent — skips if the control plane is already installed)
 [group('deployment')]
 linkerd:
+	#!/usr/bin/env bash
+	set -euo pipefail
 	just _check-dependencies linkerd
+	if kubectl get deploy linkerd-destination -n linkerd >/dev/null 2>&1; then
+		echo "Linkerd control plane already installed — skipping."
+		exit 0
+	fi
 	linkerd check --pre
 	kubectl apply --server-side -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.4.0/standard-install.yaml
 	linkerd install --crds | kubectl apply -f -
 	linkerd install --set proxy.nativeSidecar=true | kubectl apply -f -
 	linkerd check
+
+# Deploy Kyverno (idempotent, required by runtime-policies; same script as CI)
+[group('deployment')]
+kyverno:
+	just _check-dependencies helmfile
+	./scripts/ci/install-kyverno-if-missing.sh
+
+# Mesh the local nginx ingress controller so it can reach APISIX under mandatory mTLS
+[group('deployment')]
+mesh-ingress-nginx:
+	#!/usr/bin/env bash
+	set -euo pipefail
+	if ! kubectl get deployment ingress-nginx-controller -n ingress-nginx >/dev/null 2>&1; then
+		echo "ingress-nginx not found; skipping mesh step."
+		exit 0
+	fi
+	kubectl annotate namespace ingress-nginx \
+		linkerd.io/inject=enabled \
+		config.linkerd.io/skip-inbound-ports=80,443,8443 --overwrite
+	kubectl rollout restart deployment ingress-nginx-controller -n ingress-nginx
+	kubectl rollout status deployment ingress-nginx-controller -n ingress-nginx --timeout=300s
 
 # Add host entries to /etc/hosts for Linux systems
 [group('helpers')]
@@ -134,6 +217,21 @@ update-components:
 verify-policies:
 	.ci/policies/verify-kyverno-policies.sh
 
+# Run Kyverno policy regression tests (good/bad fixtures)
+[group('test & lint')]
+test-policies:
+	kyverno test .ci/policies
+
+# Smoke-test deployment variants in fresh k3d clusters (no args = all 8; pass triplets/flags or --help)
+[group('test & lint')]
+test-deployment-variants *args:
+	./scripts/test-deployment-variants.sh {{args}}
+
+# Re-vendor upstream Kyverno policies (pinned ref in the script)
+[group('helpers')]
+vendor-policies:
+	.ci/policies/vendor-upstream-policies.sh
+
 # Render helmfile for specific environment
 [group('helpers')]
 template environment='local' component='all':
@@ -150,10 +248,39 @@ template environment='local' component='all':
 template-component environment='local' component='':
 	helmfile -f ./deployment/helmfile.yaml template -e {{environment}} --selector component={{component}}
 
+# Render the shared operator layer (deploy-operators)
+[group('helpers')]
+template-operators environment='local':
+	helmfile -f ./deployment/helmfile-operators.yaml template -e {{environment}}
+
+# Render a single instance layer (deploy-instance); optional ad-hoc slug override
+[group('helpers')]
+template-instance environment='local' slug='':
+	if [ -n "{{slug}}" ]; then \
+		helmfile -f ./deployment/helmfile-instance.yaml.gotmpl template -e {{environment}} --state-values-set-string instanceSlug={{slug}}; \
+	else \
+		helmfile -f ./deployment/helmfile-instance.yaml.gotmpl template -e {{environment}}; \
+	fi
+
 # Print APIsix admin password
 [group('helpers')]
 apisix-password:
 	@kubectl --context minikube get secret -n dev apisix-admin-credentials -o jsonpath='{.data.admin}' | base64 -d && echo
+
+# Seed baseline platform data into the current cluster (kubectl context) or into the cluster behind the provided kubeconfig. The keycloak URL is required (no default — depends on the target cluster). The seed input defaults to the standard civitas baseline export. Other tunables (AUTH_USER, AUTH_PASSWORD, NAMESPACE, …) are still read from the top-level `.env` (loaded automatically via `set dotenv-load`). Job + credentials Secret are cleaned up after the run.
+[group('deployment')]
+seed keycloak-url kubeconfig='' seed-input='exports/1bf03aa3-3d9a-4291-8589-b888aa684c05.json':
+	#!/usr/bin/env bash
+	set -euo pipefail
+	export KEYCLOAK_URL="{{keycloak-url}}"
+	export SEED_INPUT="{{seed-input}}"
+	args=()
+	if [ -n "{{kubeconfig}}" ]; then
+		args+=(--kubeconfig "{{kubeconfig}}")
+	elif [ -n "${KUBECONFIG:-}" ]; then
+		args+=(--kubeconfig "${KUBECONFIG}")
+	fi
+	exec ./scripts/ci/seed-platform-data.sh "${args[@]}"
 
 # Deploy to local minikube or k3d cluster with Linkerd service mesh
 [group('deployment')]
@@ -169,17 +296,25 @@ deploy cri='k3d' namespace='dev' profile='local':
 		exit 1; \
 	fi; fi
 	@just linkerd
+	@just kyverno
+	@just mesh-ingress-nginx
 	@if [ ! -d "./deployment" ]; then \
 		cp -r defaults/deployment deployment; \
 	fi
 	@( timeout 30 bash -c 'until kubectl get ns {{namespace}} >/dev/null 2>&1; do sleep 1; done'; \
+	KEYCLOAK_NS=$( \
+		helmfile template \
+		-f deployment/helmfile.yaml \
+		-e {{profile}} \
+		--selector component=keycloak -q | \
+		yq eval -r 'select(.kind == "StatefulSet" and .metadata.name == "keycloak-app-keycloakx") | .metadata.namespace'); \
 	kubectl create secret generic keycloak-smtp \
 		--from-literal=host='smtp.example.com' \
 		--from-literal=port='587' \
 		--from-literal=from='noreply@example.com' \
 		--from-literal=user='noreply@example.com' \
 		--from-literal=password='YOUR_SMTP_PASSWORD' \
-		-n {{namespace}} ) &
+		-n ${KEYCLOAK_NS} ) &
 	@helmfile -f deployment/helmfile.yaml sync -e {{profile}}
 
 # Remove local cluster
@@ -264,3 +399,242 @@ install-dependencies:
 [macos]
 install-dependencies:
 	echo "Please check https://docs.core.civitasconnect.digital/docs_v2/Development/Deployment/local-deployment for required dependencies and adjust your system accordingly."
+
+# Get Admin Credentials
+[group('helpers')]
+get-admin-credentials:
+    @APISIX_PASSWORD=$(kubectl get secret -n "$(just _get-apisix-namespace)" apisix-admin-credentials -o jsonpath='{.data.admin}' | base64 -d && echo); \
+    KEYCLOAK_USERNAME=$(yq '.global.initialUserEmail' defaults/environment/global.yaml | cut -d '@' -f 1); \
+    KEYCLOAK_PASSWORD=$(kubectl get secret -n "$(just _get-keycloak-namespace)" keycloak-admin-user -o jsonpath='{.data.password}' | base64 -d && echo); \
+    POSTGRES_USER=$(kubectl get secret -n "$(just _get-postgres-namespace)" postgres-cluster-superuser -o jsonpath='{.data.username}' | base64 -d && echo); \
+    POSTGRES_PASSWORD=$(kubectl get secret -n "$(just _get-postgres-namespace)" postgres-cluster-superuser -o jsonpath='{.data.password}' | base64 -d && echo); \
+    TESTUSER_USERNAME="test@$(just _get-domain)"; \
+    TESTUSER_PASSWORD="TestTest1234!"; \
+    echo "APISix Admin Password: $APISIX_PASSWORD"; \
+    echo "Keycloak Admin Username: $KEYCLOAK_USERNAME"; \
+    echo "Keycloak Admin Password: $KEYCLOAK_PASSWORD"; \
+    echo "Postgres User: $POSTGRES_USER"; \
+    echo "Postgres Password: $POSTGRES_PASSWORD"; \
+    echo "Test User Username: $TESTUSER_USERNAME"; \
+    echo "Test User Password: $TESTUSER_PASSWORD"; \
+    if kubectl get secret -n "$(just _get-postgres-namespace)" devicemanagement-db-credentials >/dev/null 2>&1; then \
+        DEVICEMGMT_USER=$(kubectl get secret -n "$(just _get-postgres-namespace)" devicemanagement-db-credentials -o jsonpath='{.data.username}' | base64 -d && echo); \
+        DEVICEMGMT_PASSWORD=$(kubectl get secret -n "$(just _get-postgres-namespace)" devicemanagement-db-credentials -o jsonpath='{.data.password}' | base64 -d && echo); \
+        echo "Device-Management DB User: $DEVICEMGMT_USER"; \
+        echo "Device-Management DB Password: $DEVICEMGMT_PASSWORD"; \
+    fi
+
+# Create device-management database and import test data
+[group('helpers')]
+create-device-management-db:
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    # Read configuration from global.yaml
+    NS=$(helmfile template -f deployment/helmfile.yaml -e local --selector component=postgres --skip-deps -q | yq 'select(.kind == "Deployment") | .metadata.namespace')
+
+    echo "Creating device-management database in namespace: $NS"
+
+
+    # Get postgres credentials
+    POSTGRES_USER=$(kubectl get secret -n "$NS" postgres-cluster-superuser -o jsonpath='{.data.username}' | base64 -d)
+    POSTGRES_PASSWORD=$(kubectl get secret -n "$NS" postgres-cluster-superuser -o jsonpath='{.data.password}' | base64 -d)
+
+    # Get postgres pod name
+    POD=$(kubectl get pods -n "$NS" -l cnpg.io/cluster=postgres-cluster -o jsonpath='{.items[0].metadata.name}')
+
+    if [ -z "$POD" ]; then
+        echo "ERROR: Postgres pod not found in namespace $NS"
+        exit 1
+    fi
+
+    echo "Using Postgres pod: $POD"
+
+    # Generate password for devicemanagement user
+    DB_PASSWORD=$(openssl rand -base64 32)
+
+    # Create user and database
+    echo "Creating database user 'devicemanagement'..."
+    kubectl exec -n "$NS" "$POD" -c postgres -- psql -U "$POSTGRES_USER" -c "CREATE USER devicemanagement WITH PASSWORD '$DB_PASSWORD';" 2>/dev/null || echo "User 'devicemanagement' may already exist"
+
+    echo "Creating database 'device-management' with owner 'devicemanagement'..."
+    kubectl exec -n "$NS" "$POD" -c postgres -- psql -U "$POSTGRES_USER" -c "CREATE DATABASE \"device-management\" WITH OWNER devicemanagement;" 2>/dev/null || echo "Database 'device-management' may already exist"
+
+    # Grant necessary permissions
+    echo "Granting permissions..."
+    kubectl exec -n "$NS" "$POD" -c postgres -- psql -U "$POSTGRES_USER" -d "device-management" -c "REVOKE ALL ON DATABASE \"device-management\" FROM PUBLIC;"
+    kubectl exec -n "$NS" "$POD" -c postgres -- psql -U "$POSTGRES_USER" -d "device-management" -c "GRANT ALL ON DATABASE \"device-management\" TO devicemanagement;"
+    kubectl exec -n "$NS" "$POD" -c postgres -- psql -U "$POSTGRES_USER" -d "device-management" -c "GRANT ALL ON SCHEMA public TO devicemanagement;"
+
+    # Import SQL file
+    echo "Importing tests/02-device-management.sql..."
+    cat tests/02-device-management.sql | kubectl exec -i -n "$NS" "$POD" -c postgres -- psql -U "$POSTGRES_USER" -d "device-management"
+
+    # Change ownership of all objects in public schema to devicemanagement user
+    echo "Updating ownership of tables, views, and sequences..."
+    kubectl exec -n "$NS" "$POD" -c postgres -- psql -U "$POSTGRES_USER" -d "device-management" -c "
+        DO \$\$
+        DECLARE
+            r RECORD;
+        BEGIN
+            -- Transfer table ownership
+            FOR r IN SELECT tablename FROM pg_tables WHERE schemaname = 'public'
+            LOOP
+                EXECUTE 'ALTER TABLE public.' || quote_ident(r.tablename) || ' OWNER TO devicemanagement';
+            END LOOP;
+
+            -- Transfer view ownership
+            FOR r IN SELECT viewname FROM pg_views WHERE schemaname = 'public'
+            LOOP
+                EXECUTE 'ALTER VIEW public.' || quote_ident(r.viewname) || ' OWNER TO devicemanagement';
+            END LOOP;
+
+            -- Transfer sequence ownership
+            FOR r IN SELECT sequence_name FROM information_schema.sequences WHERE sequence_schema = 'public'
+            LOOP
+                EXECUTE 'ALTER SEQUENCE public.' || quote_ident(r.sequence_name) || ' OWNER TO devicemanagement';
+            END LOOP;
+        END
+        \$\$;"
+
+    # Create Kubernetes secret with credentials
+    echo "Creating Kubernetes secret 'devicemanagement-db-credentials'..."
+    kubectl create secret generic devicemanagement-db-credentials \
+        --from-literal=username=devicemanagement \
+        --from-literal=password="$DB_PASSWORD" \
+        --from-literal=database=device-management \
+        --from-literal=host=postgres-cluster-rw \
+        --from-literal=port=5432 \
+        -n "$NS" \
+        --dry-run=client -o yaml | kubectl apply -f -
+
+    echo "✓ Database 'device-management' created and SQL imported successfully!"
+    echo "  Database: device-management"
+    echo "  User: devicemanagement"
+    echo "  Password stored in secret: devicemanagement-db-credentials"
+
+# Create demo database and import demo data
+[group('helpers')]
+create-demo-db profile='local':
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    # Read configuration from global.yaml
+    NS=$(helmfile template -f deployment/helmfile.yaml -e {{profile}} --selector component=postgres --skip-deps -q | yq 'select(.kind == "Deployment") | .metadata.namespace')
+
+    echo "Creating demo database in namespace: $NS"
+
+    # Get postgres superuser username
+    POSTGRES_USER=$(kubectl get secret -n "$NS" postgres-cluster-superuser -o jsonpath='{.data.username}' | base64 -d)
+
+    # Use the primary pod (writes are not allowed on read-only replicas)
+    POD=$(kubectl get pods -n "$NS" -l cnpg.io/cluster=postgres-cluster,cnpg.io/instanceRole=primary -o jsonpath='{.items[0].metadata.name}')
+
+    if [ -z "$POD" ]; then
+        echo "ERROR: Primary Postgres pod not found in namespace $NS"
+        exit 1
+    fi
+
+    echo "Using primary Postgres pod: $POD"
+
+    # Fixed password for demo user
+    DB_PASSWORD="secret"
+
+    # Create user and database
+    echo "Creating database user 'demo'..."
+    kubectl exec -n "$NS" "$POD" -c postgres -- psql -U "$POSTGRES_USER" -c "CREATE USER demo WITH PASSWORD '$DB_PASSWORD';" 2>/dev/null || echo "User 'demo' may already exist"
+
+    echo "Creating database 'demo' with owner 'demo'..."
+    kubectl exec -n "$NS" "$POD" -c postgres -- psql -U "$POSTGRES_USER" -c "CREATE DATABASE demo WITH OWNER demo;" 2>/dev/null || echo "Database 'demo' may already exist"
+
+    # Grant necessary permissions
+    echo "Granting permissions..."
+    kubectl exec -n "$NS" "$POD" -c postgres -- psql -U "$POSTGRES_USER" -d demo -c "GRANT ALL ON SCHEMA public TO demo;"
+
+    # Import SQL file
+    echo "Importing tests/03-demo.sql..."
+    cat tests/03-demo.sql | kubectl exec -i -n "$NS" "$POD" -c postgres -- psql -U "$POSTGRES_USER" -d demo
+
+    # Change ownership of the demo table to the demo user
+    echo "Updating ownership..."
+    kubectl exec -n "$NS" "$POD" -c postgres -- psql -U "$POSTGRES_USER" -d demo -c "ALTER TABLE public.demo_sensor_readings OWNER TO demo;"
+
+    echo "✓ Database 'demo' created and SQL imported successfully!"
+    echo "  Database: demo"
+    echo "  User: demo"
+    echo "  Password: $DB_PASSWORD"
+    # In-cluster connection URL (e.g. how the nifi pod reaches this db)
+    echo "  In-cluster URL: postgresql://demo:$DB_PASSWORD@postgres-cluster-rw.$NS.svc.cluster.local:5432/demo"
+
+# Create test user in Keycloak
+
+[group('helpers')]
+create-test-user profile='local':
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+
+    # Read configuration from global.yaml
+    NS=$(helmfile template -f deployment/helmfile.yaml -e local --selector component=keycloak --skip-deps -q | yq 'select(.kind == "StatefulSet") | .metadata.namespace')
+    DOMAIN=$(just _get-domain {{profile}})
+    REALM=$(just _get-keycloak-realm {{profile}})
+    TEST_EMAIL="test@$DOMAIN"
+    TEST_PASSWORD="TestTest1234!"
+
+    echo "Creating test user: $TEST_EMAIL in realm: $REALM"
+
+    ADMIN_USER=$(yq '.global.initialUserEmail' defaults/environment/global.yaml | cut -d '@' -f 1)
+    ADMIN_PASSWORD=$(kubectl get secret -n "$NS" keycloak-admin-user -o jsonpath='{.data.password}' | base64 -d)
+
+    POD=$(kubectl get pods -n "$NS" -l app.kubernetes.io/name=keycloakx -o jsonpath='{.items[0].metadata.name}')
+
+    if [ -z "$POD" ]; then
+        echo "ERROR: Keycloak pod not found in namespace $NS"
+        exit 1
+    fi
+
+    echo "Using Keycloak pod: $POD"
+
+    kubectl exec -n "$NS" "$POD" -- bash -c "
+        /opt/keycloak/bin/kcadm.sh config credentials \
+            --server http://localhost:8080 \
+            --realm master \
+            --user '$ADMIN_USER' \
+            --password '$ADMIN_PASSWORD' >/dev/null 2>&1
+
+        # Check if user already exists
+        USER_ID=\$(/opt/keycloak/bin/kcadm.sh get users -r '$REALM' -q username=test --fields id --format csv --noquotes 2>/dev/null | head -n1)
+
+        if [ -n \"\$USER_ID\" ] && [ \"\$USER_ID\" != \"id\" ]; then
+            echo 'User test already exists, updating...'
+            /opt/keycloak/bin/kcadm.sh update users/\$USER_ID -r '$REALM' \
+                -s enabled=true \
+                -s emailVerified=true \
+                -s firstName=Surname \
+                -s lastName=Lastname \
+                -s email='$TEST_EMAIL'
+
+            /opt/keycloak/bin/kcadm.sh set-password -r '$REALM' \
+                --userid \$USER_ID \
+                --new-password '$TEST_PASSWORD'
+        else
+            echo 'Creating new user...'
+            /opt/keycloak/bin/kcadm.sh create users -r '$REALM' \
+                -s username=test \
+                -s enabled=true \
+                -s emailVerified=true \
+                -s firstName=Surname \
+                -s lastName=Lastname \
+                -s email='$TEST_EMAIL'
+
+            /opt/keycloak/bin/kcadm.sh set-password -r '$REALM' \
+                --username test \
+                --new-password '$TEST_PASSWORD'
+        fi
+    "
+
+    echo "✓ Test user created/updated successfully!"
+    echo "  Username: test"
+    echo "  Email: $TEST_EMAIL"
+    echo "  Password: $TEST_PASSWORD"
+    echo "  Realm: $REALM"

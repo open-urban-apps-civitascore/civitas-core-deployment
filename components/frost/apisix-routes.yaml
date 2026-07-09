@@ -1,0 +1,7 @@
+---
+frost-server:
+  name: frost-server
+  description: 'FROST-Server API'
+  upstream: frost-frost-frost-server-http.{{ include "civitas.namespace" (dict "global" .Values.global "suffix" "frost") }}.svc.cluster.local:8080 # yamllint disable-line rule:line-length
+  subDomain: api
+  uri: '/v1/*'

@@ -1,0 +1,8 @@
+---
+superset:
+  name: superset
+  description: 'Dashboard for the Civitas Platform'
+  upstream: superset-superset.{{ include "civitas.namespace" (dict "global" .Values.global "suffix" "superset") }}.svc.cluster.local:8088 # yamllint disable-line rule:line-length
+  uri: /*
+  subDomain: dashboard
+  priority: 10

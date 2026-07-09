@@ -1,0 +1,7 @@
+---
+component: geoserver
+parts:
+  - name: rabbitmq
+  - name: geoserver
+    needs:
+      - geoserver.rabbitmq

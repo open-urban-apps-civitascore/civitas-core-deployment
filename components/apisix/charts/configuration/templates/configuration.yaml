@@ -5,6 +5,7 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   name: apisix-static-configuration
+  namespace: {{ .Release.Namespace }}
   labels:
     app.kubernetes.io/component: apisix-static-configuration
   annotations:
@@ -20,7 +21,7 @@ spec:
         app.kubernetes.io/component: apisix-static-configuration
     spec:
       restartPolicy: OnFailure
-      terminationGracePeriodSeconds: 60
+      terminationGracePeriodSeconds: 300
       {{- with $root.Values.podSecurityContext }}
       securityContext:
         {{- toYaml . | nindent 8 }}
@@ -59,9 +60,10 @@ spec:
         - -c
         - |
           set -e
+          sleep 30
           trap "echo 'Received SIGTERM, exiting gracefully...'; exit 0" SIGTERM
           # Wait for APISIX to be ready
-          timeout 15s sh -c 'echo "Waiting for APISIX to be ready..."; until nc -z {{ $root.Values.apisix.host }} {{ $root.Values.apisix.port }}; do sleep 2; done'
+          timeout 30s sh -c 'echo "Waiting for APISIX to be ready..."; until curl -s {{ $root.Values.apisix.host }}:{{ $root.Values.apisix.port }}; do sleep 2; done'
           echo "Creating initial configuration in APISIX..."
 {{ range $component, $config := $root.Values.plugins }}
 
@@ -84,9 +86,19 @@ spec:
             "desc": "{{ $config.description }}",
             "upstream": {
               "type": "roundrobin",
+              {{- if hasKey $config "scheme" }}
+              "scheme": "{{ $config.scheme }}",
+              "pass_host": "{{ $config.passHost | default "pass" }}",
+              {{- if hasKey $config "upstreamHost" }}
+              "upstream_host": "{{ $config.upstreamHost }}",
+              {{- end }}
+              {{- end }}
               "nodes": {
                 "{{ $config.upstream }}": 1
               },
+              {{- if eq ($config.scheme | default "") "https" }}
+              "tls": { "verify": false },
+              {{- end }}
               "timeout": {
                 "connect": 6,
                 "send": 6,
@@ -103,9 +115,19 @@ spec:
             "plugin_config_id": "{{ $component }}",
             "upstream": {
               "type": "roundrobin",
+              {{- if hasKey $config "scheme" }}
+              "scheme": "{{ $config.scheme }}",
+              "pass_host": "{{ $config.passHost | default "pass" }}",
+              {{- if hasKey $config "upstreamHost" }}
+              "upstream_host": "{{ $config.upstreamHost }}",
+              {{- end }}
+              {{- end }}
               "nodes": {
                 "{{ $config.upstream }}": 1
               },
+              {{- if eq ($config.scheme | default "") "https" }}
+              "tls": { "verify": false },
+              {{- end }}
               "timeout": {
                 "connect": 6,
                 "send": 6,
@@ -117,6 +139,8 @@ spec:
             {{- end }}
             {{- if hasKey $config "subDomain" }},
             "host": "{{ $config.subDomain }}.'${DOMAIN}'"
+            {{- else if hasKey $config "host" }},
+            "host": "{{ $config.host }}.{{ $root.Release.Namespace }}.svc.cluster.local"
             {{- end }}
           }' || exit 1
 {{- end }}

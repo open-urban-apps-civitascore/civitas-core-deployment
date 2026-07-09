@@ -71,11 +71,18 @@ extraEnv:
         name: keycloak-smtp
         key: password
   {{- range $clientId, $client := .Values.keycloakClients }}
+  {{- $rawValues := index $client "rawValues" | default dict }}
+  {{- $isPublicClient := false }}
+  {{- if hasKey $rawValues "publicClient" }}
+  {{- $isPublicClient = index $rawValues "publicClient" }}
+  {{- end }}
+  {{- if not $isPublicClient }}
   - name: CLIENT_SECRET_{{ $clientId | upper | replace "-" "_" }}
     valueFrom:
       secretKeyRef:
         name: {{ printf "keycloak-client-%s" $clientId }}
         key: client-secret
+  {{- end }}
   {{- end }}
   - name: CONFIG_ADAPTER_PASSWORD
     valueFrom:
@@ -299,9 +306,71 @@ config:
         clientSessionMaxLifespan: "0"
         clientOfflineSessionIdleTimeout: "0"
       userManagedAccessAllowed: false
-      # Dedicated service user for the config-adapter — granted realm-admin via realm-management client role
-      # username must equal email because registrationEmailAsUsername is enabled on this realm
+      # TR-03187 AR-11: ES256-only token signing.
+      # Explicitly declare the realm key providers so keycloak-config-cli manages them
+      # authoritatively.
+      components:
+        org.keycloak.keys.KeyProvider:
+          # ES256 signing key — the only active signature provider.
+          - name: ecdsa-generated
+            providerId: ecdsa-generated
+            config:
+              priority:
+                - "100"
+              enabled:
+                - "true"
+              active:
+                - "true"
+              ecdsaEllipticCurveKey:
+                - "P-256"
+          # Disable the auto-generated RS256 signing key.
+          - name: rsa-generated
+            providerId: rsa-generated
+            config:
+              priority:
+                - "-100"
+              enabled:
+                - "false"
+              active:
+                - "false"
+          # Disable the auto-generated HS512 signing key.
+          - name: hmac-generated
+            providerId: hmac-generated
+            config:
+              priority:
+                - "-100"
+              enabled:
+                - "false"
+              active:
+                - "false"
+              algorithm:
+                - "HS512"
+          # Keep RSA-OAEP encryption key (use=enc, not used for token signatures).
+          - name: rsa-enc-generated
+            providerId: rsa-enc-generated
+            config:
+              priority:
+                - "100"
+              enabled:
+                - "true"
+              active:
+                - "true"
+              algorithm:
+                - "RSA-OAEP"
+          # Keep AES encryption key (use=enc, not used for token signatures).
+          - name: aes-generated
+            providerId: aes-generated
+            config:
+              priority:
+                - "100"
+              enabled:
+                - "true"
+              active:
+                - "true"
+      # Dedicated service users for in-cluster machine identities.
+      # Usernames must equal emails because registrationEmailAsUsername is enabled on this realm.
       users:
+        # config-adapter — realm-admin via realm-management client role
         - username: config-adapter@internal.local
           enabled: true
           emailVerified: true
@@ -316,6 +385,9 @@ config:
           clientRoles:
             realm-management:
               - realm-admin
+        # NiFi's machine identities (bootstrap Job, config-adapter) authenticate as
+        # Keycloak service accounts (client-credentials grant) instead of realm users
+        # — see components/nifi/keycloak-clients.yaml.
       clients:
         {{- range $clientId, $client := .Values.keycloakClients }}
         {{- $subdomain := $client.subdomain | default $clientId }}
@@ -325,6 +397,20 @@ config:
         {{- range (index $client "additionalRedirectPaths" | default list) }}
         {{- $redirectUris = append $redirectUris (printf "https://%s.%s%s" $subdomain $global.domain .) }}
         {{- end }}
+        # Opt-in ":443" variant for apps that emit the default HTTPS port in their
+        # redirect_uri (e.g. NiFi 2.x); Keycloak does strict port matching.
+        {{- if index $client "includePort443Variant" | default false }}
+        {{- $port443Uris := list }}
+        {{- range $redirectUris }}
+        {{- $port443Uris = append $port443Uris (. | replace (printf "https://%s.%s/" $subdomain $global.domain) (printf "https://%s.%s:443/" $subdomain $global.domain)) }}
+        {{- end }}
+        {{- $redirectUris = concat $redirectUris $port443Uris }}
+        {{- end }}
+        {{- $rawValues := index $client "rawValues" | default dict }}
+        {{- $isPublicClient := false }}
+        {{- if hasKey $rawValues "publicClient" }}
+        {{- $isPublicClient = index $rawValues "publicClient" }}
+        {{- end }}
         {{- $clientDefaults := dict
           "clientId" $clientId
           "name" ($client.name | default $clientId)
@@ -332,7 +418,6 @@ config:
           "enabled" true
           "protocol" "openid-connect"
           "publicClient" false
-          "secret" (printf "$(CLIENT_SECRET_%s)" ($clientId | upper | replace "-" "_"))
           "rootUrl" (printf "https://%s.%s" $subdomain $global.domain)
           "baseUrl" (printf "https://%s.%s" $subdomain $global.domain)
           "bearerOnly" false
@@ -341,16 +426,28 @@ config:
           "directAccessGrantsEnabled" true
           "serviceAccountsEnabled" false
           "authorizationServicesEnabled" false
-          "redirectUris" $redirectUris
           "webOrigins" (list (printf "https://%s.%s" $subdomain $global.domain))
           "defaultClientScopes" (list "basic" "email" "profile" "roles" "web-origins")
           "optionalClientScopes" (list "address" "phone" "offline_access" "microprofile-jwt")
-          "attributes" (dict "post.logout.redirect.uris" "+" "pkce.code.challenge.method" "S256")
         }}
-        {{- $rawValues := index $client "rawValues" | default dict }}
+        {{- if not $isPublicClient }}
+        {{- $_ := set $clientDefaults "secret" (printf "$(CLIENT_SECRET_%s)" ($clientId | upper | replace "-" "_")) }}
+        {{- $_ := set $clientDefaults "redirectUris" $redirectUris }}
+        {{- $_ := set $clientDefaults "attributes" (dict "post.logout.redirect.uris" "+" "pkce.code.challenge.method" "S256") }}
+        {{- else }}
+        {{- $_ := set $clientDefaults "attributes" (dict "post.logout.redirect.uris" "+") }}
+        {{- end }}
         {{- $finalClient := mergeOverwrite $clientDefaults ($rawValues | default dict) }}
         - {{ $finalClient | toYaml | nindent 10 }}
         {{- end }}
+      roles:
+        client:
+          {{- range $clientId, $client := .Values.keycloakClients }}
+          {{- if index $client "roles" }}
+          {{ $clientId }}:
+            {{- index $client "roles" | toYaml | nindent 12 }}
+          {{- end }}
+          {{- end }}
       # TR-03187 AUT-2: Custom browser flow with optional MFA (conditional on user config)
       # If a user has TOTP or WebAuthn configured, they are prompted. Otherwise login proceeds without MFA.
       authenticationFlows:
@@ -443,3 +540,4 @@ config:
       passwordPolicy: "length(20) and upperCase(1) and lowerCase(1) and digits(1) and specialChars(1)"
       # TR-03187 AR-11: Use SHA256 for OTP
       otpPolicyAlgorithm: HmacSHA256
+

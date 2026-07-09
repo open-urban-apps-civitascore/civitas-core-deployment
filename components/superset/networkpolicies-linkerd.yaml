@@ -1,0 +1,22 @@
+---
+# Linkerd proxy ports for the meshed apisix -> superset path (apisix's proxy
+# connects to superset's inbound proxy on 4143; 4190/4191 for tap/metrics).
+superset-allow-linkerd:
+  podSelector:
+    app: superset
+    release: superset-superset
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: apisix
+          componentNamespace: apisix
+      ports:
+        - port: 4143
+          protocol: TCP
+        - port: 4190
+          protocol: TCP
+        - port: 4191
+          protocol: TCP

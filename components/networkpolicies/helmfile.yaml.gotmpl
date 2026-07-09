@@ -26,47 +26,175 @@ repositories:
 {{- end }}
 
 releases:
-  {{- range $parts }}
-  {{- $part := . }}
-  {{- $releaseName := printf "%s-%s" ($component | kebabcase) $part.name }}
-  {{- $repoUrl := index $root.charts $component $part.name "repository" | default "" }}
+  {{- $layer := $root.deployLayer | default "" }}
+  {{- $allNetworkPolicies := index $root "networkpolicies" | default dict }}
+  {{- range $policyComponentName, $policyConfig := $allNetworkPolicies }}
+    {{- if ne $policyComponentName "networkpolicies" }}
+      {{- $sourceComponent := index $policyConfig "_component" | default $policyComponentName }}
+      {{- $targetComponentData := index $root $sourceComponent | default dict }}
+      {{- /* Values keys are camelCase, but component names are dash-cased (e.g.
+             "config-adapters" -> "configAdapters"); fall back to the camelCase key
+             so dash-named components still resolve a namespace and get their policies. */}}
+      {{- if not $targetComponentData }}
+        {{- $parts := splitList "-" $sourceComponent }}
+        {{- $camelCase := index $parts 0 }}
+        {{- range $i, $part := $parts }}
+          {{- if gt $i 0 }}
+            {{- $camelCase = printf "%s%s" $camelCase ($part | title) }}
+          {{- end }}
+        {{- end }}
+        {{- $targetComponentData = index $root $camelCase | default dict }}
+      {{- end }}
+      {{- $targetNamespace := "" }}
+      {{- if hasKey $policyConfig "componentNamespace" }}
+        {{- /* Pin the policy to a specific component part's namespace using the same
+               dotted "component.part" convention as peer componentNamespace (e.g.
+               postgres.operator -> the operator namespace, which in the multi-instance
+               model is the shared operators namespace, not the cluster namespace). A
+               bare component name resolves to its first namespaced part. */ -}}
+        {{- $dotted := splitList "." $policyConfig.componentNamespace }}
+        {{- $refComponentData := index $root (index $dotted 0) | default dict }}
+        {{- if not $refComponentData }}
+          {{- $parts := splitList "-" (index $dotted 0) }}
+          {{- $camelCase := index $parts 0 }}
+          {{- range $i, $part := $parts }}
+            {{- if gt $i 0 }}
+              {{- $camelCase = printf "%s%s" $camelCase ($part | title) }}
+            {{- end }}
+          {{- end }}
+          {{- $refComponentData = index $root $camelCase | default dict }}
+        {{- end }}
+        {{- if gt (len $dotted) 1 }}
+          {{- $partData := index $refComponentData (index $dotted 1) | default dict }}
+          {{- if and (kindIs "map" $partData) (hasKey $partData "namespace") }}
+            {{- $targetNamespace = index $partData "namespace" }}
+          {{- end }}
+        {{- else }}
+          {{- range $partKey, $partData := $refComponentData }}
+            {{- if and (kindIs "map" $partData) (hasKey $partData "namespace") }}
+              {{- $targetNamespace = index $partData "namespace" }}
+              {{- break }}
+            {{- end }}
+          {{- end }}
+        {{- end }}
+      {{- else }}
+        {{- range $partKey, $partData := $targetComponentData }}
+          {{- if and (kindIs "map" $partData) (hasKey $partData "namespace") }}
+            {{- $targetNamespace = index $partData "namespace" }}
+            {{- break }}
+          {{- end }}
+        {{- end }}
+      {{- end }}
+      {{- if hasKey $policyConfig "namespace" }}
+        {{- $targetNamespace = $policyConfig.namespace }}
+      {{- end }}
+      {{- /* Which deploy layer owns this policy. Policies that target the shared
+             operators namespace (the cnpg webhook allow, the default-deny for
+             operator-only components like runtime-policies, …) are created ONCE per
+             cluster by the operators layer — never per instance, or concurrent
+             instance syncs would fight over the same release in that shared namespace.
+             Everything else is per-instance. An explicit deployLayer on the policy
+             overrides this. The legacy all-in-one layer ("") renders all of them. */ -}}
+      {{- $opNamespace := ((($root.global | default dict).operators | default dict).namespace) | default "civitas-operators" }}
+      {{- $policyLayer := index $policyConfig "deployLayer" | default "" }}
+      {{- if not $policyLayer }}
+        {{- $policyLayer = ternary "operators" "instance" (eq $targetNamespace $opNamespace) }}
+      {{- end }}
+      {{- if and $targetNamespace (or (eq $layer "") (eq $layer $policyLayer)) }}
+        {{- $transformedConfig := dict }}
+        {{- range $key, $value := $policyConfig }}
+          {{- if eq $key "_component" }}
+            {{- /* Skip the component metadata field */ -}}
+          {{- else if eq $key "componentNamespace" }}
+            {{- /* Skip: consumed above for target-namespace resolution */ -}}
+          {{- else if eq $key "deployLayer" }}
+            {{- /* Skip: consumed above for layer gating */ -}}
+          {{- else if or (eq $key "ingress") (eq $key "egress") }}
+            {{- $transformedRules := list }}
+            {{- range $rule := $value }}
+              {{- $transformedRule := dict }}
+              {{- $directionKey := "from" }}
+              {{- if eq $key "egress" }}
+                {{- $directionKey = "to" }}
+              {{- end }}
+              {{- if hasKey $rule $directionKey }}
+                {{- $transformedPeers := list }}
+                {{- range $peer := (index $rule $directionKey) }}
+                  {{- $transformedPeer := dict }}
+                  {{- range $peerKey, $peerValue := $peer }}
+                    {{- if eq $peerKey "componentNamespace" }}
+                      {{- /* Resolve $partData: the map (a component part) expected to carry a
+                             "namespace" key. Dotted "component.part" targets a specific part
+                             (e.g. "postgres.operator" -> the operator namespace, which differs
+                             from the cluster namespace in the multi-instance model); a bare
+                             component name resolves to its first namespaced part. */ -}}
+                      {{- $refNamespace := "" }}
+                      {{- $partData := dict }}
+                      {{- $dotted := splitList "." $peerValue }}
+                      {{- if gt (len $dotted) 1 }}
+                        {{- $refComponentData := index $root (index $dotted 0) | default dict }}
+                        {{- $partData = index $refComponentData (index $dotted 1) | default dict }}
+                      {{- else }}
+                        {{- $refComponentData := index $root $peerValue | default dict }}
+                        {{- if not $refComponentData }}
+                          {{- $parts := splitList "-" $peerValue }}
+                          {{- $camelCase := index $parts 0 }}
+                          {{- range $i, $part := $parts }}
+                            {{- if gt $i 0 }}
+                              {{- $camelCase = printf "%s%s" $camelCase ($part | title) }}
+                            {{- end }}
+                          {{- end }}
+                          {{- $refComponentData = index $root $camelCase | default dict }}
+                        {{- end }}
+                        {{- range $partKey, $candidate := $refComponentData }}
+                          {{- if and (kindIs "map" $candidate) (hasKey $candidate "namespace") }}
+                            {{- $partData = $candidate }}
+                            {{- break }}
+                          {{- end }}
+                        {{- end }}
+                      {{- end }}
+                      {{- if and (kindIs "map" $partData) (hasKey $partData "namespace") }}
+                        {{- $refNamespace = index $partData "namespace" }}
+                      {{- end }}
+                      {{- if $refNamespace }}
+                        {{- $_ := set $transformedPeer "namespaceSelector" (dict "matchLabels" (dict "kubernetes.io/metadata.name" $refNamespace)) }}
+                      {{- end }}
+                    {{- else }}
+                      {{- $_ := set $transformedPeer $peerKey $peerValue }}
+                    {{- end }}
+                  {{- end }}
+                  {{- $transformedPeers = append $transformedPeers $transformedPeer }}
+                {{- end }}
+                {{- $_ := set $transformedRule $directionKey $transformedPeers }}
+              {{- end }}
+              {{- range $ruleKey, $ruleValue := $rule }}
+                {{- if ne $ruleKey $directionKey }}
+                  {{- $_ := set $transformedRule $ruleKey $ruleValue }}
+                {{- end }}
+              {{- end }}
+              {{- $transformedRules = append $transformedRules $transformedRule }}
+            {{- end }}
+            {{- $_ := set $transformedConfig $key $transformedRules }}
+          {{- else }}
+            {{- $_ := set $transformedConfig $key $value }}
+          {{- end }}
+        {{- end }}
+        {{- $releaseName := printf "%s-%s" $component $policyComponentName }}
   - name: {{ $releaseName }}
     labels:
       release: {{ $releaseName }}
-      {{- range $key, $value := (index $part "extraLabels" | default dict) }}
-      {{ $key }}: {{ $value }}
-      {{- end }}
-    namespace: {{ index $root $component $part.name "namespace" }}
-    {{- if ne $repoUrl "" }}
-    chart: cc2-{{ index $root.charts $component $part.name "chart" }}
-    {{- else }}
-    chart: {{ index $root.charts $component $part.name "chart" }}
-    {{- end }}
-    {{- if index $root.charts $component $part.name "version" }}
-    version: {{ index $root.charts $component $part.name "version" }}
-    {{- end }}
+      policy-name: {{ $policyComponentName }}
+    namespace: {{ $targetNamespace }}
+    chart: ./charts/networkpolicies
     createNamespace: {{ $root.global.createNamespaces }}
-    installed: {{ index $root $component $part.name "enabled" }}
-    condition: {{ $component }}.{{ $part.name }}.enabled
-    {{- if index $part "needs" }}
-    needs:
-      {{ range index $part "needs" }}
-        {{- $items := splitList "." . -}}
-        {{- $depComponent := index $items 0 -}}
-        {{- $depPart := index $items 1 -}}
-      - {{ index $root $depComponent $depPart "namespace" }}/{{ printf "%s-%s" ($depComponent | kebabcase) $depPart }}
-      {{- end }}
-    {{- end }}
-    {{- if index $part "hooks" }}
-    hooks:
-      {{- range index $part "hooks" }}
-      - {{ . | toYaml | nindent 8 }}
-      {{- end }}
-    {{- end }}
+    installed: {{ index $root $component "networkpolicies" "enabled" | default true }}
     values:
-      - values/{{ $part.name | kebabcase }}/base-values.yaml.gotmpl
-      - values/{{ $part.name | kebabcase }}/{{ $root.global.profile }}-values.yaml.gotmpl
-      - {{- index $root $component $part.name "rawValues" | default dict | toYaml | nindent 8 }}
+      - networkpolicies:
+          {{ $policyComponentName }}:
+            {{- $transformedConfig | toYaml | nindent 12 }}
+            namespace: {{ $targetNamespace }}
+      {{- end }}
+    {{- end }}
   {{- end }}
 
 commonLabels:

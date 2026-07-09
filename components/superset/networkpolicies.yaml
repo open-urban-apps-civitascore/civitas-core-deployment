@@ -1,0 +1,20 @@
+---
+# Superset's web UI is reached only through the APISIX gateway (route
+# `superset` -> upstream superset-superset:8088). The celery worker has no
+# inbound app traffic. (Superset -> valkey/postgres egress is authorized by the
+# valkey/postgres ingress policies.)
+superset:
+  podSelector:
+    app: superset
+    release: superset-superset
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: apisix
+          componentNamespace: apisix
+      ports:
+        - port: 8088
+          protocol: TCP

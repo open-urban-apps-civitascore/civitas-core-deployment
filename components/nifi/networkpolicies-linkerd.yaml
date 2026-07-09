@@ -1,0 +1,31 @@
+---
+nifi-allow-linkerd:
+  podSelector:
+    app.kubernetes.io/instance: nifi-nifi
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: config-adapter
+              app.kubernetes.io/instance: config-adapters-adapters
+      ports:
+        - port: 4143
+          protocol: TCP
+        - port: 4190
+          protocol: TCP
+        - port: 4191
+          protocol: TCP
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/instance: nifi-nifi
+              app.kubernetes.io/name: nifi
+      ports:
+        - port: 4143
+          protocol: TCP
+        - port: 4190
+          protocol: TCP
+        - port: 4191
+          protocol: TCP

@@ -12,8 +12,10 @@ if [[ -n "$COMPONENT" ]]; then
 fi
 
 echo "Testing base requirements..."
-helmfile template -f deployment/helmfile.yaml -e local $selector_arg | kyverno apply .ci/policies/base --resource -
+helmfile template -f deployment/helmfile.yaml -e local $selector_arg > /tmp/rendered-local.yaml
+kyverno apply .ci/policies/base --resource /tmp/rendered-local.yaml
 echo "All policies passed!"
-echo "Testing production requirements..."
-helmfile template -f deployment/helmfile.yaml -e production $selector_arg | kyverno apply .ci/policies/production --resource -
+echo "Testing production requirements (base + production)..."
+helmfile template -f deployment/helmfile.yaml -e production $selector_arg > /tmp/rendered-production.yaml
+kyverno apply .ci/policies/base .ci/policies/production --resource /tmp/rendered-production.yaml
 echo "All production policies passed!"

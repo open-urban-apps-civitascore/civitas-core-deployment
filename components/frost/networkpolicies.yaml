@@ -10,6 +10,7 @@ frost:
         - podSelector:
             matchLabels:
               app.kubernetes.io/name: apisix
+          componentNamespace: apisix
       ports:
         - protocol: TCP
           port: 8080
@@ -18,6 +19,7 @@ frost:
         - podSelector:
             matchLabels:
               app.kubernetes.io/name: config-adapter
+          componentNamespace: config-adapters
       ports:
         - protocol: TCP
           port: 8080

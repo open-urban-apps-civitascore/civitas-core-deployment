@@ -6,33 +6,70 @@ postgres-allow-linkerd:
     - Ingress
   ingress:
     - from:
+        # CloudNative-PG operator: allow from the operator's namespace only. The shared
+        # operator runs in a separate namespace in the multi-instance model and in the
+        # instance namespace in legacy mode; componentNamespace: postgres.operator resolves
+        # to postgres.operator.namespace for both. The podSelector keeps the peer restricted
+        # to the cnpg operator pod.
         - podSelector:
             matchLabels:
               app.kubernetes.io/name: cloudnative-pg
+          componentNamespace: postgres.operator
         - podSelector:
             matchLabels:
               app.kubernetes.io/name: portal
+          componentNamespace: portal
         - podSelector:
             matchLabels:
               app.kubernetes.io/component: backend
+              app.kubernetes.io/name: portal
+          componentNamespace: portal
         - podSelector:
             matchLabels:
               app.kubernetes.io/instance: keycloak-app
+              app.kubernetes.io/name: keycloakx
+          componentNamespace: keycloak
         - podSelector:
             matchLabels:
               app.kubernetes.io/name: authz-repo
+          componentNamespace: authz
         - podSelector:
             matchLabels:
               app.kubernetes.io/name: authz
+          componentNamespace: authz
         - podSelector:
             matchLabels:
               app.kubernetes.io/instance: frost-frost
+              app: frost-server
+          componentNamespace: frost
         - podSelector:
             matchLabels:
               app.kubernetes.io/component: database-role-setup
+              app.kubernetes.io/name: databases
+          componentNamespace: postgres
         - podSelector:
             matchLabels:
               batch.kubernetes.io/job-name: portal-db-create-role-authz-readonly
+          componentNamespace: portal
+        - podSelector:
+            matchLabels:
+              app: superset
+              release: superset-superset
+          componentNamespace: superset
+        - podSelector:
+            matchLabels:
+              app: superset-worker
+              release: superset-superset
+          componentNamespace: superset
+        - podSelector:
+            matchLabels:
+              job-name: superset-superset-init-db
+          componentNamespace: superset
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/instance: nifi-nifi
+              app.kubernetes.io/name: nifi
+          componentNamespace: nifi
       ports:
         - port: 4143
           protocol: TCP

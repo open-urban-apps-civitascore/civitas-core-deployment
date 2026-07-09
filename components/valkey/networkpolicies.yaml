@@ -1,0 +1,26 @@
+---
+valkey:
+  podSelector:
+    app.kubernetes.io/instance: valkey-valkey
+    app.kubernetes.io/name: valkey
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: valkey
+          componentNamespace: valkey
+        - podSelector:
+            matchLabels:
+              app: superset
+              release: superset-superset
+          componentNamespace: superset
+        - podSelector:
+            matchLabels:
+              app: superset-worker
+              release: superset-superset
+          componentNamespace: superset
+      ports:
+        - port: 6379
+          protocol: TCP

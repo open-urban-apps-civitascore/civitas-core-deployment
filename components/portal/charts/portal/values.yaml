@@ -23,6 +23,7 @@ backend:
       memory: 1Gi
   env:
     loggingLevelRoot: INFO
+    keycloakEnforceOtp: true
 
 # Frontend configuration
 frontend:
@@ -86,9 +87,6 @@ keycloak:
 
 kafka:
   bootstrapServers: ''
-
-modelAtlas:
-  url: ''
 
 database:
   host: ''

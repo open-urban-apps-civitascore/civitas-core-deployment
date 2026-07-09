@@ -1,8 +1,0 @@
----
-modelAtlas:
-  app:
-    repository: eclipsefennec/model.atlas
-    tag: 'apicurio-0.0.1'
-  init:
-    repository: busybox
-    tag: '1.37'

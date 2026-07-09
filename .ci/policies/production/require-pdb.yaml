@@ -4,28 +4,39 @@ kind: ClusterPolicy
 metadata:
   name: require-pdb
   annotations:
-    policies.kyverno.io/title: Require PodDisruptionBudget
+    policies.kyverno.io/title: Require Valid PodDisruptionBudget
     policies.kyverno.io/category: Best Practices
     policies.kyverno.io/severity: medium
-    policies.kyverno.io/minversion: 1.6.0
-    policies.kyverno.io/subject: Deployment
+    policies.kyverno.io/minversion: 1.8.0
+    policies.kyverno.io/subject: PodDisruptionBudget
+    policies.kyverno.io/scored: 'true'
     policies.kyverno.io/description: >-
-      PodDisruptionBudgets are required for production workloads to ensure high availability
-      during voluntary disruptions like node maintenance or cluster upgrades. This policy
-      validates that Deployments have an associated PodDisruptionBudget with at least
-      minAvailable: 1.
+      PodDisruptionBudgets (PDBs) protect workload availability during voluntary disruptions
+      such as node drains, cluster upgrades, or maintenance windows. This policy validates
+      that every PodDisruptionBudget is meaningfully configured: either `minAvailable` is
+      set to at least 1, or `maxUnavailable` is explicitly defined. A PDB with neither
+      field provides no protection. Note: this policy checks PDB quality; it does not
+      verify that every Deployment has an associated PDB (that requires a live cluster).
 spec:
-  validationFailureAction: Audit
   background: true
   rules:
-    - name: validate-pdb-min-available
+    - name: require-pdb-min-available-or-max-unavailable
       match:
         any:
           - resources:
               kinds:
                 - PodDisruptionBudget
       validate:
-        message: 'PodDisruptionBudget must have minAvailable >= 1.'
-        pattern:
-          spec:
-            minAvailable: '>=1'
+        failureAction: Audit
+        message: >-
+          PodDisruptionBudget must set either minAvailable >= 1 or maxUnavailable to
+          a defined value to ensure workload availability during disruptions.
+        deny:
+          conditions:
+            all:
+              - key: "{{ request.object.spec.minAvailable || '0' }}"
+                operator: Equals
+                value: '0'
+              - key: "{{ request.object.spec.maxUnavailable || '' }}"
+                operator: Equals
+                value: ''

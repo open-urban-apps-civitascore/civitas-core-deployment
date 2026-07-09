@@ -6,14 +6,14 @@ portal-backend:
     openid-connect:
       client_id: apisix-validator
       client_secret: '${APISIX_VALIDATOR_CLIENT_SECRET}'
-      discovery: http://keycloak-app-keycloakx-http.'${REALM}'.svc.cluster.local:80/realms/'${REALM}'/.well-known/openid-configuration # yamllint disable-line rule:line-length
+      discovery: http://keycloak-app-keycloakx-http.{{ include "civitas.namespace" (dict "global" .Values.global "suffix" "keycloak") }}.svc.cluster.local:80/realms/'${REALM}'/.well-known/openid-configuration # yamllint disable-line rule:line-length
       bearer_only: true
       ssl_verify: false
       set_userinfo_header: true
-      introspection_endpoint: http://keycloak-app-keycloakx-http.'${REALM}'.svc.cluster.local:80/realms/'${REALM}'/protocol/openid-connect/token/introspect # yamllint disable-line rule:line-length
+      introspection_endpoint: http://keycloak-app-keycloakx-http.{{ include "civitas.namespace" (dict "global" .Values.global "suffix" "keycloak") }}.svc.cluster.local:80/realms/'${REALM}'/protocol/openid-connect/token/introspect # yamllint disable-line rule:line-length
       introspection_endpoint_auth_method: post
     opa:
-      host: http://authz-authz-opa:8181
+      host: http://authz-authz-opa.{{ include "civitas.namespace" (dict "global" .Values.global "suffix" "authz") }}.svc.cluster.local:8181 # yamllint disable-line rule:line-length
       policy: civitas/authz/decision
       with_route: true
       with_service: true
@@ -51,3 +51,51 @@ portal-bff:
         set:
           X-Forwarded-Proto: https
           X-Forwarded-Port: '443'
+api-template:
+  name: api-template
+  description: Plugin which is used for the payload_api generated APIs
+  plugins:
+    openid-connect:
+      client_id: apisix-validator
+      client_secret: '${APISIX_VALIDATOR_CLIENT_SECRET}'
+      discovery: http://keycloak-app-keycloakx-http.{{ include "civitas.namespace" (dict "global" .Values.global "suffix" "keycloak") }}.svc.cluster.local:80/realms/'${REALM}'/.well-known/openid-configuration # yamllint disable-line rule:line-length
+      # unauth_action: "pass" lets anonymous requests continue to OPA instead of being rejected
+      # with 401 here — OPA is the sole authorization gate and allows reads of open-data datasets
+      bearer_only: false
+      unauth_action: 'pass'
+      access_token_in_authorization_header: true
+      session:
+        secret: '${OIDC_SESSION_SECRET}'
+      use_jwks: false
+      ssl_verify: true
+      set_userinfo_header: true
+      introspection_endpoint: http://keycloak-app-keycloakx-http.{{ include "civitas.namespace" (dict "global" .Values.global "suffix" "keycloak") }}.svc.cluster.local:80/realms/'${REALM}'/protocol/openid-connect/token/introspect # yamllint disable-line rule:line-length
+      introspection_endpoint_auth_method: post
+    opa:
+      host: http://authz-authz-opa.{{ include "civitas.namespace" (dict "global" .Values.global "suffix" "authz") }}.svc.cluster.local:8181 # yamllint disable-line rule:line-length
+      policy: civitas/authz/decision
+      with_route: true
+      with_service: true
+      with_consumer: false
+      send_headers_upstream:
+        - X-Allowed-Scope-Ids
+      _meta:
+        filter:
+          # Necessary to ignore OPA when OPTIONS is called, and use only the cors plugin
+          - ['request_method', '~=', 'OPTIONS']
+    # Lets browser clients on any ${DOMAIN} subdomain (e.g. masterportal) read
+    # dataset payloads directly - GET/HEAD only. allow_origins_by_regex (not
+    # allow_origins) is what supports matching a whole subdomain family; the
+    # plugin echoes back the specific matched Origin per request, never a
+    # literal wildcard, so this stays spec-compliant with allow_credential.
+    # allow_methods/allow_headers must be explicit once allow_credential is
+    # true - their "*" default becomes invalid per the CORS spec.
+    cors:
+      allow_origins: 'https://not.relevant'
+      allow_origins_by_regex:
+        - '^https://.+\.${DOMAIN}$'
+      allow_methods: GET,HEAD,OPTIONS
+      allow_headers: Authorization,Content-Type,Accept
+      allow_credential: true
+    request-id:
+      include_in_response: true

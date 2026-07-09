@@ -1,0 +1,11 @@
+---
+flowable:
+  name: 'flowable'
+  embedded: true
+  user: 'flowable'
+  secret:
+    name: 'db-flowable'
+    key: 'password'
+    generate: true
+  hostServiceName: 'postgres-cluster-rw'
+  port: 5432

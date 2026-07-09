@@ -1,0 +1,69 @@
+---
+{{- $this := .Values.superset.superset }}
+{{- $global := .Values.global }}
+# Checklist:
+# - [x] Resources (requests and limits)
+# - [x] Larger Storage
+# - [x] 2+ Replicas or HorizontalPodAutoscaler
+# - [x] Rolling updates `maxUnavailable: 0`, `maxSurge: 25%`
+# - [x] PodDisruptionBudget (at least `minAvailable: 1`)
+
+resources:
+  limits:
+    cpu: 400m
+    memory: 512Mi
+  requests:
+    cpu: 200m
+    memory: 256Mi
+
+supersetNode:
+  replicas:
+    replicaCount: 2
+  autoscaling:
+    enabled: true
+  podDisruptionBudget:
+    enabled: true
+    minAvailable: 1
+    maxUnavailable:
+  resources:
+    limits:
+      cpu: 400m
+      memory: 512Mi
+    requests:
+      cpu: 200m
+      memory: 256Mi
+
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 25%
+
+supersetWorker:
+  replicas:
+    replicaCount: 2
+  autoscaling:
+    enabled: true
+  podDisruptionBudget:
+    enabled: true
+    minAvailable: 1
+    maxUnavailable:
+  resources:
+    limits:
+      cpu: 800m
+      memory: 4Gi
+    requests:
+      cpu: 200m
+      memory: 1Gi
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 25%
+
+init:
+  resources:
+    limits:
+      cpu: 2000m
+      memory: 2Gi
+    requests:
+      cpu: 1000m
+      memory: 1Gi

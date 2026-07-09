@@ -1,0 +1,120 @@
+---
+{{- $this := .Values.nifi.nifi }}
+{{- $global := .Values.global }}
+
+global:
+  nifi:
+    nodeCount: {{ $this.nodeCount }}
+
+  oidc:
+    enabled: true
+    oidc_url: 'https://{{ .Values.routes.keycloak.subDomain }}.{{ $global.domain }}{{ .Values.keycloak.app.pathPrefix | trimSuffix "/" }}/realms/{{ $global.instanceSlug }}/.well-known/openid-configuration'
+    client_id: nifi
+    client_secretFrom:
+      name: keycloak-client-nifi
+      key: client-secret
+    claim_identifying_user: preferred_username
+    # NiFi's bearer-token/REST path resolves identity from `sub`, not from
+    # `claim_identifying_user` above (that only governs the browser code-flow).
+    # The `nifi-bootstrap` client hardcodes its `sub` to this value via a protocol
+    # mapper — see components/nifi/keycloak-clients.yaml.
+    initial_admin_identity: {{ $this.bootstrapAdminIdentity | quote }}
+
+    {{- if eq $global.ingress.clusterIssuer "selfsigned-ca" }}
+    # Self-signed CA to connect to platform ressources
+    truststoreStrategy: NIFI
+    {{- end }}
+
+  {{- if eq $global.ingress.clusterIssuer "selfsigned-ca" }}
+  # PEM CA bundle imported into NiFi's truststore, so ssl to Keycloak works.
+  extraTruststoreCaFile: /opt/extra-ca/ca.crt
+  {{- end }}
+
+
+image:
+  # TODO: can this get overwritten?
+  repository: apache/nifi
+  pullPolicy: IfNotPresent
+  tag: "2.9.0"
+
+# Kubernetes-native state management (replaces ZooKeeper; requires NiFi 2.0+).
+stateManagement:
+  strategy: kubernetes
+  kubernetes:
+    leasePrefix: nifi-lease
+    statePrefix: nifi-state
+
+zookeeper:
+  enabled: false
+
+ingress:
+  enabled: false
+  hostName: '{{ .Values.routes.nifi.subDomain }}.{{ $global.domain }}'
+
+service:
+  external:
+    type: ClusterIP
+
+metrics:
+  serviceMonitor:
+    enabled: {{ $global.metrics.enabled }}
+    interval: 30s
+
+nifiMonitor:
+  enabled: {{ $global.metrics.enabled }}
+  replicas: 1
+
+extraInitContainers:
+  - name: fetch-postgresql-jdbc
+    image: curlimages/curl:8.11.1
+    command:
+      - sh
+      - -c
+      - >-
+        curl -fsSL -o /opt/nifi/drivers/postgresql.jar
+        https://jdbc.postgresql.org/download/postgresql-{{ $this.postgresqlJdbcVersion | default "42.7.4" }}.jar
+    volumeMounts:
+      - name: jdbc-drivers
+        mountPath: /opt/nifi/drivers
+    securityContext:
+      runAsUser: 1000
+      runAsGroup: 1000
+      runAsNonRoot: true
+
+# TODO: would be nice if this could be remove, but for now this is the only way to get SNI working
+# Override NiFi's bind host (default = bare `$HOSTNAME`, not in cert SAN list, causes
+# TLS hostname verification to fail on NiFi's self-referential OIDC calls).
+# This pins the host to pod-0's stable FQDN and is only valid for a single-node
+# deployment; with nodeCount > 1 each pod would (incorrectly) advertise pod-0.
+{{- if gt (int $this.nodeCount) 1 }}
+{{- fail "components/nifi: NIFI_WEB_HTTPS_HOST override only supports nodeCount=1; multi-node requires a per-pod host (e.g. via Downward API)" }}
+{{- end }}
+extraEnv:
+  - name: NIFI_WEB_HTTPS_HOST
+    value: "nifi-nifi-0.nifi-nifi.{{ $this.namespace }}"
+
+extraVolumes:
+  - name: jdbc-drivers
+    emptyDir: {}
+{{- if eq $global.ingress.clusterIssuer "selfsigned-ca" }}
+  # Mount the per-namespace self-signed CA (distributed by the prepare hook) so
+  # custom-startup.sh can import it into NiFi's truststore for the OIDC back-channel.
+  - name: extra-ca
+    secret:
+      secretName: custom-ca-cert
+{{- end }}
+extraVolumeMounts:
+  - name: jdbc-drivers
+    mountPath: /opt/nifi/drivers
+    readOnly: true
+{{- if eq $global.ingress.clusterIssuer "selfsigned-ca" }}
+  - name: extra-ca
+    mountPath: /opt/extra-ca
+    readOnly: true
+{{- end }}
+
+
+securityContext:
+  runAsUser: 1000
+  runAsGroup: 1000
+  runAsNonRoot: true

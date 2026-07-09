@@ -1,0 +1,32 @@
+---
+{{- $this := .Values.geoserver.rabbitmq }}
+{{- $global := .Values.global }}
+# Checklist:
+# - [x] Resources (requests and limits)
+# - [x] Larger Storage
+# - [x] 2+ Replicas or HorizontalPodAutoscaler
+# - [x] Rolling updates `maxUnavailable: 0`, `maxSurge: 25%` -> StatefulSet
+# - [x] PodDisruptionBudget (at least `minAvailable: 1`)
+
+replicaCount: 1
+
+# Cap Erlang scheduler threads to the CPU limit (2). NEVER leave the chart
+# default: the BEAM VM otherwise starts one scheduler per HOST core regardless
+# of the pod CPU limit. Scale this together with the CPU/memory limits below.
+maxAvailableSchedulers: 2
+onlineSchedulers: 2
+
+resources:
+  requests:
+    cpu: 500m
+    memory: 512Mi
+  limits:
+    cpu: 2
+    memory: 2Gi
+
+persistence:
+  size: 20Gi
+
+pdb:
+  create: true
+  minAvailable: 1

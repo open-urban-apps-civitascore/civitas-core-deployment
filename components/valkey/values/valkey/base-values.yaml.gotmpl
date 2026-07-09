@@ -1,0 +1,76 @@
+---
+{{- $this := .Values.valkey.valkey }}
+{{- $global := .Values.global }}
+# Checklist:
+# - [x] Containers run as non-root with `readOnlyRootFilesystem` -> defined in charts values.yaml
+# - [x] Health probes
+# - [x] Graceful shutdown
+# - [x] Standard labels
+# - [x] ServiceAccount with least privilege where required -> defined in charts values.yaml
+# - [x] Named ports -> defined in charts values.yaml
+# - [x] Ingress with TLS -> not needed
+
+image:
+  registry: "{{ .Values.images.valkey.valkey.registry }}"
+  repository: "{{ .Values.images.valkey.valkey.repository }}"
+  tag: "{{ .Values.images.valkey.valkey.tag }}"
+
+
+# Content for valkey.conf (will be mounted via ConfigMap)
+valkeyConfig: ""
+
+auth:
+  # Enable ACL-based authentication
+  # IMPORTANT: When authentication is enabled, the 'default' user MUST be defined in either
+  # aclUsers or aclConfig. Without a default user, anyone can access the database without
+  # credentials, creating a security risk.
+  enabled: true
+
+  # Use an existing secret for user passwords. Key defaults to username.
+  usersExistingSecret: "valkey-users"
+
+  # Map of users to create with ACL permissions.
+  # If usersExistingSecret is set, passwords from the secret take priority over inline passwords.
+  # NOTE: If using aclUsers, the 'default' user must be included here.
+  aclUsers:
+    default:
+      permissions: "~* -@all +@read +ping +info"
+      passwordKey: "default"
+    # TODO: Consider create this as resource per component
+    superset:
+      permissions: "~* &* -@all +@all"
+      passwordKey: "superset"
+
+  # Inline ACL configuration that will be appended after generated users.
+  # NOTE: If using aclConfig, ensure the 'default' user is defined here.
+  aclConfig: ""
+  # Example:
+  # aclConfig: |
+  #   user default on >secretpass ~* &* +@all
+
+tls:
+  enabled: false
+
+metrics:
+  enabled: {{ $global.metrics.enabled }}
+  exporter:
+    command: []
+    image:
+      registry: "{{ .Values.images.valkey.metrics.registry }}"
+      repository: "{{ .Values.images.valkey.metrics.repository }}"
+      tag: "{{ .Values.images.valkey.metrics.tag }}"
+    securityContext:
+      runAsNonRoot: true
+      runAsUser: 1000
+      runAsGroup: 1000
+      capabilities:
+        drop:
+          - ALL
+      readOnlyRootFilesystem: true
+
+  serviceMonitor:
+    enabled: {{ $global.metrics.enabled }}
+  podMonitor:
+    enabled: {{ $global.metrics.enabled }}
+  prometheusRule:
+    enabled: {{ $global.metrics.enabled }}

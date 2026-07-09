@@ -18,7 +18,7 @@ def deployment_dir(project_root):
 def render_helmfile(deployment_dir):
     def _render_helmfile(*, use_test_environment: bool)  -> str:
         result = subprocess.run(
-            ["helmfile", "template", "-f", "helmfile.yaml"] + (["-e", "testing"] if use_test_environment else []),
+            ["helmfile", "template", "-f", "helmfile.yaml", "--skip-deps"] + (["-e", "testing"] if use_test_environment else []),
             cwd=deployment_dir,
             capture_output=True,
             text=True,
@@ -155,4 +155,100 @@ def test_can_overwrite_component_helm_values(configure_environment, render_helmf
             label("app.kubernetes.io/component"): "controller",
         },
         asserts={"spec.replicas": 5},
+    )
+
+
+def test_multi_namespace_different_components_use_distinct_namespaces(configure_environment, render_helmfile):
+    configure_environment({
+        "global.yaml.gotmpl": {
+            "global.singleNamespace": False,
+            "global.instanceSlug": "dev",
+        }
+    })
+    output = render_helmfile(use_test_environment=True)
+    assert_contains_k8s_resource(
+        output,
+        match={
+            "kind": "ServiceAccount",
+            label("app"): "strimzi",
+            label("release"): "kafka-operator",
+        },
+        asserts={"metadata.namespace": "dev-kafka"},
+    )
+    assert_contains_k8s_resource(
+        output,
+        match={"kind": "Database"},
+        asserts={"metadata.namespace": "dev-postgres"},
+    )
+
+
+def test_single_namespace_all_components_colocated(configure_environment, render_helmfile):
+    configure_environment({
+        "global.yaml.gotmpl": {
+            "global.singleNamespace": True,
+            "global.instanceSlug": "shared",
+        }
+    })
+    output = render_helmfile(use_test_environment=True)
+    assert_contains_k8s_resource(
+        output,
+        match={
+            "kind": "ServiceAccount",
+            label("app"): "strimzi",
+            label("release"): "kafka-operator",
+        },
+        asserts={"metadata.namespace": "shared"},
+    )
+    assert_contains_k8s_resource(
+        output,
+        match={"kind": "Database"},
+        asserts={"metadata.namespace": "shared"},
+    )
+
+
+def test_per_component_namespace_override_applies_in_single_namespace_mode(configure_environment, render_helmfile):
+    configure_environment({
+        "global.yaml.gotmpl": {
+            "global.singleNamespace": True,
+        },
+        "kafka.yaml.gotmpl": {
+            "kafka.operator.namespace": "special-kafka",
+        },
+    })
+    output = render_helmfile(use_test_environment=True)
+    assert_contains_k8s_resource(
+        output,
+        match={
+            "kind": "ServiceAccount",
+            label("app"): "strimzi",
+            label("release"): "kafka-operator",
+        },
+        asserts={"metadata.namespace": "special-kafka"},
+    )
+
+
+def test_per_component_override_affects_only_that_component(configure_environment, render_helmfile):
+    configure_environment({
+        "global.yaml.gotmpl": {
+            "global.singleNamespace": False,
+            "global.instanceSlug": "dev",
+        },
+        "kafka.yaml.gotmpl": {
+            "kafka.operator.namespace": "special",
+        },
+    })
+    output = render_helmfile(use_test_environment=True)
+    assert_contains_k8s_resource(
+        output,
+        match={
+            "kind": "ServiceAccount",
+            label("app"): "strimzi",
+            label("release"): "kafka-operator",
+        },
+        asserts={"metadata.namespace": "special"},
+    )
+    assert_contains_k8s_resource(
+        output,
+        match={"kind": "Database"},
+        asserts={"metadata.namespace": "dev-postgres"},
     )

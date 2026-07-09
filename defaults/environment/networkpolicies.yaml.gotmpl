@@ -1,5 +1,34 @@
 networkpolicies:
-  {{- include "civitas.configFiles" (dict "components" .Values.components "file" "networkpolicies.yaml") }}
-  {{- if and (.Values.global.serviceMesh.enable | default false) (eq (.Values.global.serviceMesh.type | default "") "linkerd") }}
-  {{- include "civitas.configFiles" (dict "components" .Values.components "file" "networkpolicies-linkerd.yaml") }}
+  {{- range .Values.components }}
+    {{- $component := . }}
+    {{- $addonPath := printf "../../deployment/addons/%s" $component }}
+    {{- $componentPath := printf "../../components/%s" $component }}
+    {{- if isDir $addonPath }}
+      {{- $componentPath = $addonPath }}  
+    {{- end }}
+  default-deny-{{ $component }}:
+    podSelector: {}
+    policyTypes:
+      - Ingress
+    _component: {{ $component }}
+    {{- $networkpoliciesFile := printf "%s/networkpolicies.yaml" $componentPath }}
+    {{- if isFile $networkpoliciesFile }}
+      {{- $content := readFile $networkpoliciesFile | fromYaml }}
+      {{- range $policyName, $policyConfig := $content }}
+        {{- $_ := set $policyConfig "_component" $component }}
+  {{ $policyName }}:
+    {{- $policyConfig | toYaml | nindent 4 }}
+      {{- end }}
+    {{- end }}
+    {{- if and ($.Values.global.serviceMesh.enable | default false) (eq ($.Values.global.serviceMesh.type | default "") "linkerd") }}
+      {{- $linkerdFile := printf "%s/networkpolicies-linkerd.yaml" $componentPath }}
+      {{- if isFile $linkerdFile }}
+        {{- $content := readFile $linkerdFile | fromYaml }}
+        {{- range $policyName, $policyConfig := $content }}
+          {{- $_ := set $policyConfig "_component" $component }}
+  {{ $policyName }}:
+    {{- $policyConfig | toYaml | nindent 4 }}
+        {{- end }}
+      {{- end }}
+    {{- end }}
   {{- end }}

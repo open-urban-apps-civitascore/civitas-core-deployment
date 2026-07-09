@@ -15,6 +15,7 @@ opa:
     repository: {{ .Values.images.authz.opa.repository }}
     tag: {{ .Values.images.authz.opa.tag }}
     pullPolicy: Always
+  apiHost: "api.{{ $global.domain }}"
 
 authz:
   image:
@@ -24,7 +25,7 @@ authz:
 
   database:
     # TODO: Make it more dynamic from portal database resource
-    url: 'jdbc:postgresql://{{ .Values.databases.portal.host }}:5432/portal'
+    url: 'jdbc:postgresql://{{ .Values.databases.portal.hostServiceName }}.{{ .Values.postgres.cluster.namespace }}.svc.cluster.local:5432/portal'
     username: 'authz'
     credentialsSecret:
       name: db-authz-readonly

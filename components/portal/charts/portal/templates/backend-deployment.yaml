@@ -76,6 +76,8 @@ spec:
               value: {{ .Values.keycloak.authServerUrl }}
             - name: KEYCLOAK_TARGET_REALM
               value: {{ .Values.keycloak.realm }}
+            - name: KEYCLOAK_ENFORCE_OTP
+              value: {{ .Values.backend.env.keycloakEnforceOtp | quote }}
             # JWT configuration
             - name: SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWS_ALGORITHMS
               value: ES256
@@ -93,13 +95,9 @@ spec:
               value: {{ .Values.kafka.bootstrapServers | quote }}
             - name: KAFKA_ENABLED
               value: "true"
-            # Model Atlas
-            - name: MODEL_ATLAS_BASE_URL
-              value: {{ .Values.modelAtlas.url }}
-            - name: MODEL_ATLAS_SCOPE
-              value: civitas
-            - name: SPRING_KAFKA_PRODUCER_PROPERTIES_COMPRESSION_TYPE
-              value: lz4
+            # Apisix
+            - name: CIVITAS_API_BASE_URL
+              value: {{ .Values.apisix.apiUrl | quote }}
             # Crypto configuration
             - name: CIVITAS_MASTER_KEY
               valueFrom:

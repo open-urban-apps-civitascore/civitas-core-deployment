@@ -1,0 +1,75 @@
+---
+nameOverride: ''
+fullnameOverride: ''
+
+nifi:
+  url: https://nifi-nifi-0.nifi-nifi.nifi:8443
+  # If true, the Job will use `curl -k` (no cert verification). Acceptable while NiFi
+  # serves a self-signed cert;
+  insecureSkipVerify: true
+
+oidc:
+  # Full token URL (`<issuer>/protocol/openid-connect/token`).
+  tokenUrl: ''
+  # Confidential client id the Job authenticates as (client-credentials grant).
+  clientId: nifi-bootstrap
+  # Kubernetes Secret holding that client's secret.
+  clientSecretRef:
+    name: keycloak-client-nifi-bootstrap
+    key: client-secret
+
+# Identities the Job will provision policies for inside NiFi.
+identities:
+  humanAdmin: ''
+  # `nifi-config-adapter`'s hardcoded `sub` claim (client-credentials grant).
+  configAdapter: nifi-config-adapter
+
+image:
+  # Lightweight, well-known image with curl + jq for the bootstrap script.
+  repository: alpine/curl
+  tag: '8.10.1'
+  digest: ''
+  pullPolicy: IfNotPresent
+
+hook:
+  weight: '10'
+  deletePolicies:
+    - before-hook-creation
+
+backoffLimit: 5
+activeDeadlineSeconds: ~
+tlSecondsAfterFinished: ~
+
+resources:
+  limits:
+    cpu: 200m
+    memory: 128Mi
+  requests:
+    cpu: 50m
+    memory: 64Mi
+
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop: ['ALL']
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 65532
+  runAsGroup: 65532
+  fsGroup: 65532
+  seccompProfile:
+    type: RuntimeDefault
+
+linkerd:
+  enable: false
+  # Selects the NiFi pods (matches the upstream chart's StatefulSet template).
+  podSelector:
+    app.kubernetes.io/instance: nifi-nifi
+  opaquePorts:
+    - port: 8443 # HTTPS UI / REST API
+    - port: 11443 # cluster protocol RPC (TLS)
+    - port: 10443 # cluster load-balancer protocol (TLS)
+    - port: 6342 # site-to-site (TLS)
+    - port: 9092 # Prometheus scrape (TLS)

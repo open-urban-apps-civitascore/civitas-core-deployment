@@ -1,0 +1,42 @@
+---
+{{- $this := .Values.superset.superset }}
+{{- $global := .Values.global }}
+# Checklist:
+# - [x] Minimal Resources
+# - [x] Minimal storage
+# - [x] 1 Replica
+
+supersetNode:
+  replicas:
+    replicaCount: 1
+  autoscaling:
+    enabled: false
+  podDisruptionBudget:
+    enabled: false
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+    requests:
+      cpu: 500m
+      memory: 512Mi
+
+supersetWorker:
+  replicas:
+    replicaCount: 1
+  resources:
+    limits:
+      cpu: 4000m
+      memory: 4Gi
+    requests:
+      cpu: 500m
+      memory: 512Mi
+
+init:
+  resources:
+    limits:
+      cpu: "350m"
+      memory: "384Mi"
+    requests:
+      cpu: "125m"
+      memory: "128Mi"

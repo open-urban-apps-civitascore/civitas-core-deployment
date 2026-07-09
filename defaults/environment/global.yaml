@@ -1,4 +1,10 @@
 ---
+# Internal orchestration flag (do not edit here). Set by the dedicated entrypoints:
+#   ""         -> deploy everything in one pass (legacy single-instance behaviour)
+#   "operators"-> only the shared cluster operators (deployment/helmfile-operators.yaml)
+#   "instance" -> everything except the operators (deployment/helmfile-instance.yaml.gotmpl)
+deployLayer: ''
+
 global:
   # The DNS domain for all services
   # e.g. this would build the keycloak domain: idm.civitas.test
@@ -14,13 +20,35 @@ global:
   # Controls resource limits, replica counts, scaling
   profile: development
 
-  # Whether Helmfile should create the namespace automatically
+  # Whether Helmfile should create the namespaces automatically
   createNamespaces: true
 
   # Namespace strategy:
   #   true  = all components in a single namespace (e.g. "dev")
-  #   false = each component in its own namespace (e.g. "dev-postgres", "dev-keycloak"; currently not supported)
+  #   false = each component in its own namespace (e.g. "dev-postgres", "dev-keycloak")
   singleNamespace: true
+
+  # Shared cluster operators (CloudNativePG, Strimzi).
+  # Enables running the operators ONCE per cluster while deploying arbitrarily
+  # many instances.
+  operators:
+    # Namespace for the shared cluster operators. Override it per environment by setting
+    # this key in deployment/environments/<env>/global.yaml.gotmpl; both the operator and
+    # the instance entrypoints read the same value, so they always agree.
+    #   "" (this default):
+    #     - multi-instance (deploy-operators / deploy-instance) -> resolves to the
+    #       built-in default namespace "civitas-operators"
+    #     - legacy all-in-one deployment                        -> operators run in the
+    #       instance namespace (single-instance behaviour)
+    #   "<name>": use this exact namespace for the shared operators.
+    # With multiple instances on the cluster it must differ from every instanceSlug
+    # (else destroying that instance tears down the shared operators). For a single
+    # instance, setting it to that instanceSlug is fine (operators + instance in one namespace).
+    namespace: ''
+    # true -> operators watch ALL namespaces (CNPG clusterWide, Strimzi watchAnyNamespace),
+    # so a single operator deployment serves every instance on the cluster.
+    # The operator entrypoint sets this automatically; leave it false here.
+    watchAllNamespaces: false
 
   # Service mesh configuration
   serviceMesh:
@@ -28,6 +56,32 @@ global:
     type: linkerd
     # Auto-inject Linkerd sidecars into namespaces
     patchNamespaces: true
+    # mTLS enforcement level, applied as the namespace's Linkerd
+    # `config.linkerd.io/default-inbound-policy` annotation:
+    #   all-unauthenticated   - opportunistic mTLS (Linkerd default): meshed-to-meshed
+    #                           traffic is encrypted, but plaintext/unmeshed inbound is
+    #                           still accepted.
+    #   cluster-authenticated - mandatory mTLS: only authenticated, meshed clients from
+    #                           within this cluster may connect (recommended).
+    #   all-authenticated     - mandatory mTLS from any valid mesh identity.
+    #   audit                 - log-only; reports what *would* be denied without enforcing
+    #                           (use as a safe rollout step before switching to enforce).
+    # Kubelet liveness/readiness probes are auto-authorized by Linkerd regardless of this
+    # setting. Genuinely public/unmeshed edges (the APISIX data plane behind the ingress)
+    # are carved out explicitly via Linkerd `Server` policies, so mandatory mTLS does not
+    # break ingress.
+    defaultInboundPolicy: cluster-authenticated
+    # Whether the cluster's ingress controller may reach the APISIX data
+    # plane WITHOUT mTLS. This drives the `accessPolicy` of the APISIX `Server`:
+    #   true  - ingress is unmeshed; the data-plane edge is `all-unauthenticated`
+    #           so plaintext ingress traffic is accepted.
+    #   false - the ingress controller is meshed; ingress->APISIX is mTLS, so the
+    #           data-plane edge is `all-authenticated` and rejects plaintext (default).
+    # Defaults to mandatory mTLS on the ingress edge: the ingress controller
+    # must be meshed (Linkerd-injected). Environments with an unmeshed ingress
+    # (e.g. the CI vcluster, whose ingress lives in the host cluster) must override
+    # this to true.
+    allowUnauthenticatedIngress: false
 
   ingress:
     # Use your available cluster issuer for production, e.g. 'letsencrypt-prod'
@@ -48,6 +102,12 @@ global:
   metrics:
     enabled: false
 
+  # Kyverno runtime policy enforcement mode
+  # Audit: log violations only; Enforce: block violating resources
+  runtimePolicies:
+    enabled: true
+    failureAction: Audit
+
 # List of components to deploy (order matters for dependencies)
 # To "disable" a component, remove it from the list.
 # To add custom components/addons, add them to the list.
@@ -56,15 +116,17 @@ components:
   - prepare
   - secrets
   - networkpolicies
+  - runtime-policies
   - postgres
   - etcd
   - kafka
   - keycloak
   - authz
   - apisix
-  - apicurio
   - frost
-  - model-atlas
-  - redpanda-connect
+  - nifi
   - config-adapters
   - portal
+  - geoserver
+  - valkey
+  - superset

@@ -67,7 +67,7 @@ frost:
     #  update:
     #  delete:
     #  admin:
-    realmName: {{ .Values.frost.frost.realmName | default "civitas" }}
+    realmName: {{ .Values.frost.frost.realmName | default $global.instanceSlug }}
     plainTextPassword: 'false'
     db:
       autoUpdate: "true"
@@ -164,7 +164,7 @@ frost:
 
   db:
     enableIntegratedDb: false
-    dbExternalConnectionString: "jdbc:postgresql://{{ .Values.databases.frost.host }}:{{ default 5432 .Values.databases.frost.port }}/{{ default "frost" .Values.databases.frost.name }}"
+    dbExternalConnectionString: "jdbc:postgresql://{{ .Values.databases.frost.hostServiceName }}.{{ .Values.postgres.cluster.namespace }}.svc.cluster.local:{{ default 5432 .Values.databases.frost.port }}/{{ default "frost" .Values.databases.frost.name }}"
     database: "{{ default "frost" .Values.databases.frost.name }}"
     # TODO: Restructure .Values.databases objects to support users in secrets, e.g. .Values.databases.frost.secret.usernameKey and .Values.databases.frost.secret.passwordKey
     existingSecret: {{ .Values.databases.frost.secret.name }}
