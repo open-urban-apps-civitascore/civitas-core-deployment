@@ -26,6 +26,7 @@ repositories:
 {{- end }}
 
 releases:
+  {{- $layer := $root.deployLayer | default "" }}
   {{- $allNetworkPolicies := index $root "networkpolicies" | default dict }}
   {{- range $policyComponentName, $policyConfig := $allNetworkPolicies }}
     {{- if ne $policyComponentName "networkpolicies" }}
@@ -45,20 +46,69 @@ releases:
         {{- $targetComponentData = index $root $camelCase | default dict }}
       {{- end }}
       {{- $targetNamespace := "" }}
-      {{- range $partKey, $partData := $targetComponentData }}
-        {{- if and (kindIs "map" $partData) (hasKey $partData "namespace") }}
-          {{- $targetNamespace = index $partData "namespace" }}
-          {{- break }}
+      {{- if hasKey $policyConfig "componentNamespace" }}
+        {{- /* Pin the policy to a specific component part's namespace using the same
+               dotted "component.part" convention as peer componentNamespace (e.g.
+               postgres.operator -> the operator namespace, which in the multi-instance
+               model is the shared operators namespace, not the cluster namespace). A
+               bare component name resolves to its first namespaced part. */ -}}
+        {{- $dotted := splitList "." $policyConfig.componentNamespace }}
+        {{- $refComponentData := index $root (index $dotted 0) | default dict }}
+        {{- if not $refComponentData }}
+          {{- $parts := splitList "-" (index $dotted 0) }}
+          {{- $camelCase := index $parts 0 }}
+          {{- range $i, $part := $parts }}
+            {{- if gt $i 0 }}
+              {{- $camelCase = printf "%s%s" $camelCase ($part | title) }}
+            {{- end }}
+          {{- end }}
+          {{- $refComponentData = index $root $camelCase | default dict }}
+        {{- end }}
+        {{- if gt (len $dotted) 1 }}
+          {{- $partData := index $refComponentData (index $dotted 1) | default dict }}
+          {{- if and (kindIs "map" $partData) (hasKey $partData "namespace") }}
+            {{- $targetNamespace = index $partData "namespace" }}
+          {{- end }}
+        {{- else }}
+          {{- range $partKey, $partData := $refComponentData }}
+            {{- if and (kindIs "map" $partData) (hasKey $partData "namespace") }}
+              {{- $targetNamespace = index $partData "namespace" }}
+              {{- break }}
+            {{- end }}
+          {{- end }}
+        {{- end }}
+      {{- else }}
+        {{- range $partKey, $partData := $targetComponentData }}
+          {{- if and (kindIs "map" $partData) (hasKey $partData "namespace") }}
+            {{- $targetNamespace = index $partData "namespace" }}
+            {{- break }}
+          {{- end }}
         {{- end }}
       {{- end }}
       {{- if hasKey $policyConfig "namespace" }}
         {{- $targetNamespace = $policyConfig.namespace }}
       {{- end }}
-      {{- if $targetNamespace }}
+      {{- /* Which deploy layer owns this policy. Policies that target the shared
+             operators namespace (the cnpg webhook allow, the default-deny for
+             operator-only components like runtime-policies, …) are created ONCE per
+             cluster by the operators layer — never per instance, or concurrent
+             instance syncs would fight over the same release in that shared namespace.
+             Everything else is per-instance. An explicit deployLayer on the policy
+             overrides this. The legacy all-in-one layer ("") renders all of them. */ -}}
+      {{- $opNamespace := ((($root.global | default dict).operators | default dict).namespace) | default "civitas-operators" }}
+      {{- $policyLayer := index $policyConfig "deployLayer" | default "" }}
+      {{- if not $policyLayer }}
+        {{- $policyLayer = ternary "operators" "instance" (eq $targetNamespace $opNamespace) }}
+      {{- end }}
+      {{- if and $targetNamespace (or (eq $layer "") (eq $layer $policyLayer)) }}
         {{- $transformedConfig := dict }}
         {{- range $key, $value := $policyConfig }}
           {{- if eq $key "_component" }}
             {{- /* Skip the component metadata field */ -}}
+          {{- else if eq $key "componentNamespace" }}
+            {{- /* Skip: consumed above for target-namespace resolution */ -}}
+          {{- else if eq $key "deployLayer" }}
+            {{- /* Skip: consumed above for layer gating */ -}}
           {{- else if or (eq $key "ingress") (eq $key "egress") }}
             {{- $transformedRules := list }}
             {{- range $rule := $value }}

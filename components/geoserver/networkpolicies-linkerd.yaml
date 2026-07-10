@@ -17,23 +17,32 @@ geoserver-rabbitmq-allow-linkerd:
           protocol: TCP
         - port: 4191
           protocol: TCP
+
+# TODO: make more specific policies per pod (geoserver service)
 geoserver-allow-linkerd:
   podSelector:
-    app.kubernetes.io/component: rest
     app.kubernetes.io/instance: geoserver-geoserver
     app.kubernetes.io/name: gsc
   policyTypes:
     - Ingress
   ingress:
     - from:
-        - podSelector:
-            matchLabels:
-              app.kubernetes.io/name: apisix
-          componentNamespace: apisix
+        # config-adapter -> rest
         - podSelector:
             matchLabels:
               app.kubernetes.io/name: config-adapter
           componentNamespace: config-adapters
+        # apisix -> gateway
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: apisix
+          componentNamespace: apisix
+        # geoserver gateway -> all other components
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/instance: geoserver-geoserver
+              app.kubernetes.io/name: gsc
+          componentNamespace: geoserver
       ports:
         - port: 4143
           protocol: TCP
