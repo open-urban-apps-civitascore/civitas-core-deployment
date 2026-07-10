@@ -23,7 +23,7 @@ system-tests:
 # Auth password is read from SYSTEM_TEST_AUTH_PASSWORD in the top-level .env (loaded via set dotenv-load).
 # Executed inside the cicd image so no local Java/Robot/Browser toolchain is needed.
 [group('test & lint')]
-system-test environment='local' cicd-image='registry.gitlab.com/civitas-connect/civitas-core/docker-images/cicd:2.0.0-beta-hotfixes-cicd-image':
+system-test environment='local' cicd-image='registry.gitlab.com/civitas-connect/civitas-core/docker-images/cicd:2.0.0-beta':
 	#!/usr/bin/env bash
 	set -eu
 
