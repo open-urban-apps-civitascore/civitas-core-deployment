@@ -255,6 +255,7 @@ deploy-mr:
     SMOKE_TEST_DOMAIN: ${PIPELINE_SLUG}.${SMOKE_TEST_BASE_DOMAIN}
     API_BASE_URL: https://api.${PIPELINE_SLUG}.${SMOKE_TEST_BASE_DOMAIN}/v1
     PORTAL_BACKEND_URL: https://portal.${PIPELINE_SLUG}.${SMOKE_TEST_BASE_DOMAIN}/v1
+    PORTAL_FRONTEND_URL: https://portal.${PIPELINE_SLUG}.${SMOKE_TEST_BASE_DOMAIN}
     KEYCLOAK_URL: https://idm.${PIPELINE_SLUG}.${SMOKE_TEST_BASE_DOMAIN}
     KEYCLOAK_REALM: civitas
     KEYCLOAK_CLIENT_ID: portal-frontend
@@ -405,6 +406,9 @@ deploy-nightly:
       artifacts: false
   environment:
     name: nightly/$CI_COMMIT_REF_SLUG
+    # Register the teardown job so GitLab can stop this environment (and the
+    # vcluster) even if deploy-nightly itself fails mid-run.
+    on_stop: destroy-nightly
   rules:
     # Deploy on the nightly schedule (no manual trigger)
     - if: '$IS_NIGHTLY == "true"'
@@ -500,8 +504,13 @@ collect-logs-nightly:
   needs:
     - job: nightly-slug
       artifacts: true
+    # Only run AFTER deploy and system tests
+    - job: deploy-nightly
+      artifacts: false
+      optional: true
     - job: system-tests-nightly
       artifacts: false
+      optional: true
   variables:
     KUBECONFIG_CONTENT: $KUBECONFIG_CONTENT_VCLUSTER_HOST
     SMOKE_TEST_DOMAIN: ${PIPELINE_SLUG}.${SMOKE_TEST_BASE_DOMAIN}
@@ -509,6 +518,12 @@ collect-logs-nightly:
     - if: '$IS_NIGHTLY == "true"'
       when: always
   script:
+    # If deploy never provisioned a vcluster there is nothing to collect.
+    - |
+      if ! kubectl get namespace "smoke-test-${PIPELINE_SLUG}" >/dev/null 2>&1; then
+        echo "No smoke-test-${PIPELINE_SLUG} namespace (deploy did not provision a vcluster); nothing to collect."
+        exit 0
+      fi
     # Point kubectl at the vcluster (still alive at this point).
     - ./scripts/ci/fetch-vcluster-kubeconfig.sh
     - mkdir -p nightly-logs
@@ -534,10 +549,20 @@ collect-logs-nightly:
 destroy-nightly:
   extends: .destroy-vcluster-base
   stage: cleanup
+  # Registered as deploy-nightly's on_stop job (environment action: stop) so a
+  # failed deploy-nightly still gets its vcluster torn down.
+  environment:
+    name: nightly/$CI_COMMIT_REF_SLUG
+    action: stop
   needs:
     - job: nightly-slug
       artifacts: true
-    # Cleanup must always run once a vcluster was provisioned
+    # Order this after deploy and log collection (waits for them when present).
+    # optional: doesn't fail pipeline creation, and doesn't block on a FAILED
+    # deploy. On deploy failure this needs-run is blocked, but the on_stop
+    # environment action still runs destroy-nightly (teardown guaranteed).
+    # When deploy actually ran with no vcluster, the guard below no-ops.
+
     - job: deploy-nightly
       artifacts: false
       optional: true
@@ -545,9 +570,18 @@ destroy-nightly:
       artifacts: false
       optional: true
   rules:
-    # Always destroy on the nightly schedule, even if earlier jobs failed.
     - if: '$IS_NIGHTLY == "true"'
       when: always
+  before_script:
+    - !reference [.deploy-base, before_script]
+    # if deploy never provisioned a vcluster there is nothing
+    # to tear down. 
+    - |
+      if ! kubectl get namespace "smoke-test-${PIPELINE_SLUG}" >/dev/null 2>&1; then
+        echo "No smoke-test-${PIPELINE_SLUG} namespace (deploy did not provision a vcluster); nothing to tear down."
+        exit 0
+      fi
+
 
 # Regression tests for kyverno policies themselves (good/bad fixtures per policy).
 test-kyverno-policies:
