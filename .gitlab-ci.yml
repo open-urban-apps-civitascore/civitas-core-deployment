@@ -572,15 +572,14 @@ destroy-nightly:
   rules:
     - if: '$IS_NIGHTLY == "true"'
       when: always
-  before_script:
-    - !reference [.deploy-base, before_script]
-    # if deploy never provisioned a vcluster there is nothing
-    # to tear down.
+  script:
+    # if deploy never provisioned a vcluster there is nothing to tear down.
     - |
       if ! kubectl get namespace "smoke-test-${PIPELINE_SLUG}" >/dev/null 2>&1; then
         echo "No smoke-test-${PIPELINE_SLUG} namespace (deploy did not provision a vcluster); nothing to tear down."
         exit 0
       fi
+    - kubectl delete namespace smoke-test-${PIPELINE_SLUG} --ignore-not-found
 
 # Regression tests for kyverno policies themselves (good/bad fixtures per policy).
 test-kyverno-policies:
