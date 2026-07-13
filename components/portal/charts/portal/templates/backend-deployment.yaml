@@ -118,6 +118,14 @@ spec:
               value: Data Owner
             - name: INIT_GROUPS_1_DESCRIPTION
               value: Users with full access to data
+            - name: INIT_GROUPS_2_NAME
+              value: Data Architect
+            - name: INIT_GROUPS_2_SCOPETYPE
+              value: TENANT
+            - name: INIT_GROUPS_2_ROLENAME
+              value: Data Architect
+            - name: INIT_GROUPS_2_DESCRIPTION
+              value: Users with full access to data
             - name: INIT_USERS_0_FIRSTNAME
               value: Tenant
             - name: INIT_USERS_0_LASTNAME
@@ -129,6 +137,8 @@ spec:
             {{- if .Values.initialUser.isFullAdmin }}
             - name: INIT_USERS_0_GROUPS_1
               value: Data Owner
+            - name: INIT_USERS_0_GROUPS_2
+              value: Data Architect
             {{- end }}
             {{- if and ($trustStoreConfig.enabled | default false) $trustStoreSecret }}
             - name: JAVA_TOOL_OPTIONS

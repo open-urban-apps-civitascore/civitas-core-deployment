@@ -6,7 +6,8 @@
 # and installs it as the active kubeconfig for subsequent kubectl/helm calls.
 #
 # Required environment:
-#   PIPELINE_SLUG         release/namespace suffix used by deploy-smoke-test
+#   PIPELINE_SLUG         release/namespace suffix used by deploy-branch/deploy-mr
+
 #                         ($CI_COMMIT_REF_SLUG for branch pipelines,
 #                          mr-$CI_MERGE_REQUEST_IID for MR pipelines)
 #   SMOKE_TEST_DOMAIN     expected server hostname in the kubeconfig

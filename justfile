@@ -14,6 +14,63 @@ default:
 validate:
 	pre-commit run --all-files;
 
+# Run the Robot/Java system-test PoC
+[group('test & lint')]
+system-tests:
+	bash tests/system/run-system-tests.sh
+
+# Run the system tests against an environment (endpoints derived from its global.yaml.gotmpl domain).
+# Auth password is read from SYSTEM_TEST_AUTH_PASSWORD in the top-level .env (loaded via set dotenv-load).
+# Executed inside the cicd image so no local Java/Robot/Browser toolchain is needed.
+[group('test & lint')]
+system-test environment='local' cicd-image='registry.gitlab.com/civitas-connect/civitas-core/docker-images/cicd:2.0.0-beta':
+	#!/usr/bin/env bash
+	set -eu
+
+	GLOBAL="deployment/environments/{{environment}}/global.yaml.gotmpl"
+	DOMAIN=$(yq -r '.global.domain' "${GLOBAL}")
+	REALM=$(yq -r '.global.instanceSlug // "civitas"' "${GLOBAL}")
+	# SYSTEM_TEST_AUTH_USER (from .env) takes precedence; fall back to initialUserEmail from global.yaml.
+	USER="${SYSTEM_TEST_AUTH_USER:-$(yq -r '.global.initialUserEmail // "admin@civitas.test"' "${GLOBAL}")}"
+
+	if [ -z "${DOMAIN}" ] || [ "${DOMAIN}" = "null" ]; then
+		echo "ERROR: could not read .global.domain from ${GLOBAL}" >&2
+		exit 1
+	fi
+
+
+	if [ -z "${SYSTEM_TEST_AUTH_PASSWORD:-}" ]; then
+		echo "ERROR: SYSTEM_TEST_AUTH_PASSWORD is not set. Add it to the top-level .env file." >&2
+		exit 1
+	fi
+
+	# portal-frontend is a confidential client; read its generated secret from the cluster.
+	CLIENT_SECRET=$(kubectl -n "${REALM}" get secret keycloak-client-portal-frontend -o jsonpath='{.data.client-secret}' | base64 -d)
+	if [ -z "${CLIENT_SECRET}" ]; then
+		echo "ERROR: could not read keycloak-client-portal-frontend secret from namespace ${REALM}." >&2
+		exit 1
+	fi
+
+	echo "Running system tests against environment '{{environment}}' (domain: ${DOMAIN})"
+
+	docker run --rm \
+		-v "$(pwd)":/workspace -w /workspace \
+		-e API_BASE_URL="https://api.${DOMAIN}/v1" \
+		-e KEYCLOAK_URL="https://idm.${DOMAIN}" \
+		-e KEYCLOAK_REALM="${REALM}" \
+		-e KEYCLOAK_CLIENT_ID="portal-frontend" \
+		-e KEYCLOAK_CLIENT_SECRET="${CLIENT_SECRET}" \
+		-e APISIX_GATEWAY_URL="https://api.${DOMAIN}" \
+		-e PORTAL_BACKEND_URL="https://portal.${DOMAIN}/v1" \
+		-e PORTAL_FRONTEND_URL="https://portal.${DOMAIN}" \
+		-e FROST_BASE_URL="http://frost-frost-frost-server-http.frost/FROST-Server/v1.1" \
+		-e SYSTEM_TEST_AUTH_USER="${USER}" \
+		-e SYSTEM_TEST_AUTH_PASSWORD="${SYSTEM_TEST_AUTH_PASSWORD}" \
+		"{{cicd-image}}" \
+		bash tests/system/run-system-tests.sh
+
+
+
 # Sync a specific component in an environment
 [group('deployment')]
 sync-component environment='local' component='':
@@ -514,57 +571,11 @@ create-device-management-db:
     echo "  Password stored in secret: devicemanagement-db-credentials"
 
 # Create demo database and import demo data
+# Delegates to scripts/ci/create-demo-db.sh so the logic has a single source of
+# truth and the CI job can run it without needing `just` in the CICD image.
 [group('helpers')]
 create-demo-db profile='local':
-    #!/usr/bin/env bash
-    set -euo pipefail
-
-    # Read configuration from global.yaml
-    NS=$(helmfile template -f deployment/helmfile.yaml -e {{profile}} --selector component=postgres --skip-deps -q | yq 'select(.kind == "Deployment") | .metadata.namespace')
-
-    echo "Creating demo database in namespace: $NS"
-
-    # Get postgres superuser username
-    POSTGRES_USER=$(kubectl get secret -n "$NS" postgres-cluster-superuser -o jsonpath='{.data.username}' | base64 -d)
-
-    # Use the primary pod (writes are not allowed on read-only replicas)
-    POD=$(kubectl get pods -n "$NS" -l cnpg.io/cluster=postgres-cluster,cnpg.io/instanceRole=primary -o jsonpath='{.items[0].metadata.name}')
-
-    if [ -z "$POD" ]; then
-        echo "ERROR: Primary Postgres pod not found in namespace $NS"
-        exit 1
-    fi
-
-    echo "Using primary Postgres pod: $POD"
-
-    # Fixed password for demo user
-    DB_PASSWORD="secret"
-
-    # Create user and database
-    echo "Creating database user 'demo'..."
-    kubectl exec -n "$NS" "$POD" -c postgres -- psql -U "$POSTGRES_USER" -c "CREATE USER demo WITH PASSWORD '$DB_PASSWORD';" 2>/dev/null || echo "User 'demo' may already exist"
-
-    echo "Creating database 'demo' with owner 'demo'..."
-    kubectl exec -n "$NS" "$POD" -c postgres -- psql -U "$POSTGRES_USER" -c "CREATE DATABASE demo WITH OWNER demo;" 2>/dev/null || echo "Database 'demo' may already exist"
-
-    # Grant necessary permissions
-    echo "Granting permissions..."
-    kubectl exec -n "$NS" "$POD" -c postgres -- psql -U "$POSTGRES_USER" -d demo -c "GRANT ALL ON SCHEMA public TO demo;"
-
-    # Import SQL file
-    echo "Importing tests/03-demo.sql..."
-    cat tests/03-demo.sql | kubectl exec -i -n "$NS" "$POD" -c postgres -- psql -U "$POSTGRES_USER" -d demo
-
-    # Change ownership of the demo table to the demo user
-    echo "Updating ownership..."
-    kubectl exec -n "$NS" "$POD" -c postgres -- psql -U "$POSTGRES_USER" -d demo -c "ALTER TABLE public.demo_sensor_readings OWNER TO demo;"
-
-    echo "✓ Database 'demo' created and SQL imported successfully!"
-    echo "  Database: demo"
-    echo "  User: demo"
-    echo "  Password: $DB_PASSWORD"
-    # In-cluster connection URL (e.g. how the nifi pod reaches this db)
-    echo "  In-cluster URL: postgresql://demo:$DB_PASSWORD@postgres-cluster-rw.$NS.svc.cluster.local:5432/demo"
+    ./scripts/ci/create-demo-db.sh {{profile}}
 
 # Create test user in Keycloak
 
