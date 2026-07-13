@@ -107,10 +107,10 @@ validate-renovate-config:
 
     kubectl create secret generic keycloak-smtp \
       --namespace="${KEYCLOAK_SMTP_NAMESPACE}" \
-      --from-literal=host='fw-hosting.space' \
+      --from-literal=host="${SMTP_HOST}" \
       --from-literal=port='587' \
-      --from-literal=from='noreply@f9w.de' \
-      --from-literal=user='noreply@f9w.de' \
+      --from-literal=from="${SMTP_FROM:-}" \
+      --from-literal=user="${SMTP_USER:-}" \
       --from-literal=password="${SMTP_PASSWORD:-}" \
       --dry-run=client -o yaml \
       | kubectl apply -f - >/dev/null
