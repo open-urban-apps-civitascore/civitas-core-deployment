@@ -147,6 +147,7 @@ configOverrides:
     import json
     import logging
     import os
+    from urllib.parse import urlencode, urlsplit
 
     log = logging.getLogger(__name__)
 
@@ -207,14 +208,28 @@ configOverrides:
       except Exception:
         return {}
 
+    def _sanitize_next_url(next_url):
+      # Only allow app-internal absolute paths, never absolute or protocol-relative URLs.
+      if not next_url:
+        return None
+
+      parsed = urlsplit(next_url)
+      if parsed.scheme or parsed.netloc:
+        return None
+
+      if not next_url.startswith('/') or next_url.startswith('//'):
+        return None
+
+      return next_url
+
     class CustomOAuthView(AuthOAuthView):
       @expose('/login/')
       @expose('/login/<provider>')
       def login(self, provider=None):
         if not provider:
-          next_url = request.args.get('next')
+          next_url = _sanitize_next_url(request.args.get('next'))
           if next_url:
-            return redirect(f'/login/{PROVIDER_NAME}?next={next_url}')
+            return redirect(f'/login/{PROVIDER_NAME}?{urlencode({"next": next_url})}')
           return redirect(f'/login/{PROVIDER_NAME}')
 
         if provider not in self.appbuilder.sm.oauth_remotes:
