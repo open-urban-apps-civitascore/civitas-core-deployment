@@ -3,4 +3,4 @@ frost:
   frost:
     repository: https://fraunhoferiosb.github.io/helm-charts/
     chart: frost/frost-server
-    version: 2.7.2
+    version: 2.7.3
