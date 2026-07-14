@@ -5,7 +5,7 @@ frost:
   policyTypes:
     - Ingress
   ingress:
-    # APISIX Gateway proxied den externen Traffic zu FROST
+    # APISIX Gateway proxies external Traffic to FROST
     - from:
         - podSelector:
             matchLabels:
@@ -14,7 +14,7 @@ frost:
       ports:
         - protocol: TCP
           port: 8080
-    # Config-Adapter greift direkt auf FROST zu (CRUD fuer Things, Sensors, etc.)
+    # Config-Adapter directly accesses FROST (CRUD for Things, Sensors, etc.)
     - from:
         - podSelector:
             matchLabels:
@@ -23,7 +23,7 @@ frost:
       ports:
         - protocol: TCP
           port: 8080
-    # Nifi greift direkt auf FROST zu (CRUD fuer Things, Sensors, etc.)
+    # Nifi directly accesses FROST (CRUD for Things, Sensors, etc.)
     - from:
         - podSelector:
             matchLabels:
