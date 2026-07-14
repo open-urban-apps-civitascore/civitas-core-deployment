@@ -23,3 +23,12 @@ frost:
       ports:
         - protocol: TCP
           port: 8080
+    # Nifi greift direkt auf FROST zu (CRUD fuer Things, Sensors, etc.)
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: nifi
+          componentNamespace: nifi
+      ports:
+        - protocol: TCP
+          port: 8080
