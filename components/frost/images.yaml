@@ -2,7 +2,7 @@
 frost:
   http:
     repository: fraunhoferiosb/frost-server-http
-    tag: 2.7.2
+    tag: 2.7.3
   bus:
     repository: eclipse-mosquitto
     tag: 1.6.15
