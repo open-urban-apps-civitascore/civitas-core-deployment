@@ -115,6 +115,10 @@ extraVolumeMounts:
 
 
 securityContext:
+  {{ .Values.securityDefaults.securityContext | toYaml | nindent 2 }}
   runAsUser: 1000
   runAsGroup: 1000
   runAsNonRoot: true
+
+podSecurityContext:
+  {{ .Values.securityDefaults.podSecurityContext | toYaml | nindent 2 }}
