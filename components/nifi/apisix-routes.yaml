@@ -10,5 +10,4 @@ nifi:
   scheme: https
   passHost: rewrite
   upstreamHost: nifi-nifi-http
-  subDomain: nifi
   uri: '/*'
