@@ -66,7 +66,7 @@ nifiMonitor:
 
 extraInitContainers:
   - name: fetch-postgresql-jdbc
-    image: {{ .Values.images.nifi.bootstrap.repository }}:{{ .Values.images.nifi.bootstrap.tag }}
+    image: {{ .Values.images.nifi.bootstrap.repository }}@{{ .Values.images.nifi.bootstrap.digest }}
     command:
       - sh
       - -c
