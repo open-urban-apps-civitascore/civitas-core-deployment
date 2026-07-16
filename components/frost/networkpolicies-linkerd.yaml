@@ -12,6 +12,9 @@ frost-allow-linkerd:
         - podSelector:
             matchLabels:
               app.kubernetes.io/name: config-adapter
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: nifi
       ports:
         - port: 4143
           protocol: TCP
