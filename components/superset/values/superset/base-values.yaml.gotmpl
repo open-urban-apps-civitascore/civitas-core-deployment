@@ -352,7 +352,9 @@ configOverrides:
       key_prefix='superset_results',
     )
   secret: |
-    SECRET_KEY = os.getenv("SECRET_KEY", "CHANGE-ME")
+    SECRET_KEY = os.getenv("SECRET_KEY")
+    if not SECRET_KEY:
+      raise RuntimeError("SECRET_KEY env var is required")
 
 image:
   repository: {{ .Values.images.superset.superset.registry }}/{{ .Values.images.superset.superset.repository }}
