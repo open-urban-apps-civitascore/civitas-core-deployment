@@ -211,13 +211,16 @@ configOverrides:
     def _sanitize_next_url(next_url):
       # Only allow app-internal absolute paths, never absolute or protocol-relative URLs.
       if not next_url:
+        log.debug('Rejected next URL: empty or missing value')
         return None
 
       parsed = urlsplit(next_url)
       if parsed.scheme or parsed.netloc:
+        log.debug(f'Rejected next URL (scheme/netloc present): {next_url}')
         return None
 
       if not next_url.startswith('/') or next_url.startswith('//'):
+        log.debug(f'Rejected next URL (not app-internal absolute path): {next_url}')
         return None
 
       return next_url
