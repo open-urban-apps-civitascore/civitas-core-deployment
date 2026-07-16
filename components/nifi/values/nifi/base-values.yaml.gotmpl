@@ -49,7 +49,7 @@ zookeeper:
 
 ingress:
   enabled: false
-  hostName: '{{ .Values.routes.nifi.subDomain }}.{{ $global.domain }}'
+  #hostName: 'nifi.{{ $global.domain }}'
 
 service:
   external:
@@ -66,7 +66,7 @@ nifiMonitor:
 
 extraInitContainers:
   - name: fetch-postgresql-jdbc
-    image: curlimages/curl:8.11.1
+    image: {{ .Values.images.nifi.bootstrap.repository }}@{{ .Values.images.nifi.bootstrap.digest }}
     command:
       - sh
       - -c
