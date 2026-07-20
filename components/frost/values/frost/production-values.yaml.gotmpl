@@ -6,7 +6,7 @@
 # - [ ] Larger Storage -> not applicable
 # - [x] 2+ Replicas or HorizontalPodAutoscaler
 # - [ ] Rolling updates `maxUnavailable: 0`, `maxSurge: 25%` -> not supported
-# - [ ] PodDisruptionBudget (at least `minAvailable: 1`) -> not supported
+# - [ ] PodDisruptionBudget (at least `minAvailable: 1`) -> no PDB present; chart exposes none and has no extraDeploy/extraManifests escape hatch, would need a new custom chart under components/frost/charts/ or a shared PDB-injection mechanism - flagged for decision, not applied
 
 frost:
 
