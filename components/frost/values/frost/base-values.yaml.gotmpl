@@ -2,10 +2,10 @@
 {{- $this := .Values.frost.frost }}
 {{- $global := .Values.global }}
 # Checklist:
-# - [ ] Containers run as non-root with `readOnlyRootFilesystem` -> non-root enforced (verified by Kyverno); readOnlyRootFilesystem fails Kyverno and isn't set, chart doesn't document Tomcat's writable paths (likely $CATALINA_BASE/temp,work,logs, /tmp) so needs testing before enabling, not applied
+# - [x] Containers run as non-root with `readOnlyRootFilesystem`
 # - [x] Health probes
-# - [x] Graceful shutdown -> `http.lifecycle.preStop` sleeps 5s before SIGTERM, default terminationGracePeriodSeconds 30s leaves ~25s for Tomcat to drain in-flight requests
-# - [x] Standard labels -> chart sets app.kubernetes.io/managed-by, instance, helm.sh/chart plus app/component; no values option for name/version/part-of
+# - [x] Graceful shutdown -> `http.lifecycle.preStop` sleeps 5s before SIGTERM. Not verified yet if frost handles SIGTERM gracefully.
+# - [ ] Standard labels -> chart sets some, but can't be configured
 # - [ ] ServiceAccount with least privilege where required -> not supported, chart exposes no serviceAccountName/automount override for the frost pod; runs under namespace default SA with no RBAC bound
 # - [x] Named ports -> not applicable, upstream chart, no components/frost/charts/
 # - [x] Ingress with TLS -> not applicable, routed via apisix (`http.ingress.enabled: false`)
@@ -105,18 +105,34 @@ frost:
         exec:
           command: ["sleep", "5"]
 
+    {{- /* frost image requires UID/GID 1001 and only has container securityContext, so we can't use the defaults */}}
     securityContext:
       runAsUser: 1001
       runAsGroup: 1001
       runAsNonRoot: true
       allowPrivilegeEscalation: false
-      readOnlyRootFilesystem: false
+      readOnlyRootFilesystem: true
       seccompProfile:
         type: RuntimeDefault
       capabilities:
         drop: ["ALL"]
 
-    extraEnv: |  
+    volumes:
+      - name: tomcat-logs
+        emptyDir: {}
+      - name: tomcat-work
+        emptyDir: {}
+      - name: tomcat-conf-localhost
+        emptyDir: {}
+    volumeMounts:
+      - name: tomcat-logs
+        mountPath: /usr/local/tomcat/logs
+      - name: tomcat-work
+        mountPath: /usr/local/tomcat/work
+      - name: tomcat-conf-localhost
+        mountPath: /usr/local/tomcat/conf/Catalina/localhost
+
+    extraEnv: |
       - name: auth_registerUserLocally
         value: "true"        
       - name: auth_userRoleDecoderClass
