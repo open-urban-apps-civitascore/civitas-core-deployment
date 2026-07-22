@@ -21,6 +21,7 @@ spec:
         any:
           - resources:
               kinds: [Pod]
+              operations: [CREATE, UPDATE]
       preconditions:
         all:
           - key: '{{ request.object.metadata.annotations."linkerd.io/inject" || ''enabled'' }}'
