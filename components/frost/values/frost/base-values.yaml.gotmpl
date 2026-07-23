@@ -2,13 +2,13 @@
 {{- $this := .Values.frost.frost }}
 {{- $global := .Values.global }}
 # Checklist:
-# - [ ] Containers run as non-root with `readOnlyRootFilesystem` -> not supported
+# - [x] Containers run as non-root with `readOnlyRootFilesystem`
 # - [x] Health probes
-# - [x] Graceful shutdown
-# - [x] Standard labels
-# - [ ] ServiceAccount with least privilege where required -> not supported
-# - [x] Named ports
-# - [ ] Ingress with TLS -> not (yet) applicable
+# - [x] Graceful shutdown -> `http.lifecycle.preStop` sleeps 5s before SIGTERM. Not verified yet if frost handles SIGTERM gracefully.
+# - [ ] Standard labels -> chart sets some, but can't be configured
+# - [ ] ServiceAccount with least privilege where required -> not supported, chart exposes no serviceAccountName/automount override for the frost pod; runs under namespace default SA with no RBAC bound
+# - [x] Named ports -> not applicable, upstream chart, no components/frost/charts/
+# - [x] Ingress with TLS -> not applicable, routed via apisix (`http.ingress.enabled: false`)
 
 frost:
   metrics:
@@ -100,18 +100,39 @@ frost:
     ingress:
       enabled: false
 
+    lifecycle:
+      preStop:
+        exec:
+          command: ["sleep", "5"]
+
+    {{- /* frost image requires UID/GID 1001 and only has container securityContext, so we can't use the defaults */}}
     securityContext:
       runAsUser: 1001
       runAsGroup: 1001
       runAsNonRoot: true
       allowPrivilegeEscalation: false
-      readOnlyRootFilesystem: false
+      readOnlyRootFilesystem: true
       seccompProfile:
         type: RuntimeDefault
       capabilities:
         drop: ["ALL"]
 
-    extraEnv: |  
+    volumes:
+      - name: tomcat-logs
+        emptyDir: {}
+      - name: tomcat-work
+        emptyDir: {}
+      - name: tomcat-conf-localhost
+        emptyDir: {}
+    volumeMounts:
+      - name: tomcat-logs
+        mountPath: /usr/local/tomcat/logs
+      - name: tomcat-work
+        mountPath: /usr/local/tomcat/work
+      - name: tomcat-conf-localhost
+        mountPath: /usr/local/tomcat/conf/Catalina/localhost
+
+    extraEnv: |
       - name: auth_registerUserLocally
         value: "true"        
       - name: auth_userRoleDecoderClass
