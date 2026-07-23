@@ -27,6 +27,13 @@ spec:
       restartPolicy: OnFailure
       containers:
       - name: create-role
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "200m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
         image: postgres:16-alpine
         env:
         - name: PGHOST

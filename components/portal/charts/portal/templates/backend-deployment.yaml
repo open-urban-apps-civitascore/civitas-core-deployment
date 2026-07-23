@@ -47,6 +47,14 @@ spec:
               readOnly: true
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
+          # hardcoded since this is a fixed keytool import that won't need more resources, even when the platform scales up
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              cpu: 100m
+              memory: 64Mi
       {{- end }}
       containers:
         - name: backend
