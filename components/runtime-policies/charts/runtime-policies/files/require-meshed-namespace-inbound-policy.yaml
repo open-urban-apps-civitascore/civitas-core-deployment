@@ -23,6 +23,7 @@ spec:
         any:
           - resources:
               kinds: [Namespace]
+              operations: [CREATE, UPDATE]
       preconditions:
         all:
           - key: '{{ request.object.metadata.annotations."linkerd.io/inject" || ''unset'' }}'

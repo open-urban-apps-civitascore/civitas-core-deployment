@@ -28,6 +28,7 @@ spec:
         any:
           - resources:
               kinds: [Pod]
+              operations: [CREATE, UPDATE]
       preconditions:
         all:
           # Only values that Strimzi creates *directly* (Kafka brokers/controllers
@@ -54,6 +55,7 @@ spec:
         any:
           - resources:
               kinds: [Pod]
+              operations: [CREATE, UPDATE]
       preconditions:
         all:
           - key: '{{ request.object.metadata.labels."app.kubernetes.io/name" || '''' }}'
@@ -78,6 +80,7 @@ spec:
         any:
           - resources:
               kinds: [Pod]
+              operations: [CREATE, UPDATE]
       preconditions:
         all:
           - key: '{{ request.userInfo.username }}'
@@ -100,6 +103,7 @@ spec:
         any:
           - resources:
               kinds: [Pod]
+              operations: [CREATE, UPDATE]
       preconditions:
         all:
           - key: '{{ request.object.metadata.labels."cnpg.io/jobRole" || '''' }}'

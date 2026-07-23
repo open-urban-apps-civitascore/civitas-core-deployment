@@ -106,7 +106,7 @@ global:
   # Audit: log violations only; Enforce: block violating resources
   runtimePolicies:
     enabled: true
-    failureAction: Audit
+    failureAction: Enforce
 
 # List of components to deploy (order matters for dependencies)
 # To "disable" a component, remove it from the list.
