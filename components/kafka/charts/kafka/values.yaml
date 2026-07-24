@@ -25,6 +25,24 @@ broker:
       cpu: '2'
       memory: '8Gi'
 
+entityOperator:
+  topicOperator:
+    resources:
+      requests:
+        cpu: '400m'
+        memory: '512Mi'
+      limits:
+        cpu: '400m'
+        memory: '512Mi'
+  userOperator:
+    resources:
+      requests:
+        cpu: '400m'
+        memory: '512Mi'
+      limits:
+        cpu: '400m'
+        memory: '512Mi'
+
 kafka:
   # Listener presets; adjust as needed
   listeners:

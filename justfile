@@ -190,7 +190,9 @@ linkerd:
 	linkerd check --pre
 	kubectl apply --server-side -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.4.0/standard-install.yaml
 	linkerd install --crds | kubectl apply -f -
-	linkerd install --set proxy.nativeSidecar=true | kubectl apply -f -
+	linkerd install --set proxy.nativeSidecar=true \
+		--proxy-cpu-request=20m --proxy-cpu-limit=40m \
+		--proxy-memory-request=32Mi --proxy-memory-limit=64Mi | kubectl apply -f -
 	linkerd check
 
 # Deploy Kyverno (idempotent, required by runtime-policies; same script as CI)

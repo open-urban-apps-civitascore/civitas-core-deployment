@@ -76,6 +76,13 @@ extraInitContainers:
     volumeMounts:
       - name: jdbc-drivers
         mountPath: /opt/nifi/drivers
+    resources:
+      requests:
+        cpu: 10m
+        memory: 16Mi
+      limits:
+        cpu: 20m
+        memory: 32Mi
     securityContext:
       {{- .Values.securityDefaults.securityContext | toYaml | nindent 6 }}
 
