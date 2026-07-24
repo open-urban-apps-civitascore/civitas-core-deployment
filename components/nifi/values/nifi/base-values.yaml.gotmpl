@@ -77,9 +77,7 @@ extraInitContainers:
       - name: jdbc-drivers
         mountPath: /opt/nifi/drivers
     securityContext:
-      runAsUser: 1000
-      runAsGroup: 1000
-      runAsNonRoot: true
+      {{- .Values.securityDefaults.securityContext | toYaml | nindent 6 }}
 
 # TODO: would be nice if this could be remove, but for now this is the only way to get SNI working
 # Override NiFi's bind host (default = bare `$HOSTNAME`, not in cert SAN list, causes
@@ -93,9 +91,24 @@ extraEnv:
   - name: NIFI_WEB_HTTPS_HOST
     value: "nifi-nifi-0.nifi-nifi.{{ $this.namespace }}"
 
+{{- $nifiHome := "/opt/nifi/nifi-current" }}
+{{- $writablePaths := list
+  (dict "name" "nifi-home" "path" "/home/nifi")
+  (dict "name" "nifi-work" "path" (printf "%s/work" $nifiHome))
+  (dict "name" "nifi-assets" "path" (printf "%s/assets" $nifiHome))
+  (dict "name" "nifi-connector-assets" "path" (printf "%s/connector_assets" $nifiHome))
+  (dict "name" "nifi-database-repository" "path" (printf "%s/database_repository" $nifiHome))
+  (dict "name" "nifi-nar-repository" "path" (printf "%s/nar_repository" $nifiHome))
+  (dict "name" "nifi-tmp" "path" "/tmp")
+}}
+
 extraVolumes:
   - name: jdbc-drivers
     emptyDir: {}
+{{- range $writablePaths }}
+  - name: {{ .name }}
+    emptyDir: {}
+{{- end }}
 {{- if eq $global.ingress.clusterIssuer "selfsigned-ca" }}
   # Mount the per-namespace self-signed CA (distributed by the prepare hook) so
   # custom-startup.sh can import it into NiFi's truststore for the OIDC back-channel.
@@ -107,6 +120,10 @@ extraVolumeMounts:
   - name: jdbc-drivers
     mountPath: /opt/nifi/drivers
     readOnly: true
+{{- range $writablePaths }}
+  - name: {{ .name }}
+    mountPath: {{ .path }}
+{{- end }}
 {{- if eq $global.ingress.clusterIssuer "selfsigned-ca" }}
   - name: extra-ca
     mountPath: /opt/extra-ca
@@ -115,6 +132,7 @@ extraVolumeMounts:
 
 
 securityContext:
-  runAsUser: 1000
-  runAsGroup: 1000
-  runAsNonRoot: true
+  {{ .Values.securityDefaults.securityContext | toYaml | nindent 2 }}
+
+podSecurityContext:
+  {{ .Values.securityDefaults.podSecurityContext | toYaml | nindent 2 }}

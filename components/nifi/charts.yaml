@@ -4,6 +4,6 @@ nifi:
     # yamllint disable-line rule:line-length
     repository: https://gitlab.com/api/v4/projects/civitas-connect%2Fcivitas-core%2Fcivitas-core-v2%2Fapache-nifi-helm/packages/helm/stable
     chart: apache-nifi-helm/nifi
-    version: '0.0.10'
+    version: '0.0.11'
   bootstrap:
     chart: charts/nifi-bootstrap
