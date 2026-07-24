@@ -28,7 +28,7 @@ import yaml
 # helpers
 # ---------------------------------------------------------------------------
 
-STATUS_PRIORITY = {"fail": 2, "warn": 1, "pass": 0}
+STATUS_PRIORITY = {"fail": 3, "warn": 2, "skip": 1, "pass": 0}
 
 
 def base_rule(rule: str) -> str:
@@ -124,24 +124,31 @@ def build_junit(policies: dict) -> ET.Element:
         sum(1 for c in cases.values() if c["status"] == "warn")
         for cases in policies.values()
     )
+    total_skipped = sum(
+        sum(1 for c in cases.values() if c["status"] == "skip")
+        for cases in policies.values()
+    )
 
     testsuites = ET.Element("testsuites", attrib={
         "name": "Kyverno Policy Scan",
         "tests": str(total_tests),
         "failures": str(total_failures),
         "errors": str(total_errors),
+        "skipped": str(total_skipped),
         "time": "0",
     })
 
     for policy, cases in sorted(policies.items()):
         failures = sum(1 for c in cases.values() if c["status"] == "fail")
         errors = sum(1 for c in cases.values() if c["status"] == "warn")
+        skipped = sum(1 for c in cases.values() if c["status"] == "skip")
 
         testsuite = ET.SubElement(testsuites, "testsuite", attrib={
             "name": policy,
             "tests": str(len(cases)),
             "failures": str(failures),
             "errors": str(errors),
+            "skipped": str(skipped),
             "time": "0",
         })
 
@@ -168,6 +175,11 @@ def build_junit(policies: dict) -> ET.Element:
                     "type": severity,
                 })
                 error.text = message
+            elif status == "skip":
+                ET.SubElement(
+                    testcase, "skipped",
+                    attrib={"message": message} if message else {},
+                )
             # pass → empty testcase element
 
     return testsuites

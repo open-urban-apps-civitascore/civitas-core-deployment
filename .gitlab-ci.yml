@@ -599,7 +599,10 @@ scan-kyverno-policies:
   # (rolling-update, resources, ro-rootfs, capabilities, probes, and the
   # explicit-securityContext requirements of the PSS restricted profile).
   # The job reports them as JUnit results without blocking the pipeline.
-  # Remove allow_failure once the existing findings are fixed or covered by
+  # Accepted findings are tracked as PolicyExceptions colocated with their
+  # component (components/*/policy-exceptions.yaml, see frost for an
+  # example) instead of a blanket allow_failure - see .ci/policies/README.md.
+  # Remove allow_failure once the remaining findings are fixed or covered by
   # PolicyExceptions, so new violations block again.
   allow_failure: true
   rules:
@@ -617,7 +620,12 @@ scan-kyverno-policies:
     # swallow render failures (kyverno exits 0 on empty input) and turn the
     # job green without a single resource scanned.
     - helmfile template -f deployment/helmfile.yaml -e "$ENVIRONMENT" > rendered.yaml
-    - kyverno apply $POLICIES -p --resource rendered.yaml > policy-report.yaml || SCAN_EXIT=$?
+    - |
+      EXCEPTIONS=""
+      for f in components/*/policy-exceptions.yaml; do
+        [ -f "$f" ] && EXCEPTIONS="$EXCEPTIONS --exception $f"
+      done
+      kyverno apply $POLICIES -p --resource rendered.yaml $EXCEPTIONS > policy-report.yaml || SCAN_EXIT=$?
     - python3 .ci/policies/report_to_junit.py policy-report.yaml > "kyverno-policy-scan-${ENVIRONMENT}.xml"
     - exit ${SCAN_EXIT:-0}
   artifacts:

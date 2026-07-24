@@ -1,0 +1,22 @@
+---
+apiVersion: kyverno.io/v2
+kind: PolicyException
+metadata:
+  name: frost-require-rolling-update
+  annotations:
+    reason: >-
+      The upstream frost-server chart doesn't expose the Deployment's
+      rollout strategy, so maxUnavailable/maxSurge can't be set without
+      forking the chart.
+spec:
+  exceptions:
+    - policyName: require-rolling-update
+      ruleNames:
+        - require-rolling-update-deployment
+  match:
+    any:
+      - resources:
+          kinds:
+            - Deployment
+          names:
+            - frost-frost-frost-server-http
