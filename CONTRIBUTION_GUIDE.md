@@ -90,12 +90,7 @@ If your contribution requires tests, make sure to include them in your merge req
 
 ### How to Report a Bug
 
-Please create an issue (=ticket) in the repository the bug is related to. We appreciate if you use our bug report template, which provides a structured format for gathering essential information to reproduce and understand the issue. At least provide information about:
-- the precondition and environment where you found the bug,
-- the steps to reproduce it,
-- the expected and the observed behavior.
-
-Also, please add the label `type::bug` to the bug issues that you create.
+We provide a lightweight way to report unexpected behaviour or bugs when testing the platform. Open the [Findings Board](https://gitlab.com/groups/civitas-connect/civitas-core/-/boards/11418946?types=1235) and check if your finding already exists. If not, create a new finding [here](https://gitlab.com/civitas-connect/civitas-core/civitas-core-v2/civitas-core-platform/-/work_items/new). Choose Type "Finding", add a short title and a description with observed and expected behaviour. We will check new Findings regularly.
 
 > If you discover a security vulnerability, **do not** open an issue. Instead, please email us at [core@civitasconnect.digital](mailto:core@civitasconnect.digital) directly, so we can address it promptly and confidentially.
 
