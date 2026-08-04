@@ -27,7 +27,7 @@ identities:
 image:
   # Lightweight, well-known image with curl + jq for the bootstrap script.
   repository: alpine/curl
-  tag: '8.10.1'
+  tag: '8.11.1'
   digest: ''
   pullPolicy: IfNotPresent
 
