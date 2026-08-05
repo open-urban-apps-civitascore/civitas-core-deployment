@@ -1,0 +1,31 @@
+global:
+  domain: '179.237.75.185.nip.io' 
+  instanceSlug: 'core'
+  profile: 'development'
+  
+  serviceMesh:
+    enable: false
+
+  ingress:
+    ingressClass: 'nginx'
+    clusterIssuer: 'selfsigned-ca'
+
+components:
+  - prepare
+  - secrets
+  # - networkpolicies
+  - postgres
+  - etcd
+  - kafka
+  - keycloak
+  - authz
+  - apisix
+  - portal
+  # - civitas-marketplace
+  - frost            # SensorThings API (IoT)
+  - nifi             # Data Pipelines
+  - geoserver        # GIS & Geodaten-Sink
+  - config-adapters  # Adapter zur Verknüpfung von NiFi & GeoServer
+  - valkey           # Cache für Superset
+  - superset         # BI-Dashboards
+
