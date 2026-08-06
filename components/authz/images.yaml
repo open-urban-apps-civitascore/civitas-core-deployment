@@ -5,5 +5,8 @@ authz:
     repository: registry.gitlab.com/civitas-connect/civitas-core/civitas-core-v2/civitas-core-platform/authz-repo-service
     tag: 'v1.1.0'
   opa:
-    repository: registry.gitlab.com/civitas-connect/civitas-core/civitas-core-v2/civitas-core-platform/opa
-    tag: 'v1.1.0'
+    # Open Urban Apps fork: rego bundle includes the /v1/imports endpoint
+    # permissions. Official upstream image:
+    # registry.gitlab.com/civitas-connect/civitas-core/civitas-core-v2/civitas-core-platform/opa:v1.1.0
+    repository: ghcr.io/open-urban-apps-civitascore/opa
+    tag: 'mf-1'
