@@ -1,0 +1,8 @@
+---
+marketplace:
+  name: marketplace
+  description: 'Open Urban Apps marketplace for reusable use cases'
+  upstream: civitas-marketplace-app.{{ include "civitas.namespace" (dict "global" .Values.global "suffix" "marketplace") }}.svc.cluster.local:80 # yamllint disable-line rule:line-length
+  uri: /*
+  subDomain: marketplace
+  priority: 10

@@ -14,16 +14,12 @@ publicUrl: https://{{ $host }}
 {{- $portalHost := printf "%s.%s" (default "" .Values.portal.portal.subdomain) $global.domain | trimPrefix "." }}
 portalUrl: https://{{ $portalHost }}
 
-# TODO: replace this dedicated ingress with an APISIX route soon, so the
-# marketplace enters the cluster the same way as the portal BFF.
+# Served through an APISIX route (see the addon's apisix-routes.yaml) like the
+# portal BFF — the aggregated route also puts the host on the shared apisix
+# ingress and into the apisix-tls certificate. The chart's own ingress stays
+# available for standalone installs only.
 ingress:
-  enabled: true
-  className: {{ $global.ingress.ingressClass }}
-  host: {{ $host }}
-  tls:
-    enabled: true
-    secretName: marketplace-tls
-    clusterIssuer: {{ $global.ingress.clusterIssuer }}
+  enabled: false
 
 {{- $keycloakHost := printf "%s.%s" (default "" .Values.keycloak.app.subdomain) $global.domain | trimPrefix "." }}
 {{- $keycloakPath := .Values.keycloak.app.pathPrefix | trimSuffix "/" }}
