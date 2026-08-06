@@ -1,0 +1,15 @@
+---
+# Checklist:
+# - [x] Resources (requests and limits)
+# - [ ] 2+ Replicas -> single replica until the app is proven stateless-safe
+#       under multiple instances (NextAuth cookie sessions are, but verify)
+
+replicaCount: 1
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi

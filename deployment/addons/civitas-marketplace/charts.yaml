@@ -1,0 +1,4 @@
+---
+civitasMarketplace:
+  app:
+    chart: charts/civitas-marketplace

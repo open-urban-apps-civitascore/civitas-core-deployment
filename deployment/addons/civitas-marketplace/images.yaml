@@ -1,0 +1,5 @@
+---
+civitasMarketplace:
+  app:
+    repository: ghcr.io/open-urban-apps-civitascore/civitas-marketplace
+    tag: 'v0.3.0'

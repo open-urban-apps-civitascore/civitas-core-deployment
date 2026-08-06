@@ -1,0 +1,7 @@
+---
+civitasMarketplace:
+  app:
+    enabled: true
+    namespace: {{ include "civitas.namespace" (dict "global" .Values.global "suffix" "marketplace") }}
+    subdomain: marketplace
+    pathPrefix: /

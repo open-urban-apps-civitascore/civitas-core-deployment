@@ -1,0 +1,4 @@
+---
+component: civitasMarketplace
+parts:
+  - name: app
