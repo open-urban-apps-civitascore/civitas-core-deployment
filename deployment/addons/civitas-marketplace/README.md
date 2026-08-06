@@ -17,9 +17,11 @@ What the pipeline derives from these files:
 - **Secrets**: `keycloak-client-marketplace` (client secret, auto-generated for
   every confidential client) and `marketplace-nextauth-secret` (session cookie
   encryption), both copied into the marketplace namespace.
-- **Ingress** `marketplace.<domain>` with TLS from the environment's cluster
-  issuer. TODO: replace with an APISIX route soon, so the marketplace enters
-  the cluster the same way as the portal BFF.
+- **APISIX route** `marketplace.<domain>` via the `apisix-routes.yaml` +
+  `apisix-plugins.yaml` fragment pair (routes hard-reference a same-named
+  plugin_config). The aggregated route also puts the host on the shared
+  apisix ingress and into the apisix-tls certificate — the chart itself
+  ships no ingress.
 
 `charts/civitas-marketplace/` is vendored from the marketplace repo
 (`civitas-marketplace/chart/`) — keep it in sync when the chart changes there.
