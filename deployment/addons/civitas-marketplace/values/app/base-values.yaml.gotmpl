@@ -57,4 +57,10 @@ nextauthSecret:
 
 # Self-signed cluster CA: Node rejects the certificate chain otherwise.
 # (The portal frontend sets the same flag, with a TODO to mount the CA properly.)
+{{- if eq $global.ingress.clusterIssuer "selfsigned-ca" }}
+# Self-signed cluster CA: Node cannot verify the chain otherwise. With a real
+# issuer the empty value keeps the env variable out of the pod entirely.
 nodeTlsRejectUnauthorized: "0"
+{{- else }}
+nodeTlsRejectUnauthorized: ""
+{{- end }}

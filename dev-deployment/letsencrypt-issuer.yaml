@@ -1,0 +1,25 @@
+# Let's Encrypt ClusterIssuer (HTTP-01 via the nginx ingress).
+#
+# Companion to ca-template.yaml: applied once per cluster, referenced from the
+# environment via global.ingress.clusterIssuer: 'letsencrypt'. Requires public
+# DNS for every ingress host (the ACME server fetches a challenge URL on port
+# 80 through the ingress) — nip.io or other selfsigned setups keep using the
+# selfsigned-ca issuer instead.
+#
+#   kubectl apply -f dev-deployment/letsencrypt-issuer.yaml
+---
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt
+spec:
+  acme:
+    server: https://acme-v02.api.letsencrypt.org/directory
+    # Expiry/problem notifications from Let's Encrypt land here.
+    email: ewa.agnieszka.flis@gmail.com
+    privateKeySecretRef:
+      name: letsencrypt-account-key
+    solvers:
+      - http01:
+          ingress:
+            ingressClassName: nginx

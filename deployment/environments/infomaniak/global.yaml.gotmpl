@@ -1,14 +1,19 @@
 global:
-  domain: '179.237.75.185.nip.io' 
+  # *.dev.openurbanapps.org — wildcard A record at Cloudflare (DNS only)
+  # pointing at the ingress LB 179.237.75.185.
+  domain: 'dev.openurbanapps.org'
   instanceSlug: 'core'
   profile: 'development'
-  
+
   serviceMesh:
     enable: false
 
   ingress:
     ingressClass: 'nginx'
-    clusterIssuer: 'selfsigned-ca'
+    # Applied once via dev-deployment/letsencrypt-issuer.yaml. Switching away
+    # from 'selfsigned-ca' also disables the CA distribution and every
+    # component's certificate-check workaround (they all key on that name).
+    clusterIssuer: 'letsencrypt'
 
 components:
   - prepare
