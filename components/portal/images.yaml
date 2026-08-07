@@ -6,7 +6,7 @@ portal:
     # pushed manually — see the meta repo's runbook. Official upstream image:
     # registry.gitlab.com/civitas-connect/civitas-core/civitas-core-v2/civitas-core-platform/backend-portal:v1.1.0
     repository: ghcr.io/open-urban-apps-civitascore/portal-backend
-    tag: 'mf-2'
+    tag: 'mf-4'
   frontend:
     repository: registry.gitlab.com/civitas-connect/civitas-core/civitas-core-v2/civitas-core-platform/frontend-portal
     tag: 'v1.1.0'
