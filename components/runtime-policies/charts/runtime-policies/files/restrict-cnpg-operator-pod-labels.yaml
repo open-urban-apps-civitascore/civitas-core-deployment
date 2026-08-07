@@ -24,6 +24,7 @@ spec:
         any:
           - resources:
               kinds: [Pod]
+              operations: [CREATE, UPDATE]
       preconditions:
         all:
           - key: "{{ request.userInfo.username | split(@, ':') | [-1] }}"

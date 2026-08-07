@@ -25,6 +25,7 @@ spec:
         any:
           - resources:
               kinds: [Pod]
+              operations: [CREATE, UPDATE]
       preconditions:
         all:
           # SA name regardless of namespace: system:serviceaccount:<ns>:<name>

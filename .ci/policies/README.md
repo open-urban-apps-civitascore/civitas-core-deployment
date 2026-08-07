@@ -53,3 +53,15 @@ All other policies are project-specific and maintained here. Every rule must
 have at least one passing and one failing fixture in `tests/` - a broken
 JMESPath expression silently passes everything, which is exactly what the
 test suite exists to catch.
+
+## Accepting a known finding
+
+If a component can't satisfy a policy (e.g. an upstream chart doesn't expose
+the required field), don't silence it centrally. Add a `PolicyException`
+scoped to that resource in `components/<name>/policy-exceptions.yaml`, with
+a `reason` annotation explaining why it's accepted - see
+`components/frost/policy-exceptions.yaml` for an example.
+
+`just verify-policies` and the `scan-kyverno-policies` CI job all pick up every `components/*/policy-exceptions.yaml`
+automatically and pass it to `kyverno apply --exception`.
+Excepted rules show up as `skip` in the policy report and gitlab testreport instead of `fail`.

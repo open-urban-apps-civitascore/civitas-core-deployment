@@ -6,8 +6,10 @@ default:
 stages:
   - .pre
   - lint
-  - report
   - deploy
+  - system-tests
+  - report
+  - cleanup
 
 # TODO: Make this work with rennovate
 .cicd-image: &cicd_image >-
@@ -43,7 +45,7 @@ setup-version:
 
 pre-commit:
   stage: lint
-  image: registry.gitlab.com/civitas-connect/civitas-core/docker-images/cicd:2.0.0-beta
+  image: *cicd_image
   script:
     - *helm-docker-hub-login
     - cp -r defaults/deployment deployment
@@ -78,7 +80,7 @@ validate-renovate-config:
 
 .deploy-base:
   stage: deploy
-  image: registry.gitlab.com/civitas-connect/civitas-core/docker-images/cicd:2.0.0-beta
+  image: *cicd_image
   before_script:
     # Setup kubeconfig
     - mkdir -p ~/.kube
@@ -105,10 +107,10 @@ validate-renovate-config:
 
     kubectl create secret generic keycloak-smtp \
       --namespace="${KEYCLOAK_SMTP_NAMESPACE}" \
-      --from-literal=host='fw-hosting.space' \
+      --from-literal=host="${SMTP_HOST}" \
       --from-literal=port='587' \
-      --from-literal=from='noreply@f9w.de' \
-      --from-literal=user='noreply@f9w.de' \
+      --from-literal=from="${SMTP_FROM:-}" \
+      --from-literal=user="${SMTP_USER:-}" \
       --from-literal=password="${SMTP_PASSWORD:-}" \
       --dry-run=client -o yaml \
       | kubectl apply -f - >/dev/null
@@ -156,7 +158,7 @@ deploy-production:
 #   * an auto-stop timer (7d) that triggers the matching destroy job on expiry,
 #   * manual `on_stop` so reviewers can tear it down early.
 
-.smoke-test-base:
+.deploy-vcluster-base:
   extends: .deploy-base
   # Smoke-test deploys are convenience environments and must never block mergeability.
   allow_failure: true
@@ -188,40 +190,39 @@ deploy-production:
     # 6. Deploy the platform.
     - helmfile -f ./deployment/ sync -e smoke-test
 
-deploy-smoke-test-branch:
-  extends: .smoke-test-base
+deploy-branch:
+  extends: .deploy-vcluster-base
   variables:
     PIPELINE_SLUG: $CI_COMMIT_REF_SLUG
   environment:
     name: smoke-test/$CI_COMMIT_REF_SLUG
     url: https://portal.$CI_COMMIT_REF_SLUG.$SMOKE_TEST_BASE_DOMAIN
-    on_stop: destroy-smoke-test-branch
+    on_stop: destroy-branch
     auto_stop_in: 7 days
   rules:
-    # Don't double-up on MR pipelines (handled by deploy-smoke-test-mr).
+    # Don't double-up on MR pipelines (handled by deploy-mr).
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
       when: never
     # Protected long-lived branches deploy via deploy-staging / deploy-production.
-
     - if: '$CI_COMMIT_BRANCH =~ /^(main|staging|develop)$/'
       when: never
     - if: '$CI_COMMIT_BRANCH'
       when: manual
 
-deploy-smoke-test-mr:
-  extends: .smoke-test-base
+deploy-mr:
+  extends: .deploy-vcluster-base
   variables:
     PIPELINE_SLUG: mr-$CI_MERGE_REQUEST_IID
   environment:
     name: smoke-test/mr-$CI_MERGE_REQUEST_IID
     url: https://portal.mr-$CI_MERGE_REQUEST_IID.$SMOKE_TEST_BASE_DOMAIN
-    on_stop: destroy-smoke-test-mr
+    on_stop: destroy-mr
     auto_stop_in: 7 days
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
       when: manual
 
-.seed-data-smoke-test-base:
+.seed-base:
   # Imports baseline platform seed data into the vcluster smoke-test deployment.
   # Runs automatically once the (manually-triggered) deploy job completes.
   extends: .deploy-base
@@ -237,15 +238,35 @@ deploy-smoke-test-mr:
     API_BASE_URL: http://apisix-gateway.civitas.svc.cluster.local/v1
     SEED_IMAGE: registry.gitlab.com/civitas-connect/civitas-core/docker-images/seed-platform-data:1.0.0
     SEED_INPUT: exports/1bf03aa3-3d9a-4291-8589-b888aa684c05.json
+    AUTH_DOTENV_FILE: seed-data-auth.env
   script:
     - ./scripts/ci/fetch-vcluster-kubeconfig.sh
     - export AUTH_USER="${GITLAB_USER_EMAIL:-admin@civitas.test}"
     - ./scripts/ci/seed-platform-data.sh
+  artifacts:
+    reports:
+      dotenv: seed-data-auth.env
 
-seed-data-smoke-test-branch:
-  extends: .seed-data-smoke-test-base
+.system-tests-base:
+  stage: system-tests
+  image: *cicd_image
+  variables:
+    PIPELINE_SLUG: ''
+    SMOKE_TEST_DOMAIN: ${PIPELINE_SLUG}.${SMOKE_TEST_BASE_DOMAIN}
+    API_BASE_URL: https://api.${PIPELINE_SLUG}.${SMOKE_TEST_BASE_DOMAIN}/v1
+    PORTAL_BACKEND_URL: https://portal.${PIPELINE_SLUG}.${SMOKE_TEST_BASE_DOMAIN}/v1
+    PORTAL_FRONTEND_URL: https://portal.${PIPELINE_SLUG}.${SMOKE_TEST_BASE_DOMAIN}
+    KEYCLOAK_URL: https://idm.${PIPELINE_SLUG}.${SMOKE_TEST_BASE_DOMAIN}
+    KEYCLOAK_REALM: civitas
+    KEYCLOAK_CLIENT_ID: portal-frontend
+    FROST_BASE_URL: http://frost-frost-frost-server-http.frost/FROST-Server/v1.1
+  script:
+    - bash tests/system/run-system-tests.sh
+
+seed-branch:
+  extends: .seed-base
   needs:
-    - job: deploy-smoke-test-branch
+    - job: deploy-branch
       artifacts: false
       optional: true
   variables:
@@ -257,10 +278,10 @@ seed-data-smoke-test-branch:
       when: never
     - if: '$CI_COMMIT_BRANCH'
 
-seed-data-smoke-test-mr:
-  extends: .seed-data-smoke-test-base
+seed-mr:
+  extends: .seed-base
   needs:
-    - job: deploy-smoke-test-mr
+    - job: deploy-mr
       artifacts: false
       optional: true
   variables:
@@ -268,10 +289,10 @@ seed-data-smoke-test-mr:
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
 
-.destroy-smoke-test-base:
+.destroy-vcluster-base:
   # Triggered by GitLab when the smoke-test environment is stopped, either
   # manually from the MR widget or automatically by auto_stop_in after 7 days
-  # of idleness (no new deploy-smoke-test run in that time).
+  # of idleness (no new deploy run in that time).
   extends: .deploy-base
   variables:
     KUBECONFIG_CONTENT: $KUBECONFIG_CONTENT_VCLUSTER_HOST
@@ -281,8 +302,8 @@ seed-data-smoke-test-mr:
     - kubectl delete namespace smoke-test-${PIPELINE_SLUG} --ignore-not-found
   allow_failure: true
 
-destroy-smoke-test-branch:
-  extends: .destroy-smoke-test-base
+destroy-branch:
+  extends: .destroy-vcluster-base
   variables:
     PIPELINE_SLUG: $CI_COMMIT_REF_SLUG
   environment:
@@ -296,8 +317,8 @@ destroy-smoke-test-branch:
     - if: '$CI_COMMIT_BRANCH'
       when: manual
 
-destroy-smoke-test-mr:
-  extends: .destroy-smoke-test-base
+destroy-mr:
+  extends: .destroy-vcluster-base
   variables:
     PIPELINE_SLUG: mr-$CI_MERGE_REQUEST_IID
   environment:
@@ -307,10 +328,263 @@ destroy-smoke-test-mr:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
       when: manual
 
+# =============================================================================
+# Nightly system tests
+#
+# Triggered by a GitLab pipeline schedule (Settings -> CI/CD -> Schedules):
+#   * Cron: `0 21 * * *` (every day 21:00 / 9pm)
+#   * Schedule variable: IS_NIGHTLY = true
+#
+# Flow (all jobs run automatically — no manual trigger):
+#   1. nightly-slug            -> computes PIPELINE_SLUG = nightly-YYYYMMDD and
+#                                 NIGHTLY_IMAGE_TAG = <branch>-nightly-YYYYMMDD
+#   2. verify-nightly-images   -> hard-fails fast if any image:tag is missing,
+#                                 BEFORE any vcluster is provisioned
+#   3. deploy-nightly          -> spins up an ephemeral vcluster + deploys platform
+#   4. create-demo-db-nightly  -> creates the demo db + user (known password from
+#                                 DEMO_DB_PASSWORD) before tests run
+#   5. set-initial-user-password-nightly -> sets the initial user's password
+#                                 (reusing the seeding logic) and exports the
+#                                 credentials as a dotenv for the system tests
+#   6. system-tests-nightly    -> runs system tests against the vcluster (NO seed)
+#   7. collect-logs-nightly    -> dumps in-cluster pod logs/events as artifacts
+#   8. destroy-nightly         -> tears the vcluster down (runs even on failure)
+
+#
+# Domain schema: https://portal.nightly-20260629.<SMOKE_TEST_BASE_DOMAIN>
+#
+# Unlike smoke tests, nightly runs pin a dated nightly build tag
+# `<branch>-nightly-YYYYMMDD` via NIGHTLY_IMAGE_TAG.
+# =============================================================================
+
+# Compute a per-run date-based slug + image tag shared by all nightly jobs.
+# PIPELINE_SLUG is used as a k8s namespace/release suffix and a domain segment,
+# so it must be slash-free; the GitLab *environment* name uses nightly/<date>.
+nightly-slug:
+  stage: .pre
+  image: alpine:latest
+  variables:
+    # Branch whose nightly images we deploy. Override via CI/CD variable.
+    NIGHTLY_IMAGE_BRANCH: 'develop'
+  rules:
+    - if: '$IS_NIGHTLY == "true"'
+  script:
+    - DATE=$(date +%Y%m%d)
+    - echo "PIPELINE_SLUG=nightly-${DATE}" > nightly.env
+    - echo "NIGHTLY_IMAGE_TAG=${NIGHTLY_IMAGE_BRANCH}-nightly-${DATE}" >> nightly.env
+    - echo "Setting PIPELINE_SLUG=nightly-${DATE}"
+    - echo "Setting NIGHTLY_IMAGE_TAG=${NIGHTLY_IMAGE_BRANCH}-nightly-${DATE}"
+  artifacts:
+    reports:
+      dotenv: nightly.env
+
+# Pre-flight: hard-fail fast if any platform image is missing for the requested
+# nightly tag, BEFORE we provision a vcluster.
+verify-nightly-images:
+  stage: .pre
+  image: *cicd_image
+  needs:
+    - job: nightly-slug
+      artifacts: true
+  # NIGHTLY_IMAGE_TAG is provided via the nightly-slug dotenv artifact.
+  rules:
+    - if: '$IS_NIGHTLY == "true"'
+      when: always
+  script:
+    - ./scripts/ci/verify-nightly-images.sh
+
+deploy-nightly:
+  extends: .deploy-vcluster-base
+  allow_failure: false
+  needs:
+    - job: nightly-slug
+      artifacts: true
+    # Block the (expensive) vcluster provisioning until images are confirmed.
+    - job: verify-nightly-images
+      artifacts: false
+    - job: pre-commit
+      artifacts: false
+  environment:
+    name: nightly/$CI_COMMIT_REF_SLUG
+    # Register the teardown job so GitLab can stop this environment (and the
+    # vcluster) even if deploy-nightly itself fails mid-run.
+    on_stop: destroy-nightly
+  rules:
+    # Deploy on the nightly schedule (no manual trigger)
+    - if: '$IS_NIGHTLY == "true"'
+      when: on_success
+
+# Create the demo database + user after deploy, before system tests run.
+create-demo-db-nightly:
+  extends: .deploy-base
+  stage: deploy
+  needs:
+    - job: nightly-slug
+      artifacts: true
+    - job: deploy-nightly
+      artifacts: false
+  variables:
+    KUBECONFIG_CONTENT: $KUBECONFIG_CONTENT_VCLUSTER_HOST
+    SMOKE_TEST_DOMAIN: ${PIPELINE_SLUG}.${SMOKE_TEST_BASE_DOMAIN}
+    DEMO_DB_PASSWORD: $DEMO_DB_PASSWORD
+    DEMO_DB_DOTENV: demo-db.env
+  rules:
+    - if: '$IS_NIGHTLY == "true"'
+      when: on_success
+  script:
+    # Point kubectl/helm at the vcluster the platform was deployed into.
+    - ./scripts/ci/fetch-vcluster-kubeconfig.sh
+    - ./scripts/ci/create-demo-db.sh smoke-test
+  # Expose the demo db connection details (DEMO_DB_*) to the system tests.
+  artifacts:
+    reports:
+      dotenv: demo-db.env
+
+# Set the initial user's password after a fresh deploy so the system tests can
+# log in.
+set-initial-user-password-nightly:
+  extends: .deploy-base
+  stage: deploy
+  needs:
+    - job: nightly-slug
+      artifacts: true
+    - job: deploy-nightly
+      artifacts: false
+  variables:
+    KUBECONFIG_CONTENT: $KUBECONFIG_CONTENT_VCLUSTER_HOST
+    SMOKE_TEST_DOMAIN: ${PIPELINE_SLUG}.${SMOKE_TEST_BASE_DOMAIN}
+    NAMESPACE: civitas
+    KEYCLOAK_REALM: civitas
+    KEYCLOAK_URL: https://idm.${PIPELINE_SLUG}.${SMOKE_TEST_BASE_DOMAIN}
+    AUTH_DOTENV_FILE: system-test-auth.env
+  rules:
+    - if: '$IS_NIGHTLY == "true"'
+      when: on_success
+  script:
+    - ./scripts/ci/fetch-vcluster-kubeconfig.sh
+    - export AUTH_USER="${GITLAB_USER_EMAIL:-admin@civitas.test}"
+    - ./scripts/ci/set-initial-user-password.sh
+    - CLIENT_SECRET=$(kubectl -n "${NAMESPACE}" get secret keycloak-client-portal-frontend
+      -o jsonpath='{.data.client-secret}' | base64 -d)
+    - echo "KEYCLOAK_CLIENT_SECRET=${CLIENT_SECRET}" >> system-test-auth.env
+
+  artifacts:
+    reports:
+      dotenv: system-test-auth.env
+
+system-tests-nightly:
+  extends: .system-tests-base
+  needs:
+    - job: nightly-slug
+      artifacts: true
+    - job: deploy-nightly
+      artifacts: false
+    # Consumes the DEMO_DB_* dotenv (demo db connection details).
+    - job: create-demo-db-nightly
+      artifacts: true
+    # Consumes SYSTEM_TEST_AUTH_USER / SYSTEM_TEST_AUTH_PASSWORD dotenv.
+    - job: set-initial-user-password-nightly
+      artifacts: true
+  rules:
+    - if: '$IS_NIGHTLY == "true"'
+      when: on_success
+  artifacts:
+    when: always
+    expire_in: 30 days
+    paths:
+      - tests/system/results/
+    reports:
+      junit: tests/system/results/xunit.xml
+
+# Collect in-cluster logs/events before the vcluster is destroyed, so failures
+# remain debuggable even though the cluster is gone afterwards.
+collect-logs-nightly:
+  extends: .deploy-base
+  stage: report
+  needs:
+    - job: nightly-slug
+      artifacts: true
+    # Only run AFTER deploy and system tests
+    - job: deploy-nightly
+      artifacts: false
+      optional: true
+    - job: system-tests-nightly
+      artifacts: false
+      optional: true
+  variables:
+    KUBECONFIG_CONTENT: $KUBECONFIG_CONTENT_VCLUSTER_HOST
+    SMOKE_TEST_DOMAIN: ${PIPELINE_SLUG}.${SMOKE_TEST_BASE_DOMAIN}
+  rules:
+    - if: '$IS_NIGHTLY == "true"'
+      when: always
+  script:
+    # If deploy never provisioned a vcluster there is nothing to collect.
+    - |
+      if ! kubectl get namespace "smoke-test-${PIPELINE_SLUG}" >/dev/null 2>&1; then
+        echo "No smoke-test-${PIPELINE_SLUG} namespace (deploy did not provision a vcluster); nothing to collect."
+        exit 0
+      fi
+    # Point kubectl at the vcluster (still alive at this point).
+    - ./scripts/ci/fetch-vcluster-kubeconfig.sh
+    - mkdir -p nightly-logs
+    # Cluster-wide overview.
+    - kubectl get all --all-namespaces -o wide > nightly-logs/resources.txt 2>&1 || true
+    - kubectl get events --all-namespaces --sort-by=.lastTimestamp > nightly-logs/events.txt 2>&1 || true
+    # Per-pod logs (current + previous container) across all namespaces.
+    - |
+      for ns in $(kubectl get ns -o jsonpath='{.items[*].metadata.name}'); do
+        for pod in $(kubectl -n "$ns" get pods -o jsonpath='{.items[*].metadata.name}' 2>/dev/null); do
+          kubectl -n "$ns" logs "$pod" --all-containers --timestamps \
+            > "nightly-logs/${ns}_${pod}.log" 2>&1 || true
+          kubectl -n "$ns" logs "$pod" --all-containers --timestamps --previous \
+            > "nightly-logs/${ns}_${pod}.previous.log" 2>&1 || true
+        done
+      done
+  artifacts:
+    when: always
+    expire_in: 30 days
+    paths:
+      - nightly-logs/
+
+destroy-nightly:
+  extends: .destroy-vcluster-base
+  stage: cleanup
+  # Registered as deploy-nightly's on_stop job (environment action: stop) so a
+  # failed deploy-nightly still gets its vcluster torn down.
+  environment:
+    name: nightly/$CI_COMMIT_REF_SLUG
+    action: stop
+  needs:
+    - job: nightly-slug
+      artifacts: true
+    # Order this after deploy and log collection (waits for them when present).
+    # optional: doesn't fail pipeline creation, and doesn't block on a FAILED
+    # deploy. On deploy failure this needs-run is blocked, but the on_stop
+    # environment action still runs destroy-nightly (teardown guaranteed).
+    # When deploy actually ran with no vcluster, the guard below no-ops.
+
+    - job: deploy-nightly
+      artifacts: false
+      optional: true
+    - job: collect-logs-nightly
+      artifacts: false
+      optional: true
+  rules:
+    - if: '$IS_NIGHTLY == "true"'
+      when: always
+  script:
+    # if deploy never provisioned a vcluster there is nothing to tear down.
+    - |
+      if ! kubectl get namespace "smoke-test-${PIPELINE_SLUG}" >/dev/null 2>&1; then
+        echo "No smoke-test-${PIPELINE_SLUG} namespace (deploy did not provision a vcluster); nothing to tear down."
+        exit 0
+      fi
+    - kubectl delete namespace smoke-test-${PIPELINE_SLUG} --ignore-not-found
+
 # Regression tests for kyverno policies themselves (good/bad fixtures per policy).
 test-kyverno-policies:
   stage: lint
-  image: registry.gitlab.com/civitas-connect/civitas-core/docker-images/cicd:2.0.0-beta
+  image: *cicd_image
   needs: []
   rules:
     - when: always
@@ -319,13 +593,16 @@ test-kyverno-policies:
 
 scan-kyverno-policies:
   stage: lint
-  image: registry.gitlab.com/civitas-connect/civitas-core/docker-images/cicd:2.0.0-beta
+  image: *cicd_image
   needs: []
   # Transitional: the production rendering currently has ~49 known findings
   # (rolling-update, resources, ro-rootfs, capabilities, probes, and the
   # explicit-securityContext requirements of the PSS restricted profile).
   # The job reports them as JUnit results without blocking the pipeline.
-  # Remove allow_failure once the existing findings are fixed or covered by
+  # Accepted findings are tracked as PolicyExceptions colocated with their
+  # component (components/*/policy-exceptions.yaml, see frost for an
+  # example) instead of a blanket allow_failure - see .ci/policies/README.md.
+  # Remove allow_failure once the remaining findings are fixed or covered by
   # PolicyExceptions, so new violations block again.
   allow_failure: true
   rules:
@@ -343,7 +620,12 @@ scan-kyverno-policies:
     # swallow render failures (kyverno exits 0 on empty input) and turn the
     # job green without a single resource scanned.
     - helmfile template -f deployment/helmfile.yaml -e "$ENVIRONMENT" > rendered.yaml
-    - kyverno apply $POLICIES -p --resource rendered.yaml > policy-report.yaml || SCAN_EXIT=$?
+    - |
+      EXCEPTIONS=""
+      for f in components/*/policy-exceptions.yaml; do
+        [ -f "$f" ] && EXCEPTIONS="$EXCEPTIONS --exception $f"
+      done
+      kyverno apply $POLICIES -p --resource rendered.yaml $EXCEPTIONS > policy-report.yaml || SCAN_EXIT=$?
     - python3 .ci/policies/report_to_junit.py policy-report.yaml > "kyverno-policy-scan-${ENVIRONMENT}.xml"
     - exit ${SCAN_EXIT:-0}
   artifacts:

@@ -2,7 +2,7 @@
 portal:
   backend:
     repository: registry.gitlab.com/civitas-connect/civitas-core/civitas-core-v2/civitas-core-platform/backend-portal
-    tag: 'v1.1.0'
+    tag: 'v1.2.0'
   frontend:
     repository: registry.gitlab.com/civitas-connect/civitas-core/civitas-core-v2/civitas-core-platform/frontend-portal
-    tag: 'v1.1.0'
+    tag: 'v1.2.0'

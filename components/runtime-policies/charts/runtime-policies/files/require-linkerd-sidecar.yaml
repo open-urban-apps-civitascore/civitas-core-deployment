@@ -27,6 +27,7 @@ spec:
         any:
           - resources:
               kinds: [Pod]
+              operations: [CREATE, UPDATE]
       context:
         # namespaceSelector matches namespace LABELS, not annotations, so read
         # the injection annotation of the namespace via an API call.

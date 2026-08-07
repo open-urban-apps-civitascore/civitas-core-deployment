@@ -15,6 +15,12 @@ postgres-allow-linkerd:
             matchLabels:
               app.kubernetes.io/name: cloudnative-pg
           componentNamespace: postgres.operator
+        # Postgres cluster running with multiple pods
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/component: database
+              app.kubernetes.io/name: postgresql
+          componentNamespace: postgres
         - podSelector:
             matchLabels:
               app.kubernetes.io/name: portal

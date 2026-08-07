@@ -22,15 +22,14 @@ image:
   tag: {{ .tag }}
   {{- end }}
 backoffLimit: 2
-job:
-  resources:
-    # resources are hardcoded since config-cli is a job which won't need more resources, even when the platform scales up
-    limits:
-      cpu: "400m"
-      memory: "1024Mi"
-    requests:
-      cpu:  "100m"
-      memory: "512Mi"
+# resources are hardcoded since config-cli is a job which won't need more resources, even when the platform scales up
+resources:
+  limits:
+    cpu: "400m"
+    memory: "1024Mi"
+  requests:
+    cpu: "100m"
+    memory: "512Mi"
 
 env:
   KEYCLOAK_AVAILABILITYCHECK_ENABLED: "true"

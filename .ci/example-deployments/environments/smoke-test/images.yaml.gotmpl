@@ -1,0 +1,22 @@
+{{/*
+  Image tags for the smoke-test environment.
+
+  Normal smoke tests (branch/MR) use the rolling `develop` tag.
+  Nightly pipelines override CIVITAS_IMAGE_TAG with a pinned nightly build tag
+  of the form `<branch>-nightly-YYYYMMDD` (e.g. 1687-nightly-builds-nightly-20260628).
+*/}}
+{{- $tag := env "CIVITAS_IMAGE_TAG" | default "develop" }}
+images:
+  authz:
+    authz:
+      tag: '{{ $tag }}'
+    opa:
+      tag: '{{ $tag }}'
+  configAdapters:
+    adapters:
+      tag: '{{ $tag }}'
+  portal:
+    backend:
+      tag: '{{ $tag }}'
+    frontend:
+      tag: '{{ $tag }}'

@@ -141,6 +141,13 @@ extraInitContainers: |
       - |
         cp -R /opt/keycloak/* /app/
         /app/bin/kc.sh build --db=postgres --health-enabled=true --metrics-enabled=true --http-relative-path={{ $this.pathPrefix }}
+    resources:
+      requests:
+        cpu: "100m"
+        memory: "256Mi"
+      limits:
+        cpu: "1000m"
+        memory: "1Gi"
     volumeMounts:
       - name: workspace
         mountPath: /app

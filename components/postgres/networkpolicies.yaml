@@ -22,6 +22,13 @@ postgres:
             matchLabels:
               cnpg.io/jobRole: join
           componentNamespace: postgres
+    # Postgres cluster running with multiple pods
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/component: database
+              app.kubernetes.io/name: postgresql
+          componentNamespace: postgres
     # Portal backend - auto-inject instanceSlug namespace
     - from:
         - podSelector:
