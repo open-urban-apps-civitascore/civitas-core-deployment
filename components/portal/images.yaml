@@ -8,5 +8,9 @@ portal:
     repository: ghcr.io/open-urban-apps-civitascore/portal-backend
     tag: 'mf-4'
   frontend:
-    repository: registry.gitlab.com/civitas-connect/civitas-core/civitas-core-v2/civitas-core-platform/frontend-portal
-    tag: 'v1.1.0'
+    # Open Urban Apps fork: must match the backend — the branch changed the
+    # pipeline/mapping contract (CORE artifacts) and the data sink config, and
+    # carries the null-version sort fix. Official upstream image:
+    # registry.gitlab.com/civitas-connect/civitas-core/civitas-core-v2/civitas-core-platform/frontend-portal:v1.1.0
+    repository: ghcr.io/open-urban-apps-civitascore/portal-frontend
+    tag: 'mf-2'
