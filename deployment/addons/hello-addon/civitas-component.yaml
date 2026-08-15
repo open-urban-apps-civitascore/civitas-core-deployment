@@ -1,0 +1,4 @@
+---
+component: helloAddon
+parts:
+  - name: app

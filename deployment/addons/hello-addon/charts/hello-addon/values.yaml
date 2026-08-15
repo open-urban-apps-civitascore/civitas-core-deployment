@@ -1,0 +1,33 @@
+replicaCount: 1
+
+# CPU/memory requests and limits; empty means none (fine for local dev).
+resources: {}
+
+image:
+  registry: docker.io
+  repository: nginxinc/nginx-unprivileged
+  tag: stable-alpine
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 80
+  # The unprivileged nginx image listens on 8080 — as a non-root user it cannot
+  # bind a privileged port.
+  targetPort: 8080
+
+page:
+  publicUrl: ""
+  instance: ""
+
+# Matches the platform's security defaults (see defaults/environment/security.yaml.gotmpl).
+# The root filesystem stays writable: nginx needs /tmp for its pid and caches.
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 101
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+  seccompProfile:
+    type: RuntimeDefault
