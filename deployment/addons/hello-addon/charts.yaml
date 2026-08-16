@@ -1,0 +1,6 @@
+---
+helloAddon:
+  app:
+    # Local chart shipped with the addon — no external Helm repository, so the
+    # install works in restricted municipal networks.
+    chart: charts/hello-addon
