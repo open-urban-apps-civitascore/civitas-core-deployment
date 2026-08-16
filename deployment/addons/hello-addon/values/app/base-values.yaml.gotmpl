@@ -1,0 +1,20 @@
+---
+{{- $this := .Values.helloAddon.app }}
+{{- $global := .Values.global }}
+
+image:
+  registry: {{ .Values.images.helloAddon.app.registry }}
+  repository: {{ .Values.images.helloAddon.app.repository }}
+  tag: {{ .Values.images.helloAddon.app.tag }}
+  pullPolicy: IfNotPresent
+
+{{- $host := printf "%s.%s" (default "" $this.subdomain) $global.domain | trimPrefix "." }}
+
+# Served through an APISIX route (see the addon's apisix-routes.yaml) like the
+# portal BFF — the aggregated route also puts the host on the shared apisix
+# ingress and into the apisix-tls certificate. The chart has no ingress.
+page:
+  publicUrl: https://{{ $host }}
+  # Proves on screen WHICH instance answered, so the demo cannot be faked with
+  # a local page.
+  instance: {{ $global.instanceSlug }}

@@ -1,0 +1,10 @@
+---
+hello-addon:
+  name: hello-addon
+  description: 'Demo add-on installed through the CIVITAS AppStore'
+  # Release name is the kebab-cased component plus the part name, see the
+  # addon helmfile below; the chart names its Service after the release.
+  upstream: hello-addon-app.{{ include "civitas.namespace" (dict "global" .Values.global "suffix" "hello-addon") }}.svc.cluster.local:80 # yamllint disable-line rule:line-length
+  uri: /*
+  subDomain: hello
+  priority: 10
