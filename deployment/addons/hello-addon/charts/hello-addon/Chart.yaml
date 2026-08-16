@@ -1,0 +1,6 @@
+apiVersion: v2
+name: hello-addon
+description: Helm chart for the CIVITAS AppStore demo add-on
+type: application
+version: 0.1.0
+appVersion: "1.0.0"

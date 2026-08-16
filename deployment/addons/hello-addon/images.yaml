@@ -1,0 +1,6 @@
+---
+helloAddon:
+  app:
+    registry: docker.io
+    repository: nginxinc/nginx-unprivileged
+    tag: 'stable-alpine'

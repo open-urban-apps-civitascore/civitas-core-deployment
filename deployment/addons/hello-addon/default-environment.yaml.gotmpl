@@ -1,0 +1,6 @@
+---
+helloAddon:
+  app:
+    enabled: true
+    namespace: {{ include "civitas.namespace" (dict "global" .Values.global "suffix" "hello-addon") }}
+    subdomain: hello
