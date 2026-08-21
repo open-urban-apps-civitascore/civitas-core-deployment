@@ -1,0 +1,8 @@
+---
+geoportal:
+  masterportal:
+    chart: charts/general
+  backend:
+    chart: charts/general
+  mapfish:
+    chart: charts/general

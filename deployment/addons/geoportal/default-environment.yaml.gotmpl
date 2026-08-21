@@ -1,0 +1,11 @@
+---
+geoportal:
+  masterportal:
+    enabled: true
+    namespace: {{ include "civitas.namespace" (dict "global" .Values.global "suffix" "geoportal") }}
+  backend:
+    enabled: true
+    namespace: {{ include "civitas.namespace" (dict "global" .Values.global "suffix" "geoportal") }}
+  mapfish:
+    enabled: true
+    namespace: {{ include "civitas.namespace" (dict "global" .Values.global "suffix" "geoportal") }}

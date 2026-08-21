@@ -1,0 +1,55 @@
+---
+masterportal:
+  name: masterportal
+  description: Public Client for the masterportal frontend
+  subdomain: geoportal
+  redirectPath: /*
+  rawValues:
+    publicClient: true
+    standardFlowEnabled: true
+    directAccessGrantsEnabled: false
+    defaultClientScopes:
+      - basic
+      - email
+      - profile
+    protocolMappers:
+      - name: groups
+        protocol: openid-connect
+        protocolMapper: oidc-group-membership-mapper
+        consentRequired: false
+        config:
+          "access.token.claim": "false"
+          "id.token.claim": "false"
+          "userinfo.token.claim": "true"
+          "claim.name": "groups"
+          "full.path": "false"
+      - name: apisix-audience
+        protocol: openid-connect
+        protocolMapper: oidc-audience-mapper
+        consentRequired: false
+        config:
+          included.client.audience: apisix-validator
+          access.token.claim: 'true'
+          id.token.claim: 'false'
+masterportal-backend:
+  name: masterportal-backend
+  description: Protected Client for the geostack API
+  subdomain: geoportal
+  redirectPath: /*
+  rawValues:
+    publicClient: false
+    standardFlowEnabled: false
+    # TODO: Use a more secure way for authentication instead of the deprecated Resource Owner Password Credentials grant
+    directAccessGrantsEnabled: true
+    serviceAccountsEnabled: false
+    protocolMappers:
+      - name: groups
+        protocol: openid-connect
+        protocolMapper: oidc-group-membership-mapper
+        consentRequired: false
+        config:
+          "access.token.claim": "false"
+          "id.token.claim": "false"
+          "userinfo.token.claim": "true"
+          "claim.name": "groups"
+          "full.path": "false"

@@ -1,0 +1,8 @@
+---
+# Changes here will be overwritten by Copier.
+_commit: v2.0-beta-53-g787fb8e
+_src_path: ..
+componentName: Geoportal
+componentSlug: geoportal
+releases: masterportal,portal-backend,mapfish
+shortDescription: Masterportal with additional auth and print compoenents

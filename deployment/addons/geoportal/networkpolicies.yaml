@@ -1,0 +1,37 @@
+---
+geoportal-masterportal:
+  podSelector:
+    app.kubernetes.io/instance: geoportal-masterportal
+    app.kubernetes.io/name: masterportal
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: apisix
+          componentNamespace: apisix
+geoportal-backend:
+  podSelector:
+    app.kubernetes.io/instance: geoportal-backend
+    app.kubernetes.io/name: geoportal-backend
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: apisix
+          componentNamespace: apisix
+geoportal-mapfish:
+  podSelector:
+    app.kubernetes.io/instance: geoportal-mapfish
+    app.kubernetes.io/name: mapfish-print
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: apisix
+          componentNamespace: apisix

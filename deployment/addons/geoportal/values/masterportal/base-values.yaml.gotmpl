@@ -1,0 +1,57 @@
+---
+{{- $this := .Values.geoportal.masterportal }}
+{{- $global := .Values.global }}
+# Checklist:
+# - [x] Containers run as non-root with `readOnlyRootFilesystem`
+# - [x] Health probes
+# - [ ] Graceful shutdown
+# - [ ] Standard labels
+# - [ ] ServiceAccount with least privilege where required
+# - [x] Named ports
+# - [ ] Ingress with TLS
+
+name: masterportal
+
+containerPort: 8080
+
+image:
+  repository: {{ .Values.images.geoportal.masterportal.repository }}
+  tag: {{ .Values.images.geoportal.masterportal.tag }}
+  pullPolicy: IfNotPresent
+
+{{- $keycloakHost := printf "%s.%s" (default "" .Values.keycloak.app.subdomain) $global.domain | trimPrefix "." }}
+{{- $keycloakPath := .Values.keycloak.app.pathPrefix -}}
+{{- $keycloakUrl := printf "https://%s%s" $keycloakHost $keycloakPath -}}
+{{- $realmName := $global.instanceSlug }}
+
+env:
+  OIDC_AUTH: "{{ $keycloakUrl }}realms/{{ $realmName }}/protocol/openid-connect/auth"
+  OIDC_TOKEN: "{{ $keycloakUrl }}realms/{{ $realmName }}/protocol/openid-connect/token"
+  OIDC_CLIENT: "masterportal"
+  OIDC_REDIRECT: "https://geoportal.{{ .Values.global.domain }}/"
+  OIDC_SCOPE: "profile openid email"
+  PORTAL_BASE_URL: "https://geoportal.{{ .Values.global.domain }}/"
+  # DOMAIN, where the payload_api (geoserver) lives? auth tokens aer added to requests to this domain
+  API_BASE_URL: "https://api.{{ .Values.global.domain }}/"
+  BACKEND_URL: "https://geoportal.{{ .Values.global.domain }}/portalBackend/civitas-default"
+
+securityContext:
+  {{ .Values.securityDefaults.securityContext | toYaml | nindent 2 }}
+
+podSecurityContext:
+  {{ .Values.securityDefaults.podSecurityContext | toYaml | nindent 2 }}
+
+# readOnlyRootFilesystem: cmd.sh copies the baked-in static assets from
+# html-src into the html emptyDir before templating config.js. tmp is
+# writable for nginx's pid file and proxy/client/fastcgi temp dirs.
+extraVolumes:
+  - name: html
+    emptyDir: {}
+  - name: tmp
+    emptyDir: {}
+
+extraVolumeMounts:
+  - name: html
+    mountPath: /usr/share/nginx/html
+  - name: tmp
+    mountPath: /tmp

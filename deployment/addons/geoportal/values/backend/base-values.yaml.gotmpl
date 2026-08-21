@@ -1,0 +1,81 @@
+---
+{{- $this := .Values.geoportal.backend }}
+{{- $global := .Values.global }}
+# Checklist:
+# - [x] Containers run as non-root with `readOnlyRootFilesystem`
+# - [x] Health probes
+# - [ ] Graceful shutdown
+# - [ ] Standard labels
+# - [ ] ServiceAccount with least privilege where required
+# - [x] Named ports
+# - [ ] Ingress with TLS -> not required
+
+name: geoportal-backend
+
+image:
+  repository: {{ .Values.images.geoportal.backend.repository }}
+  tag: {{ .Values.images.geoportal.backend.tag }}
+
+containerPort: 8080
+
+{{- $keycloakHost := printf "%s.%s" (default "" .Values.keycloak.app.subdomain) $global.domain | trimPrefix "." }}
+{{- $keycloakPath := .Values.keycloak.app.pathPrefix -}}
+{{- $keycloakUrl := printf "https://%s%s" $keycloakHost $keycloakPath -}}
+{{- $realmName := $global.instanceSlug }}
+
+env:
+  PORT: "8080"
+  KEYCLOAK_GRANT_TYPE: "password" # We can use the insecure "password" grant, because this is only used when `TEST_MODE=true`
+  KEYCLOAK_HOST: "{{ $keycloakUrl }}"
+  KEYCLOAK_REALM: "{{ $realmName }}"
+  KEYCLOAK_CLIENT_ID: "masterportal-backend"
+  INPUT_FILE_PATH: "input"
+  SERVICE_INTERNET_INPUT_FILE: "service"
+  REST_SERVICES_INTERNET_INPUT_FILE: "rest-services"
+  CONFIG_INPUT_FILE: "config"
+  INPUT_FILES_EXTENSION: ""
+  OUTPUT_FILES_EXTENSION: ""
+  OUTPUT_FILE_PATH: "output"
+  LOG_LEVEL: INFO
+  TEST_MODE: "false"
+  PUBLIC_ROLE: "open_data"
+  COOKIE_TOKEN_NAME: token
+  ENABLE_APPSMITH_URL_UPDATER: "false"
+  MPBE_REPLACE_GEOSERVER_URL: "https://api.{{ $global.domain }}/v1/datasets"
+  MPBE_REPLACE_MAPFISH_URL: "/mapserver"
+  {{- if eq ($global.ingress.clusterIssuer | default "") "selfsigned-ca" }}
+  NODE_EXTRA_CA_CERTS: /etc/ssl/certs/extra-ca.crt
+  SSL_CERT_FILE: /etc/ssl/certs/extra-ca.crt
+  REQUESTS_CA_BUNDLE: /etc/ssl/certs/extra-ca.crt
+  {{- end }}
+
+envValueFrom:
+  KEYCLOAK_CLIENT_SECRET:
+    secretKeyRef:
+      name: keycloak-client-masterportal-backend
+      key: client-secret
+
+extraVolumes:
+  {{- if eq ($global.ingress.clusterIssuer | default "") "selfsigned-ca" }}
+  - name: cacert-volume
+    secret:
+      secretName: custom-ca-cert
+  {{- end }}
+  - name: temp-output
+    emptyDir: {}
+
+extraVolumeMounts:
+  {{- if eq ($global.ingress.clusterIssuer | default "") "selfsigned-ca" }}
+  - name: cacert-volume
+    mountPath: /etc/ssl/certs/extra-ca.crt
+    subPath: ca.crt
+    readOnly: true
+  {{- end }}
+  - name: temp-output
+    mountPath: /usr/src/app/output/
+
+securityContext:
+  {{ .Values.securityDefaults.securityContext | toYaml | nindent 2 }}
+
+podSecurityContext:
+  {{ .Values.securityDefaults.podSecurityContext | toYaml | nindent 2 }}
