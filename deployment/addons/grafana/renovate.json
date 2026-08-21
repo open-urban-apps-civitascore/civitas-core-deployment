@@ -1,0 +1,41 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended", ":configMigration"],
+  "baseBranchPatterns": ["main"],
+  "enabledManagers": ["custom.regex"],
+  "labels": ["renovate", "v::2", "team devops"],
+  "prConcurrentLimit": 10,
+  "prHourlyLimit": 5,
+  "osvVulnerabilityAlerts": true,
+  "vulnerabilityAlerts": {
+    "labels": ["renovate", "cop it-sec", "v::2", "team devops"]
+  },
+  "separateMultipleMajor": true,
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "Helm charts from HTTP(S) repos in charts.yaml; helmfile repository alias is stripped",
+      "managerFilePatterns": ["/^charts\\.yaml$/"],
+      "matchStrings": [
+        "repository:\\s*['\"]?(?<registryUrl>https?://[^\\s'\"]+)['\"]?\\s*\\n\\s*chart:\\s*['\"]?(?:[^\\s/'\"]+/)?(?<depName>[^\\s/'\"]+)['\"]?\\s*\\n\\s*version:\\s*['\"]?(?<currentValue>[^'\"\\n]+)['\"]?"
+      ],
+      "datasourceTemplate": "helm"
+    },
+    {
+      "customType": "regex",
+      "description": "Container images in images.yaml",
+      "managerFilePatterns": ["/^images\\.yaml$/"],
+      "matchStrings": [
+        "repository:\\s*['\"]?(?<depName>[^\\s'\"]+)['\"]?\\s*\\n\\s*tag:\\s*['\"]?(?<currentValue>[^'\"\\n]+)['\"]?"
+      ],
+      "datasourceTemplate": "docker"
+    }
+  ],
+  "packageRules": [
+    { "matchUpdateTypes": ["major"], "addLabels": ["major"] },
+    { "matchUpdateTypes": ["minor"], "addLabels": ["minor"] },
+    { "matchUpdateTypes": ["patch"], "addLabels": ["patch"] },
+    { "matchFileNames": ["charts.yaml"], "addLabels": ["helm"] },
+    { "matchDatasources": ["docker"], "matchFileNames": ["images.yaml"], "addLabels": ["docker"] }
+  ]
+}

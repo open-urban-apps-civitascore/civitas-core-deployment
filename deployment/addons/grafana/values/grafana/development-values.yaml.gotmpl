@@ -1,0 +1,23 @@
+---
+{{- $this := .Values.grafana.grafana }}
+{{- $global := .Values.global }}
+# Checklist:
+# - [x] Minimal Resources
+# - [ ] Minimal storage
+# - [x] 1 Replica
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 128Mi
+
+extraSecretMounts:
+  - name: custom-ca-cert
+    secretName: custom-ca-cert
+    mountPath: /etc/ssl/certs/custom-ca.crt
+    subPath: ca.crt
+    readOnly: true
+
+grafana.ini:
+  auth.generic_oauth:
+    tls_client_ca: /etc/ssl/certs/custom-ca.crt

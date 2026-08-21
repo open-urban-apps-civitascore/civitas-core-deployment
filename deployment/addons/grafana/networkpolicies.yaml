@@ -1,0 +1,15 @@
+---
+grafana:
+  podSelector:
+    app.kubernetes.io/instance: grafana-grafana
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: apisix
+          componentNamespace: apisix
+      ports:
+        - protocol: TCP
+          port: 3000
