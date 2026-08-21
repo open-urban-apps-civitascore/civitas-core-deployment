@@ -1,0 +1,13 @@
+---
+grafana:
+  name: Grafana
+  description: Grafana dashboard
+  subdomain: grafana
+  redirectPath: /login/generic_oauth
+  additionalRedirectPaths:
+    - /login
+  roles:
+    - name: grafanaServerAdmin
+    - name: grafanaAdmin
+    - name: grafanaEditor
+    - name: grafanaViewer

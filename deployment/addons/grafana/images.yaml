@@ -1,0 +1,5 @@
+---
+grafana:
+  grafana:
+    repository: grafana/grafana
+    tag: '13.1.0'

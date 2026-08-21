@@ -1,0 +1,8 @@
+---
+grafana:
+  grafana:
+    enabled: true
+    namespace: {{ include "civitas.namespace" (dict "global" .Values.global "suffix" "grafana") }}
+    # NOTE: changing this also requires updating apisix-routes.yaml manually until
+    # civitas.configFiles passes a global context for gotmpl evaluation.
+    subdomain: grafana

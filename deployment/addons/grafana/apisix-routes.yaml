@@ -1,0 +1,7 @@
+---
+grafana:
+  name: grafana
+  description: Grafana dashboard
+  upstream: grafana-grafana.{{ include "civitas.namespace" (dict "global" .Values.global "suffix" "grafana") }}.svc.cluster.local:80 # yamllint disable-line rule:line-length
+  subDomain: grafana
+  uri: '/*'
