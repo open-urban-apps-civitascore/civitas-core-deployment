@@ -1,0 +1,60 @@
+---
+
+image:
+  repository: registry.gitlab.com/civitas-connect/civitas-core/civitas-core-v2/add-ons/geoportal/components/geoportal_mapfish
+  tag: latest
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+# - name: my-registry-secret
+
+replicaCount: 1
+name: ""
+
+fullnameOverride: ""
+
+annotations: {}
+containerPort: 8080
+
+podSecurityContext: {}
+
+securityContext: {}
+
+env: {}
+# KEY: "value"
+
+envValueFrom: {}
+# KEY:
+#   secretKeyRef:
+#     name: my-secret
+#     key: my-key
+
+extraVolumeMounts: []
+
+extraVolumes: []
+
+# Arbitrary number of ConfigMaps. Each entry creates one ConfigMap whose
+# files are mounted into the container at `<mountPath>/<fileName>` (via
+# subPath, so other files in the directory are preserved).
+configMaps: []
+# - name: app-config            # ConfigMap name suffix (fullname-<name>)
+#   mountPath: /etc/myapp       # directory the files are mounted into
+#   data:
+#     config.json: |
+#       { "key": "value" }
+#     settings.yaml: |
+#       foo: bar
+
+updateStrategy: {}
+# type: RollingUpdate
+# rollingUpdate:
+#   maxUnavailable: 0
+#   maxSurge: "25%"
+
+pdb:
+  enabled: false
+  minAvailable: ""
+  maxUnavailable: ""
+
+resources: {}
+

@@ -1,0 +1,20 @@
+---
+{{- $this := .Values.geoportal.backend }}
+{{- $global := .Values.global }}
+# Checklist:
+# - [x] Minimal Resources
+# - [x] Minimal storage -> not applicable
+# - [x] 1 Replica
+
+env:
+  LOG_LEVEL: DEBUG
+
+replicaCount: 1
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi

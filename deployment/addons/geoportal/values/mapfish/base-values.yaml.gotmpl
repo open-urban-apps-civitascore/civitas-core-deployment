@@ -1,0 +1,44 @@
+---
+{{- $this := .Values.geoportal.mapfish }}
+{{- $global := .Values.global }}
+# Checklist:
+# - [ ] Containers run as non-root with `readOnlyRootFilesystem`
+# - [ ] Health probes
+# - [ ] Graceful shutdown
+# - [ ] Standard labels
+# - [ ] ServiceAccount with least privilege where required
+# - [ ] Named ports
+# - [ ] Ingress with TLS
+
+name: mapfish-print
+
+image:
+  repository: {{ .Values.images.geoportal.mapfish.repository }}
+  tag: {{ .Values.images.geoportal.mapfish.tag }}
+
+containerPort: 8080
+
+extraVolumeMounts:
+  - name: tomcat-temp
+    mountPath: /usr/local/tomcat/temp
+  - name: tomcat-logs
+    mountPath: /usr/local/tomcat/logs
+  - name: tomcat-work
+    mountPath: /usr/local/tomcat/work
+
+extraVolumes:
+  - name: tomcat-temp
+    emptyDir:
+      medium: Memory
+  - name: tomcat-logs
+    emptyDir:
+      medium: Memory
+  - name: tomcat-work
+    emptyDir:
+      medium: Memory
+
+securityContext:
+  {{ .Values.securityDefaults.securityContext | toYaml | nindent 2 }}
+
+podSecurityContext:
+  {{ .Values.securityDefaults.podSecurityContext | toYaml | nindent 2 }}

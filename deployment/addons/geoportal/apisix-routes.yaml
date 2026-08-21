@@ -1,0 +1,19 @@
+---
+masterportal:
+  name: masterportal
+  description: 'Access to the masterportal website'
+  upstream: geoportal-masterportal:8080
+  subDomain: geoportal
+  uri: '/*'
+mapfish:
+  name: mapfish-print
+  description: 'Access to the mapfish print service'
+  upstream: geoportal-mapfish-mapfish-print:8080
+  subDomain: geoportal
+  uri: '/mapserver/*'
+backend:
+  name: geoportal-backend
+  description: 'Access to the geoportal backend'
+  upstream:  geoportal-backend:8080
+  subDomain: geoportal
+  uri: '/portalBackend/*'

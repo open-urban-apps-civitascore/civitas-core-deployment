@@ -1,0 +1,58 @@
+---
+geoportal-masterportal-linkerd:
+  podSelector:
+    app.kubernetes.io/instance: geoportal-masterportal
+    app.kubernetes.io/name: masterportal
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: apisix
+          componentNamespace: apisix
+      ports:
+        - port: 4143
+          protocol: TCP
+        - port: 4190
+          protocol: TCP
+        - port: 4191
+          protocol: TCP
+geoportal-backend-linkerd:
+  podSelector:
+    app.kubernetes.io/instance: geoportal-backend
+    app.kubernetes.io/name: geoportal-backend
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: apisix
+          componentNamespace: apisix
+      ports:
+        - port: 4143
+          protocol: TCP
+        - port: 4190
+          protocol: TCP
+        - port: 4191
+          protocol: TCP
+geoportal-mapfish-linkerd:
+  podSelector:
+    app.kubernetes.io/instance: geoportal-mapfish
+    app.kubernetes.io/name: mapfish-print
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: apisix
+          componentNamespace: apisix
+      ports:
+        - port: 4143
+          protocol: TCP
+        - port: 4190
+          protocol: TCP
+        - port: 4191
+          protocol: TCP

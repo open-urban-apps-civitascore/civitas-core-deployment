@@ -1,0 +1,6 @@
+---
+component: geoportal
+parts:
+  - name: masterportal
+  - name: backend
+  - name: mapfish

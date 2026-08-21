@@ -1,0 +1,25 @@
+---
+masterportal:
+  name: masterportal
+  description: 'Access to the masterportal website'
+  plugins:
+    proxy-rewrite:
+      regex_uri:
+        - "^/(.*)"
+        - "/$1"
+mapfish:
+  name: mapfish-print
+  description: 'Access to the mapfish print service'
+  plugins:
+    proxy-rewrite:
+      regex_uri:
+        - "^/mapserver/(.*)"
+        - "/$1"
+backend:
+  name: geoportal-backend
+  description: 'Access to the geoportal backend'
+  plugins:
+    proxy-rewrite:
+      regex_uri:
+        - "^/portalBackend/(.*)"
+        - "/$1"
